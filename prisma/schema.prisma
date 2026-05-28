@@ -7,14 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum PatientStatus {
+enum EstadoPaciente {
   activo
   inactivo
 
   @@map("estado_paciente")
 }
 
-enum AppointmentStatus {
+enum EstadoTurno {
   pendiente
   confirmado
   atendido
@@ -24,66 +24,66 @@ enum AppointmentStatus {
   @@map("estado_turno")
 }
 
-model Patient {
-  id              String        @id
-  name            String        @map("nombre")
-  firstName       String?       @map("nombre_pila")
-  lastName        String?       @map("apellido")
-  dni             String
-  phone           String        @map("telefono")
-  insurance       String        @default("Particular") @map("obra_social")
-  email           String?
-  notes           String?       @map("observaciones")
-  status          PatientStatus @default(activo) @map("estado")
-  lastAppointment String?       @map("ultimo_turno")
-  createdAt       String?       @map("fecha_alta")
-  appointments    Appointment[]
+model Paciente {
+  id           String         @id
+  nombre       String
+  nombrePila   String?        @map("nombre_pila")
+  apellido     String?
+  dni          String
+  telefono     String
+  obraSocial   String         @default("Particular") @map("obra_social")
+  email        String?
+  observaciones String?
+  estado       EstadoPaciente @default(activo)
+  ultimoTurno  String?        @map("ultimo_turno")
+  fechaAlta    String?        @map("fecha_alta")
+  turnos       Turno[]
 
-  @@index([status])
+  @@index([estado])
   @@index([dni])
   @@map("pacientes")
 }
 
-model Professional {
-  id              String        @id
-  name            String        @map("nombre")
-  firstName       String        @map("nombre_pila")
-  lastName        String        @map("apellido")
-  license         String?       @map("matricula")
+model Profesional {
+  id              String   @id
+  nombre          String
+  nombrePila      String   @map("nombre_pila")
+  apellido        String
+  matricula       String?
   email           String?
-  phone           String?       @map("telefono")
-  specialty       String        @map("especialidad")
-  days            String[]      @map("dias_atencion")
-  scheduleStart   String        @map("horario_inicio")
-  scheduleEnd     String        @map("horario_fin")
-  defaultDuration Int           @default(45) @map("duracion_default")
-  active          Boolean       @default(true) @map("activo")
-  avatarColor     String        @map("color_avatar")
-  notes           String?       @map("observaciones")
-  appointments    Appointment[]
+  telefono        String?
+  especialidad    String
+  diasAtencion    String[] @map("dias_atencion")
+  horarioInicio   String   @map("horario_inicio")
+  horarioFin      String   @map("horario_fin")
+  duracionDefault Int      @default(45) @map("duracion_default")
+  activo          Boolean  @default(true)
+  colorAvatar     String   @map("color_avatar")
+  observaciones   String?
+  turnos          Turno[]
 
-  @@index([active])
+  @@index([activo])
   @@map("profesionales")
 }
 
-model Appointment {
-  id               String            @id
-  patientId        String            @map("paciente_id")
-  professionalId   String            @map("profesional_id")
-  patientName      String            @map("paciente_nombre")
-  professionalName String            @map("profesional_nombre")
-  date             String            @map("fecha")
-  time             String            @map("hora")
-  duration         Int               @map("duracion")
-  status           AppointmentStatus @default(pendiente) @map("estado")
-  sessionType      String            @map("tipo_sesion")
-  notes            String?           @map("observaciones")
-  patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  professional     Professional      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+model Turno {
+  id                 String      @id
+  pacienteId         String      @map("paciente_id")
+  profesionalId      String      @map("profesional_id")
+  pacienteNombre     String      @map("paciente_nombre")
+  profesionalNombre  String      @map("profesional_nombre")
+  fecha              String
+  hora               String
+  duracion           Int
+  estado             EstadoTurno @default(pendiente)
+  tipoSesion         String      @map("tipo_sesion")
+  observaciones      String?
+  paciente           Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  profesional        Profesional @relation(fields: [profesionalId], references: [id], onDelete: Restrict)
 
-  @@index([date])
-  @@index([status])
-  @@index([professionalId, date])
-  @@index([patientId])
+  @@index([fecha])
+  @@index([estado])
+  @@index([profesionalId, fecha])
+  @@index([pacienteId])
   @@map("turnos")
 }

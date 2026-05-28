@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import type { Professional } from "@/types";
 
 export async function getProfessionalsFromDb(): Promise<Professional[]> {
-  const records = await prisma.professional.findMany({
-    orderBy: { name: "asc" },
+  const records = await prisma.profesional.findMany({
+    orderBy: { nombre: "asc" },
   });
 
   return records.map(mapProfessional);

@@ -1,59 +1,59 @@
 import type {
-  Appointment as PrismaAppointment,
-  Patient as PrismaPatient,
-  Professional as PrismaProfessional,
+  Paciente,
+  Profesional,
+  Turno,
 } from "@prisma/client";
 import type { Appointment, Patient, Professional, WeekDay } from "@/types";
 
-export function mapPatient(record: PrismaPatient): Patient {
+export function mapPatient(record: Paciente): Patient {
   return {
     id: record.id,
-    name: record.name,
-    firstName: record.firstName ?? undefined,
-    lastName: record.lastName ?? undefined,
+    name: record.nombre,
+    firstName: record.nombrePila ?? undefined,
+    lastName: record.apellido ?? undefined,
     dni: record.dni,
-    phone: record.phone,
-    insurance: record.insurance,
+    phone: record.telefono,
+    insurance: record.obraSocial,
     email: record.email ?? undefined,
-    notes: record.notes ?? undefined,
-    status: record.status,
-    lastAppointment: record.lastAppointment ?? undefined,
-    createdAt: record.createdAt ?? undefined,
+    notes: record.observaciones ?? undefined,
+    status: record.estado,
+    lastAppointment: record.ultimoTurno ?? undefined,
+    createdAt: record.fechaAlta ?? undefined,
   };
 }
 
-export function mapProfessional(record: PrismaProfessional): Professional {
+export function mapProfessional(record: Profesional): Professional {
   return {
     id: record.id,
-    name: record.name,
-    firstName: record.firstName,
-    lastName: record.lastName,
-    license: record.license ?? undefined,
+    name: record.nombre,
+    firstName: record.nombrePila,
+    lastName: record.apellido,
+    license: record.matricula ?? undefined,
     email: record.email ?? undefined,
-    phone: record.phone ?? undefined,
-    specialty: record.specialty,
-    days: record.days as WeekDay[],
-    scheduleStart: record.scheduleStart,
-    scheduleEnd: record.scheduleEnd,
-    defaultDuration: record.defaultDuration,
-    active: record.active,
-    avatarColor: record.avatarColor,
-    notes: record.notes ?? undefined,
+    phone: record.telefono ?? undefined,
+    specialty: record.especialidad,
+    days: record.diasAtencion as WeekDay[],
+    scheduleStart: record.horarioInicio,
+    scheduleEnd: record.horarioFin,
+    defaultDuration: record.duracionDefault,
+    active: record.activo,
+    avatarColor: record.colorAvatar,
+    notes: record.observaciones ?? undefined,
   };
 }
 
-export function mapAppointment(record: PrismaAppointment): Appointment {
+export function mapAppointment(record: Turno): Appointment {
   return {
     id: record.id,
-    patientId: record.patientId,
-    patientName: record.patientName,
-    professionalId: record.professionalId,
-    professionalName: record.professionalName,
-    date: record.date,
-    time: record.time,
-    duration: record.duration,
-    status: record.status,
-    sessionType: record.sessionType as Appointment["sessionType"],
-    notes: record.notes ?? undefined,
+    patientId: record.pacienteId,
+    patientName: record.pacienteNombre,
+    professionalId: record.profesionalId,
+    professionalName: record.profesionalNombre,
+    date: record.fecha,
+    time: record.hora,
+    duration: record.duracion,
+    status: record.estado,
+    sessionType: record.tipoSesion as Appointment["sessionType"],
+    notes: record.observaciones ?? undefined,
   };
 }
