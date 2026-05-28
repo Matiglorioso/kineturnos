@@ -11,8 +11,9 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 
 | | |
 |---|---|
-| **Demo en vivo** | _[Agregar URL de deploy — ej. Vercel](https://tu-demo.vercel.app)_ |
-| **Case study** | [`/proyecto`](/proyecto) dentro de la app |
+| **Demo en vivo** | **[kineturnos.vercel.app](https://kineturnos.vercel.app/)** |
+| **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
+| **Case study** | [kineturnos.vercel.app/proyecto](https://kineturnos.vercel.app/proyecto) |
 | **Versión** | Demo v0.1 · 2026 |
 
 ---
@@ -88,13 +89,9 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 ## Demo
 
-<!-- Reemplazar con el link real cuando esté deployado -->
+**[https://kineturnos.vercel.app/](https://kineturnos.vercel.app/)**
 
-```
-https://tu-demo.vercel.app
-```
-
-También podés explorar el **case study interactivo** en la ruta `/proyecto`, con stack, decisiones técnicas, limitaciones de la demo y roadmap.
+También podés explorar el **case study interactivo** en [/proyecto](https://kineturnos.vercel.app/proyecto), con stack, decisiones técnicas, limitaciones de la demo y roadmap.
 
 ---
 
@@ -125,7 +122,7 @@ También podés explorar el **case study interactivo** en la ruta `/proyecto`, c
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/kineturnos.git
+git clone https://github.com/Matiglorioso/kineturnos.git
 cd kineturnos
 
 # Instalar dependencias
@@ -152,7 +149,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 
 ```env
 # URL base para metadata Open Graph (deploy)
-NEXT_PUBLIC_SITE_URL=https://tu-demo.vercel.app
+NEXT_PUBLIC_SITE_URL=https://kineturnos.vercel.app
 ```
 
 ---
@@ -245,10 +242,8 @@ kineturnos/
 
 | | |
 |---|---|
-| **Portfolio** | _[tu-portfolio.com](https://tu-portfolio.com)_ |
-| **LinkedIn** | _[linkedin.com/in/tu-perfil](https://linkedin.com/in/tu-perfil)_ |
-| **GitHub** | _[github.com/tu-usuario](https://github.com/tu-usuario)_ |
-| **Email** | _tu-email@ejemplo.com_ |
+| **GitHub** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
+| **Demo** | [kineturnos.vercel.app](https://kineturnos.vercel.app/) |
 
 ---
 

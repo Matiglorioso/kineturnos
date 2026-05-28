@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 export const siteConfig = {
   name: "KineTurnos",
   tagline: "Gestión kinesiológica",
+  url: "https://kineturnos.vercel.app",
+  repo: "https://github.com/Matiglorioso/kineturnos",
   description:
     "Sistema moderno para organizar turnos, pacientes y profesionales en consultorios de kinesiología.",
   shortDescription: "Turnos y pacientes para tu consultorio kinesiológico.",
@@ -70,7 +72,10 @@ export function createPageMetadata(
 
 export const rootMetadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_SITE_URL ??
+      (process.env.NODE_ENV === "production"
+        ? siteConfig.url
+        : "http://localhost:3000")
   ),
   title: {
     default: `${siteConfig.name} | ${siteConfig.tagline}`,
