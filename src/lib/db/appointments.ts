@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import type { Appointment } from "@/types";
 
 export async function getAppointmentsFromDb(): Promise<Appointment[]> {
-  const records = await prisma.appointment.findMany({
-    orderBy: [{ date: "asc" }, { time: "asc" }],
+  const records = await prisma.turno.findMany({
+    orderBy: [{ fecha: "asc" }, { hora: "asc" }],
   });
 
   return records.map(mapAppointment);

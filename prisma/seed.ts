@@ -7,76 +7,76 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log("Limpiando tablas...");
-  await prisma.appointment.deleteMany();
-  await prisma.patient.deleteMany();
-  await prisma.professional.deleteMany();
+  await prisma.turno.deleteMany();
+  await prisma.paciente.deleteMany();
+  await prisma.profesional.deleteMany();
 
   console.log("Insertando profesionales...");
   for (const professional of mockProfessionals) {
-    await prisma.professional.create({
+    await prisma.profesional.create({
       data: {
         id: professional.id,
-        name: professional.name,
-        firstName: professional.firstName,
-        lastName: professional.lastName,
-        license: professional.license,
+        nombre: professional.name,
+        nombrePila: professional.firstName,
+        apellido: professional.lastName,
+        matricula: professional.license,
         email: professional.email,
-        phone: professional.phone,
-        specialty: professional.specialty,
-        days: professional.days,
-        scheduleStart: professional.scheduleStart,
-        scheduleEnd: professional.scheduleEnd,
-        defaultDuration: professional.defaultDuration,
-        active: professional.active,
-        avatarColor: professional.avatarColor,
-        notes: professional.notes,
+        telefono: professional.phone,
+        especialidad: professional.specialty,
+        diasAtencion: professional.days,
+        horarioInicio: professional.scheduleStart,
+        horarioFin: professional.scheduleEnd,
+        duracionDefault: professional.defaultDuration,
+        activo: professional.active,
+        colorAvatar: professional.avatarColor,
+        observaciones: professional.notes,
       },
     });
   }
 
   console.log("Insertando pacientes...");
   for (const patient of mockPatients) {
-    await prisma.patient.create({
+    await prisma.paciente.create({
       data: {
         id: patient.id,
-        name: patient.name,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
+        nombre: patient.name,
+        nombrePila: patient.firstName,
+        apellido: patient.lastName,
         dni: patient.dni,
-        phone: patient.phone,
-        insurance: patient.insurance,
+        telefono: patient.phone,
+        obraSocial: patient.insurance,
         email: patient.email,
-        notes: patient.notes,
-        status: patient.status,
-        lastAppointment: patient.lastAppointment,
-        createdAt: patient.createdAt,
+        observaciones: patient.notes,
+        estado: patient.status,
+        ultimoTurno: patient.lastAppointment,
+        fechaAlta: patient.createdAt,
       },
     });
   }
 
   console.log("Insertando turnos...");
   for (const appointment of mockAppointments) {
-    await prisma.appointment.create({
+    await prisma.turno.create({
       data: {
         id: appointment.id,
-        patientId: appointment.patientId,
-        professionalId: appointment.professionalId,
-        patientName: appointment.patientName,
-        professionalName: appointment.professionalName,
-        date: appointment.date,
-        time: appointment.time,
-        duration: appointment.duration,
-        status: appointment.status,
-        sessionType: appointment.sessionType,
-        notes: appointment.notes,
+        pacienteId: appointment.patientId,
+        profesionalId: appointment.professionalId,
+        pacienteNombre: appointment.patientName,
+        profesionalNombre: appointment.professionalName,
+        fecha: appointment.date,
+        hora: appointment.time,
+        duracion: appointment.duration,
+        estado: appointment.status,
+        tipoSesion: appointment.sessionType,
+        observaciones: appointment.notes,
       },
     });
   }
 
   const counts = {
-    professionals: await prisma.professional.count(),
-    patients: await prisma.patient.count(),
-    appointments: await prisma.appointment.count(),
+    profesionales: await prisma.profesional.count(),
+    pacientes: await prisma.paciente.count(),
+    turnos: await prisma.turno.count(),
   };
 
   console.log("Seed completado:", counts);
