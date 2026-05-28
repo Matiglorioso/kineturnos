@@ -181,7 +181,7 @@ Por ahora, con `db:push` local alcanza para desarrollo. En producción podés co
 
 ```
 prisma/
-  schema.prisma    # Modelos: Patient, Professional, Appointment
+  schema.prisma    # Modelos TS; tablas/columnas en español vía @map / @@map
   seed.ts          # Datos iniciales desde mocks
 src/
   lib/
@@ -189,6 +189,8 @@ src/
     db-health.ts   # Chequeo de conexión
   app/api/health/db/route.ts   # GET para probar conexión
 ```
+
+**Tablas en Neon:** `pacientes`, `profesionales`, `turnos` (columnas en snake_case español, ej. `paciente_nombre`, `obra_social`, `tipo_sesion`).
 
 ---
 

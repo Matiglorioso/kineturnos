@@ -27,10 +27,14 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 
 ```powershell
 cd C:\Users\matias.aliaga\kineturnos
-npm run db:push
-npm run db:seed
-npm run dev
+npm.cmd run db:push
+npm.cmd run db:seed
+npm.cmd run dev
 ```
+
+> **Windows / PowerShell:** si `npm run ...` falla con *"la ejecución de scripts está deshabilitada"*, usá **`npm.cmd`** en lugar de `npm` (es lo mismo, evita el bloqueo de PowerShell).
+
+**Orden importante:** primero `db:push` (crea tablas), después `db:seed` (carga datos). Si el seed dice que la tabla no existe, falta correr `db:push`.
 
 ## 5. Probar en el navegador
 

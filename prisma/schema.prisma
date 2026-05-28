@@ -10,6 +10,8 @@ datasource db {
 enum PatientStatus {
   activo
   inactivo
+
+  @@map("estado_paciente")
 }
 
 enum AppointmentStatus {
@@ -18,60 +20,64 @@ enum AppointmentStatus {
   atendido
   cancelado
   ausente
+
+  @@map("estado_turno")
 }
 
 model Patient {
   id              String        @id
-  name            String
-  firstName       String?
-  lastName        String?
+  name            String        @map("nombre")
+  firstName       String?       @map("nombre_pila")
+  lastName        String?       @map("apellido")
   dni             String
-  phone           String
-  insurance       String        @default("Particular")
+  phone           String        @map("telefono")
+  insurance       String        @default("Particular") @map("obra_social")
   email           String?
-  notes           String?
-  status          PatientStatus @default(activo)
-  lastAppointment String?
-  createdAt       String?
+  notes           String?       @map("observaciones")
+  status          PatientStatus @default(activo) @map("estado")
+  lastAppointment String?       @map("ultimo_turno")
+  createdAt       String?       @map("fecha_alta")
   appointments    Appointment[]
 
   @@index([status])
   @@index([dni])
+  @@map("pacientes")
 }
 
 model Professional {
   id              String        @id
-  name            String
-  firstName       String
-  lastName        String
-  license         String?
+  name            String        @map("nombre")
+  firstName       String        @map("nombre_pila")
+  lastName        String        @map("apellido")
+  license         String?       @map("matricula")
   email           String?
-  phone           String?
-  specialty       String
-  days            String[]
-  scheduleStart   String
-  scheduleEnd     String
-  defaultDuration Int           @default(45)
-  active          Boolean       @default(true)
-  avatarColor     String
-  notes           String?
+  phone           String?       @map("telefono")
+  specialty       String        @map("especialidad")
+  days            String[]      @map("dias_atencion")
+  scheduleStart   String        @map("horario_inicio")
+  scheduleEnd     String        @map("horario_fin")
+  defaultDuration Int           @default(45) @map("duracion_default")
+  active          Boolean       @default(true) @map("activo")
+  avatarColor     String        @map("color_avatar")
+  notes           String?       @map("observaciones")
   appointments    Appointment[]
 
   @@index([active])
+  @@map("profesionales")
 }
 
 model Appointment {
   id               String            @id
-  patientId        String
-  professionalId   String
-  patientName      String
-  professionalName String
-  date             String
-  time             String
-  duration         Int
-  status           AppointmentStatus @default(pendiente)
-  sessionType      String
-  notes            String?
+  patientId        String            @map("paciente_id")
+  professionalId   String            @map("profesional_id")
+  patientName      String            @map("paciente_nombre")
+  professionalName String            @map("profesional_nombre")
+  date             String            @map("fecha")
+  time             String            @map("hora")
+  duration         Int               @map("duracion")
+  status           AppointmentStatus @default(pendiente) @map("estado")
+  sessionType      String            @map("tipo_sesion")
+  notes            String?           @map("observaciones")
   patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   professional     Professional      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
 
@@ -79,4 +85,5 @@ model Appointment {
   @@index([status])
   @@index([professionalId, date])
   @@index([patientId])
+  @@map("turnos")
 }
