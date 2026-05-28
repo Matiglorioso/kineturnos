@@ -15,6 +15,7 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
 | **Case study** | [kineturnos.vercel.app/proyecto](https://kineturnos.vercel.app/proyecto) |
 | **Versión** | Demo v0.1 · 2026 |
+| **Base de datos** | PostgreSQL (Neon) + Prisma — [guía de setup](docs/GUIA-NEON-PRISMA.md) |
 
 ---
 
@@ -107,7 +108,8 @@ También podés explorar el **case study interactivo** en [/proyecto](https://ki
 | **Lucide React** | Iconografía consistente |
 | **date-fns** | Fechas en español y lógica de calendario |
 | **Sonner** | Notificaciones toast |
-| **localStorage** | Persistencia sin backend en la demo |
+| **Neon + Prisma** | PostgreSQL serverless + ORM (en progreso) |
+| **localStorage** | Persistencia actual de la demo (migración a DB en curso) |
 
 ---
 
@@ -150,6 +152,19 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 ```env
 # URL base para metadata Open Graph (deploy)
 NEXT_PUBLIC_SITE_URL=https://kineturnos.vercel.app
+```
+
+Copiá la plantilla desde `env.example` y renombrala a `.env`.
+
+### Base de datos (Neon + Prisma)
+
+Guía completa: [`docs/GUIA-NEON-PRISMA.md`](docs/GUIA-NEON-PRISMA.md)  
+Checklist rápido (tu parte): [`docs/TU-PARTE-NEON.md`](docs/TU-PARTE-NEON.md)
+
+```bash
+npm run db:push    # Crear tablas en Neon
+npm run db:seed    # Cargar datos de demo
+npm run db:studio  # Ver la DB en el navegador
 ```
 
 ---
@@ -201,6 +216,8 @@ kineturnos/
 | Agenda lista + semanal | ✅ Completo |
 | Validación de horarios y solapamientos | ✅ Completo |
 | Persistencia local | ✅ Completo |
+| Neon + Prisma (schema, seed, API) | 🔄 En progreso |
+| App conectada a Postgres | ⏳ Pendiente (requiere `DATABASE_URL`) |
 | Branding, metadata y favicon | ✅ Completo |
 | Backend / API | ❌ No incluido |
 | Autenticación y roles | ❌ No incluido |

@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PatientStatus {
+  activo
+  inactivo
+}
+
+enum AppointmentStatus {
+  pendiente
+  confirmado
+  atendido
+  cancelado
+  ausente
+}
+
+model Patient {
+  id              String        @id
+  name            String
+  firstName       String?
+  lastName        String?
+  dni             String
+  phone           String
+  insurance       String        @default("Particular")
+  email           String?
+  notes           String?
+  status          PatientStatus @default(activo)
+  lastAppointment String?
+  createdAt       String?
+  appointments    Appointment[]
+
+  @@index([status])
+  @@index([dni])
+}
+
+model Professional {
+  id              String        @id
+  name            String
+  firstName       String
+  lastName        String
+  license         String?
+  email           String?
+  phone           String?
+  specialty       String
+  days            String[]
+  scheduleStart   String
+  scheduleEnd     String
+  defaultDuration Int           @default(45)
+  active          Boolean       @default(true)
+  avatarColor     String
+  notes           String?
+  appointments    Appointment[]
+
+  @@index([active])
+}
+
+model Appointment {
+  id               String            @id
+  patientId        String
+  professionalId   String
+  patientName      String
+  professionalName String
+  date             String
+  time             String
+  duration         Int
+  status           AppointmentStatus @default(pendiente)
+  sessionType      String
+  notes            String?
+  patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professional     Professional      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+
+  @@index([date])
+  @@index([status])
+  @@index([professionalId, date])
+  @@index([patientId])
+}
