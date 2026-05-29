@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { mockAppointments } from "../src/data/mockAppointments";
 import { mockPatients } from "../src/data/mockPatients";
 import { mockProfessionals } from "../src/data/mockProfessionals";
+import { hashPassword } from "../src/lib/auth/password";
 import { resolveNameParts } from "../src/lib/person-name";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
 import type { Patient } from "../src/types";
@@ -35,6 +36,7 @@ function buildPacienteSeedData(patient: Patient) {
 async function main() {
   console.log("Limpiando tablas...");
   await prisma.turno.deleteMany();
+  await prisma.usuario.deleteMany();
   await prisma.paciente.deleteMany();
   await prisma.profesional.deleteMany();
 
@@ -90,10 +92,53 @@ async function main() {
     });
   }
 
+  console.log("Insertando usuarios...");
+  const demoPasswordHash = await hashPassword("demo1234");
+  const firstProfessionalId = mockProfessionals[0]?.id ?? null;
+
+  const demoUsers = [
+    {
+      id: "u-admin",
+      email: "admin@kineturnos.local",
+      nombre: "Administrador Demo",
+      rol: "admin" as const,
+      profesionalId: null,
+    },
+    {
+      id: "u-recepcion",
+      email: "recepcion@kineturnos.local",
+      nombre: "Recepción Demo",
+      rol: "recepcion" as const,
+      profesionalId: null,
+    },
+    {
+      id: "u-profe",
+      email: "profe@kineturnos.local",
+      nombre: mockProfessionals[0]?.name ?? "Profesional Demo",
+      rol: "profesional" as const,
+      profesionalId: firstProfessionalId,
+    },
+  ];
+
+  for (const user of demoUsers) {
+    await prisma.usuario.create({
+      data: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        passwordHash: demoPasswordHash,
+        rol: user.rol,
+        activo: true,
+        profesionalId: user.profesionalId,
+      },
+    });
+  }
+
   const counts = {
     profesionales: await prisma.profesional.count(),
     pacientes: await prisma.paciente.count(),
     turnos: await prisma.turno.count(),
+    usuarios: await prisma.usuario.count(),
   };
 
   console.log("Seed completado:", counts);

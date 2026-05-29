@@ -39,9 +39,13 @@ La app ya persiste **pacientes, profesionales y turnos** en PostgreSQL. Para que
    |------|--------|
    | `DATABASE_URL` | URL **Pooled** de Neon (paso 1) |
    | `NEXT_PUBLIC_SITE_URL` | `https://kineturnos.vercel.app` |
+   | `AUTH_SECRET` | Secreto aleatorio (`openssl rand -base64 32`) |
+   | `VERIFY_SECRET` | *(opcional)* Para `verify:migration` sin login |
 
 4. Marcá los tres entornos: **Production**, **Preview**, **Development**
 5. **Save**
+
+> **Auth:** Sin `AUTH_SECRET`, el login no funciona en producción. Usuarios demo (contraseña `demo1234`): `recepcion@kineturnos.local`, `admin@kineturnos.local`, `profe@kineturnos.local`. Corré `npm run db:seed` después del push del schema para crearlos.
 
 ---
 
@@ -60,10 +64,9 @@ Reemplazá el dominio si usás otro:
 | URL | Resultado esperado |
 |-----|-------------------|
 | `https://kineturnos.vercel.app/api/health/db` | `{ "ok": true, ... }` |
-| `https://kineturnos.vercel.app/api/patients` | JSON con lista de pacientes |
-| `https://kineturnos.vercel.app/api/professionals` | JSON con profesionales |
-| `https://kineturnos.vercel.app/api/appointments` | JSON con turnos |
-| `https://kineturnos.vercel.app/pacientes` | UI carga pacientes del seed |
+| `https://kineturnos.vercel.app/login` | Pantalla de login |
+| `https://kineturnos.vercel.app/proyecto` | Case study (público, sin login) |
+| `https://kineturnos.vercel.app/pacientes` | Redirige a login si no hay sesión |
 
 Si `/api/health/db` falla con 503, revisá que `DATABASE_URL` esté bien pegada (sin espacios) y que sea la URL **Pooled**.
 
@@ -71,7 +74,7 @@ Si `/api/health/db` falla con 503, revisá que `DATABASE_URL` esté bien pegada 
 
 ## Verificación automática (local)
 
-Con el servidor corriendo (`npm run dev`):
+Con el servidor corriendo (`npm run dev`) y `VERIFY_SECRET` en `.env`:
 
 ```powershell
 npm.cmd run verify:migration

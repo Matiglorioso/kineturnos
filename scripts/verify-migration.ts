@@ -6,10 +6,23 @@ import {
 
 const prisma = new PrismaClient();
 const BASE = process.env.VERIFY_BASE_URL ?? "http://localhost:3000";
+const VERIFY_SECRET = process.env.VERIFY_SECRET;
 
 type CheckResult = { name: string; ok: boolean; detail: string };
 
 const results: CheckResult[] = [];
+
+function apiHeaders(extra?: HeadersInit): HeadersInit {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (VERIFY_SECRET) {
+    headers["x-verify-secret"] = VERIFY_SECRET;
+  }
+
+  return { ...headers, ...(extra as Record<string, string> | undefined) };
+}
 
 function pass(name: string, detail: string) {
   results.push({ name, ok: true, detail });
@@ -20,7 +33,10 @@ function fail(name: string, detail: string) {
 }
 
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, init);
+  const res = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: apiHeaders(init?.headers),
+  });
   const body = (await res.json().catch(() => null)) as {
     data?: T;
     error?: string;
@@ -403,8 +419,110 @@ async function verifyAppointmentsApi() {
   });
   pass("PATCH /api/appointments/[id]", "Actualizacion completa OK");
 
-  await fetchApi(`/api/appointments/${testId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelado" }) });
+  await fetchApi(`/api/appointments/${testId}`, { method: "PATCH", headers: apiHeaders(), body: JSON.stringify({ status: "cancelado" }) });
   pass("DELETE logico turno", "Cancelacion via PATCH OK");
+}
+
+async function verifySyncBehavior() {
+  const patients = await fetchApi<Array<{ id: string; name: string; lastAppointment?: string }>>(
+    "/api/patients"
+  );
+  const professionals = await fetchApi<Array<{ id: string; name: string }>>(
+    "/api/professionals"
+  );
+
+  if (patients.length === 0 || professionals.length === 0) {
+    fail("Sync ultimo_turno", "Faltan pacientes o profesionales");
+    return;
+  }
+
+  const patientId = `p-sync-${Date.now()}`;
+  const professionalId = professionals[0].id;
+  const appointmentId = `a-sync-${Date.now()}`;
+  const attendedDate = "15-01-2027";
+  const testDni = `${Date.now()}`.slice(-8);
+  const slotMinutes = 10 * 60 + (Date.now() % 120);
+  const hours = String(Math.floor(slotMinutes / 60)).padStart(2, "0");
+  const mins = String(slotMinutes % 60).padStart(2, "0");
+  const time = `${hours}:${mins}`;
+
+  await fetchApi("/api/patients", {
+    method: "POST",
+    body: JSON.stringify({
+      id: patientId,
+      firstName: "Sync",
+      lastName: "UltimoTurno",
+      dni: testDni,
+      phone: "+54 11 7777-7777",
+      email: "sync@test.local",
+      insurance: "Particular",
+      status: "activo",
+      notes: "",
+    }),
+  });
+
+  await fetchApi("/api/appointments", {
+    method: "POST",
+    body: JSON.stringify({
+      id: appointmentId,
+      patientId,
+      professionalId,
+      date: attendedDate,
+      time,
+      duration: "45",
+      sessionType: "Control",
+      status: "pendiente",
+      notes: "",
+    }),
+  });
+
+  await fetchApi(`/api/appointments/${appointmentId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "atendido" }),
+  });
+
+  const patientAfterAttended = await fetchApi<{
+    lastAppointment?: string;
+  }>(`/api/patients/${patientId}`);
+
+  if (patientAfterAttended.lastAppointment === attendedDate) {
+    pass("Sync ultimo_turno", `Actualizado a ${attendedDate}`);
+  } else {
+    fail(
+      "Sync ultimo_turno",
+      `Esperado ${attendedDate}, recibido ${patientAfterAttended.lastAppointment ?? "null"}`
+    );
+  }
+
+  const updatedPatientName = "Sync Nombre Nuevo";
+  await fetchApi(`/api/patients/${patientId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      firstName: "Sync",
+      lastName: "Nombre Nuevo",
+      dni: testDni,
+      phone: "+54 11 7777-7777",
+      email: "sync@test.local",
+      insurance: "Particular",
+      status: "activo",
+      notes: "",
+    }),
+  });
+
+  const appointmentAfterRename = await fetchApi<{ patientName: string }>(
+    `/api/appointments/${appointmentId}`
+  );
+
+  if (appointmentAfterRename.patientName === updatedPatientName) {
+    pass("Sync paciente_nombre", "Nombre propagado al turno");
+  } else {
+    fail(
+      "Sync paciente_nombre",
+      `Esperado "${updatedPatientName}", recibido "${appointmentAfterRename.patientName}"`
+    );
+  }
+
+  await fetchApi(`/api/patients/${patientId}`, { method: "DELETE" });
 }
 
 async function main() {
@@ -433,6 +551,15 @@ async function main() {
     );
     console.log("Para pruebas API completas: npm run dev en otra terminal.\n");
   } else {
+    if (!VERIFY_SECRET) {
+      console.log(
+        "VERIFY_SECRET no configurado — las pruebas API pueden fallar por auth.\n"
+      );
+      console.log(
+        "Agregá VERIFY_SECRET en .env (ver env.example) y reiniciá dev.\n"
+      );
+    }
+
     try {
       await verifyPatientsApi();
     } catch (error) {
@@ -453,6 +580,15 @@ async function main() {
     } catch (error) {
       fail(
         "API turnos",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    try {
+      await verifySyncBehavior();
+    } catch (error) {
+      fail(
+        "Sync dominio",
         error instanceof Error ? error.message : String(error)
       );
     }

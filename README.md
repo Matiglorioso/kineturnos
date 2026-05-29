@@ -14,7 +14,7 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 | **Demo en vivo** | **[kineturnos.vercel.app](https://kineturnos.vercel.app/)** |
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
 | **Case study** | [kineturnos.vercel.app/proyecto](https://kineturnos.vercel.app/proyecto) |
-| **Versión** | Demo v0.2 · PostgreSQL · 2026 |
+| **Versión** | Demo v0.3 · PostgreSQL + Auth · 2026 |
 | **Base de datos** | PostgreSQL (Neon) + Prisma — [setup local](docs/TU-PARTE-NEON.md) · [deploy Vercel](docs/TU-PARTE-VERCEL.md) |
 
 ---
@@ -92,7 +92,15 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 **[https://kineturnos.vercel.app/](https://kineturnos.vercel.app/)**
 
-También podés explorar el **case study interactivo** en [/proyecto](https://kineturnos.vercel.app/proyecto), con stack, decisiones técnicas, limitaciones de la demo y roadmap.
+La app requiere **login**. Usuarios demo (contraseña `demo1234`):
+
+| Rol | Email |
+|-----|-------|
+| Recepción | `recepcion@kineturnos.local` |
+| Admin | `admin@kineturnos.local` |
+| Profesional | `profe@kineturnos.local` |
+
+El case study en [/proyecto](https://kineturnos.vercel.app/proyecto) es **público** (sin login).
 
 ---
 
