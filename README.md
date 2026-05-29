@@ -2,7 +2,7 @@
 
 **Gestión kinesiológica moderna para consultorios**
 
-Sistema web de demostración para organizar turnos, pacientes y profesionales en un consultorio de kinesiología. Diseñado como **case study de portfolio**: flujos completos, UI responsive y decisiones de arquitectura documentadas.
+Sistema web para organizar turnos, pacientes y profesionales en consultorios de kinesiología. Producto **KineTurnos v1.0**, desplegado con PostgreSQL, autenticación y panel operativo completo.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
@@ -12,10 +12,9 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 
 | | |
 |---|---|
-| **Demo en vivo** | **[kineturnos.vercel.app](https://kineturnos.vercel.app/)** |
+| **Aplicación** | **[kineturnos.vercel.app](https://kineturnos.vercel.app/)** |
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
-| **Case study** | [kineturnos.vercel.app/proyecto](https://kineturnos.vercel.app/proyecto) |
-| **Versión** | Demo v0.3 · PostgreSQL + Auth · 2026 |
+| **Versión** | v1.0 · PostgreSQL + Auth · 2026 |
 | **Base de datos** | PostgreSQL (Neon) + Prisma — [setup local](docs/TU-PARTE-NEON.md) · [deploy Vercel](docs/TU-PARTE-VERCEL.md) |
 
 ---
@@ -24,7 +23,7 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 
 **KineTurnos** es una aplicación full-stack para la operación diaria de un consultorio kinesiológico: panel de control, agenda por día o semana, fichas de pacientes y gestión del equipo profesional.
 
-La demo prioriza **claridad de flujos**, **feedback inmediato** (toasts, estados vacíos, confirmaciones) y una **experiencia responsive** (mobile, tablet y desktop), con **persistencia en PostgreSQL (Neon)** vía API REST y Prisma.
+La aplicación prioriza **claridad de flujos**, **feedback inmediato** (toasts, estados vacíos, confirmaciones) y una **experiencia responsive** (mobile, tablet y desktop), con **persistencia en PostgreSQL (Neon)** vía API REST y Prisma.
 
 ---
 
@@ -101,19 +100,13 @@ _Login requerido. Regenerar desktop: `npm run screenshots:desktop` (Playwright).
 
 ---
 
-## Demo
+## Acceso
 
 **[https://kineturnos.vercel.app/](https://kineturnos.vercel.app/)**
 
-La app requiere **login**. Usuarios demo (contraseña `demo1234`):
+La app requiere **login**. Los usuarios se crean por el administrador del sistema (ver `npm run db:seed` solo para entornos de desarrollo).
 
-| Rol | Email |
-|-----|-------|
-| Recepción | `recepcion@kineturnos.local` |
-| Admin | `admin@kineturnos.local` |
-| Profesional | `profe@kineturnos.local` |
-
-El case study en [/proyecto](https://kineturnos.vercel.app/proyecto) es **público** (sin login).
+La sección **Ayuda** (`/proyecto`) está disponible una vez autenticado.
 
 ---
 
@@ -169,7 +162,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run clean` | Elimina caché de `.next` |
 | `npm run db:push` | Sincroniza schema → DB (solo desarrollo puntual) |
 | `npm run db:migrate:deploy` | Aplica migraciones en producción / CI |
-| `npm run db:seed` | Carga datos de demo |
+| `npm run db:seed` | Carga datos iniciales (solo desarrollo) |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
@@ -192,7 +185,7 @@ Copiá la plantilla desde `env.example` → `.env`.
 
 ```bash
 npm run db:push    # Crear tablas en Neon
-npm run db:seed    # Cargar datos de demo
+npm run db:seed    # Datos iniciales de desarrollo
 npm run db:studio  # Ver la DB en el navegador
 npm run verify:migration   # Verificar migración (con dev server activo)
 ```
@@ -222,7 +215,7 @@ kineturnos/
     │   ├── agenda/         # Agenda lista y semanal
     │   ├── pacientes/      # Gestión de pacientes
     │   ├── profesionales/  # Gestión de kinesiólogos
-    │   ├── proyecto/       # Case study del portfolio
+    │   ├── proyecto/       # Ayuda (requiere login)
     │   └── api/            # REST: patients, professionals, appointments, health/db
     ├── components/
     │   ├── agenda/         # Vistas de calendario
@@ -267,32 +260,7 @@ kineturnos/
 | Migraciones Prisma formales | ✅ Completo |
 | Deploy Vercel con `DATABASE_URL` + `AUTH_SECRET` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
-| Permisos finos por rol en UI/API | ❌ Pendiente |
 | Notificaciones externas (email / WhatsApp) | ❌ No incluido |
-
-### Limitaciones de la demo
-
-- Roles definidos pero sin restricciones por pantalla (todos ven los mismos módulos)
-- Un solo consultorio (sin multi-sede)
-- Sin facturación, obras sociales avanzadas ni historial clínico detallado
-- Sin recordatorios automáticos por email o WhatsApp
-
----
-
-## Roadmap futuro
-
-### Corto plazo
-- Permisos por rol en UI y API (recepción / profesional / admin)
-
-### Mediano plazo
-- Recordatorios automáticos y confirmación por link
-- Reportes exportables (PDF / Excel) y métricas históricas
-- Bloqueo de agenda por feriados y sobreturnos
-
-### Largo plazo
-- Multi-consultorio y turnos online
-- Integración con obras sociales y fichas clínicas
-- App móvil o PWA para profesionales en sala
 
 ---
 
@@ -305,16 +273,16 @@ kineturnos/
 | | |
 |---|---|
 | **GitHub** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
-| **Demo** | [kineturnos.vercel.app](https://kineturnos.vercel.app/) |
+| **App** | [kineturnos.vercel.app](https://kineturnos.vercel.app/) |
 
 ---
 
 ## Licencia
 
-Proyecto de demostración para portfolio. _[Definir licencia si se publica en GitHub — ej. MIT]_
+Proyecto privado / uso comercial. _[Definir licencia si se publica en GitHub — ej. MIT]_
 
 ---
 
 <p align="center">
-  Hecho con Next.js, TypeScript y PostgreSQL · Demo v0.3 · 2026
+  Hecho con Next.js, TypeScript y PostgreSQL · KineTurnos v1.0 · 2026
 </p>

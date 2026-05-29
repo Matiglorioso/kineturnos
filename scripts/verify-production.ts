@@ -74,7 +74,7 @@ async function main() {
 
   await checkStatus("/login", 200, "Login accesible");
 
-  await checkStatus("/proyecto", 200, "Case study publico");
+  await checkRedirectToLogin("/proyecto");
 
   await checkRedirectToLogin("/pacientes");
 

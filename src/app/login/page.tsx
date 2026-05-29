@@ -4,17 +4,11 @@ import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
+import { siteConfig } from "@/lib/site-config";
 import { showErrorToast } from "@/lib/toast";
 import { signIn } from "next-auth/react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
-
-const DEMO_USERS = [
-  { role: "Recepción", email: "recepcion@kineturnos.local", password: "demo1234" },
-  { role: "Admin", email: "admin@kineturnos.local", password: "demo1234" },
-  { role: "Profesional", email: "profe@kineturnos.local", password: "demo1234" },
-];
 
 function LoginForm() {
   const router = useRouter();
@@ -45,20 +39,18 @@ function LoginForm() {
     router.refresh();
   }
 
-  function fillDemo(user: (typeof DEMO_USERS)[number]) {
-    setEmail(user.email);
-    setPassword(user.password);
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <Logo href="/proyecto" size="lg" />
+            <Logo size="lg" />
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Ingresá al consultorio
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+            {siteConfig.clinicName}
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+            Ingresá a {siteConfig.name}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Acceso para recepción, profesionales y administración.
@@ -76,7 +68,7 @@ function LoginForm() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="recepcion@kineturnos.local"
+              placeholder="nombre@consultorio.com"
               required
             />
           </FormField>
@@ -97,32 +89,9 @@ function LoginForm() {
           </Button>
         </form>
 
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Usuarios demo
-          </p>
-          <div className="space-y-2">
-            {DEMO_USERS.map((user) => (
-              <button
-                key={user.email}
-                type="button"
-                onClick={() => fillDemo(user)}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm transition hover:border-brand-300 hover:bg-brand-50/40"
-              >
-                <span className="font-medium text-slate-800">{user.role}</span>
-                <span className="text-xs text-muted-foreground">{user.email}</span>
-              </button>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Contraseña para todos: <span className="font-mono">demo1234</span>
-          </p>
-        </div>
-
-        <p className="text-center text-sm text-muted-foreground">
-          <Link href="/proyecto" className="text-brand-600 hover:underline">
-            Ver acerca del proyecto
-          </Link>
+        <p className="text-center text-xs leading-relaxed text-muted-foreground">
+          Si no tenés usuario o olvidaste tu contraseña, contactá al administrador
+          del sistema.
         </p>
       </div>
     </div>

@@ -3,8 +3,8 @@
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import {
-  BookOpen,
   CalendarDays,
+  CircleHelp,
   LayoutDashboard,
   Menu,
   Stethoscope,
@@ -40,9 +40,9 @@ const navigation = [
 
 const secondaryNavigation = [
   {
-    name: "Acerca del proyecto",
+    name: "Ayuda",
     href: "/proyecto",
-    icon: BookOpen,
+    icon: CircleHelp,
   },
 ];
 
@@ -97,7 +97,7 @@ export function Sidebar() {
 
       <nav className="space-y-1 px-4 pb-4">
         <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-          Proyecto
+          Soporte
         </p>
         {secondaryNavigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
