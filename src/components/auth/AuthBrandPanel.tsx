@@ -71,25 +71,23 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex flex-1 flex-col justify-center gap-8 py-6 xl:gap-10 xl:py-8">
-            <div className="w-full space-y-4 text-left">
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
-                  {siteConfig.clinicName}
-                </p>
-                <div aria-hidden className="h-0.5 w-8 rounded-full bg-brand-300" />
-              </div>
-              <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
-                Tu consultorio, organizado en un solo panel
-              </h2>
-              <p className="text-sm leading-relaxed text-brand-50/90 xl:text-base">
-                Menos papeleo. Más tiempo con tus pacientes.
+          <div className="w-full shrink-0 space-y-4 pt-4 text-left xl:pt-5">
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
+                {siteConfig.clinicName}
               </p>
+              <div aria-hidden className="h-0.5 w-8 rounded-full bg-brand-300" />
             </div>
+            <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
+              Tu consultorio, organizado en un solo panel
+            </h2>
+            <p className="text-sm leading-relaxed text-brand-50/90 xl:text-base">
+              Menos papeleo. Más tiempo con tus pacientes.
+            </p>
+          </div>
 
-            <div className="flex w-full justify-center">
-              <AuthPanelPreview />
-            </div>
+          <div className="flex min-h-0 flex-1 items-center justify-center py-6 xl:py-8">
+            <AuthPanelPreview />
           </div>
 
           <section
@@ -103,7 +101,7 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
               {capabilities.map((item) => (
                 <article
                   key={item.title}
-                  className="flex items-start gap-2 rounded-xl border border-white/20 bg-white/15 p-2.5 backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:p-3"
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/20 bg-white/15 p-2.5 text-center backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:p-3"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20">
                     <item.icon className="h-3.5 w-3.5" />
