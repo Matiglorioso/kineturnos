@@ -7,8 +7,9 @@ export function AuthPanelPreview() {
       aria-hidden
       className="relative w-full max-w-[280px] lg:max-w-[300px] xl:max-w-[320px]"
     >
-      <div className="absolute -right-3 top-6 h-full w-full rotate-2 rounded-2xl bg-white/10 ring-1 ring-white/20" />
-      <div className="relative overflow-hidden rounded-2xl bg-white/95 p-4 text-slate-900 shadow-2xl shadow-teal-950/30 ring-1 ring-white/40">
+      <div className="absolute -right-2 top-8 h-full w-full rotate-6 rounded-2xl bg-white/8" />
+      <div className="absolute -right-3 top-6 h-full w-full rotate-3 rounded-2xl bg-white/15 ring-1 ring-white/25" />
+      <div className="relative overflow-hidden rounded-2xl bg-white/95 p-4 text-slate-900 shadow-2xl shadow-teal-950/40 ring-1 ring-white/40">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-600">
@@ -16,12 +17,16 @@ export function AuthPanelPreview() {
             </p>
             <p className="text-sm font-bold text-slate-900">Resumen operativo</p>
           </div>
-          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-700">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-700">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            </span>
             En vivo
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-4 grid grid-cols-3 gap-2 tabular-nums">
           <PreviewStat icon={CalendarCheck} label="Turnos" value="8" tone="brand" />
           <PreviewStat icon={Clock} label="Pend." value="2" tone="amber" />
           <PreviewStat icon={Users} label="Activos" value="7" tone="violet" />

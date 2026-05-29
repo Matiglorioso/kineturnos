@@ -11,6 +11,9 @@ import {
   Users,
 } from "lucide-react";
 
+const DOT_PATTERN =
+  "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E\")";
+
 const capabilities = [
   { icon: CalendarDays, title: "Agenda diaria y semanal" },
   { icon: Users, title: "Pacientes e historial" },
@@ -37,6 +40,11 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
     >
       <div
         aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: DOT_PATTERN }}
+      />
+      <div
+        aria-hidden
         className="pointer-events-none absolute -right-20 top-1/4 h-72 w-72 rounded-full bg-white/10 blur-3xl"
       />
       <div
@@ -50,65 +58,69 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
 
       <div className="relative flex h-full w-full flex-col px-8 py-7 xl:px-12 xl:py-9">
         <header className="shrink-0">
-          <div className="flex items-center gap-3">
-            <LogoMark className="h-10 w-10 shrink-0" />
+          <div className="flex items-center gap-3.5">
+            <LogoMark className="h-12 w-12 shrink-0" />
             <div>
-              <p className="text-base font-bold tracking-tight">{siteConfig.name}</p>
-              <p className="text-[10px] font-medium uppercase tracking-widest text-brand-100">
+              <p className="text-lg font-bold tracking-tight">{siteConfig.name}</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/60">
                 {siteConfig.tagline}
               </p>
             </div>
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 items-center py-6 xl:py-8">
-          <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-8 xl:gap-12">
-            <div className="flex flex-col justify-center gap-8 xl:gap-9">
-              <div className="max-w-md space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-1 flex-col items-center justify-center gap-8 py-6 xl:gap-10 xl:py-8">
+            <div className="w-full max-w-lg space-y-4">
+              <div className="space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
                   {siteConfig.clinicName}
                 </p>
-                <h2 className="text-2xl font-bold leading-tight tracking-tight xl:text-[1.75rem] xl:leading-snug">
-                  Tu consultorio, organizado en un solo panel
-                </h2>
-                <p className="text-sm leading-relaxed text-brand-50/90">
-                  Turnos, pacientes y profesionales en una sola plataforma.
-                </p>
+                <div className="h-0.5 w-8 rounded-full bg-brand-300" aria-hidden />
               </div>
-
-              <section aria-label="Funcionalidades principales" className="max-w-lg">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
-                  Qué podés hacer
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {capabilities.map((item) => (
-                    <article
-                      key={item.title}
-                      className="flex flex-col gap-2.5 rounded-xl border border-white/15 bg-white/10 p-3.5 backdrop-blur-sm xl:p-4"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
-                        <item.icon className="h-4 w-4" />
-                      </span>
-                      <p className="text-xs font-medium leading-snug text-brand-50 xl:text-[13px]">
-                        {item.title}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              </section>
+              <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
+                Tu consultorio, organizado en un solo panel
+              </h2>
+              <p className="max-w-md text-sm leading-relaxed text-brand-50/90 xl:text-base">
+                Menos papeleo. Más tiempo con tus pacientes.
+              </p>
             </div>
 
-            <div className="flex items-center justify-center lg:justify-end xl:justify-center">
+            <div className="flex w-full justify-center">
               <AuthPanelPreview />
             </div>
           </div>
+
+          <section
+            aria-label="Funcionalidades principales"
+            className="w-full max-w-xl shrink-0 pb-2"
+          >
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
+              Qué podés hacer
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {capabilities.map((item) => (
+                <article
+                  key={item.title}
+                  className="flex flex-col gap-2.5 rounded-xl border border-white/20 bg-white/15 p-3.5 backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:p-4"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+                    <item.icon className="h-4 w-4" />
+                  </span>
+                  <p className="text-[13px] font-medium leading-snug text-brand-50">
+                    {item.title}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
 
-        <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-white/15 pt-5">
+        <footer className="mt-4 flex shrink-0 flex-wrap items-center gap-3 border-t border-white/25 pt-5">
           {trustSignals.map((item) => (
             <span
               key={item.label}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-brand-50"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-brand-50"
             >
               <item.icon className="h-3.5 w-3.5 shrink-0" />
               {item.label}
