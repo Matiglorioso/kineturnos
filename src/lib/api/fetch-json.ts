@@ -1,3 +1,5 @@
+import { getApiErrorMessage } from "@/lib/api-error-message";
+
 export class ApiError extends Error {
   status: number;
 
@@ -12,14 +14,24 @@ export async function fetchJson<T>(
   url: string,
   init?: RequestInit
 ): Promise<T> {
-  const response = await fetch(url, init);
+  let response: Response;
+
+  try {
+    response = await fetch(url, init);
+  } catch {
+    throw new ApiError(
+      "Sin conexión. Revisá tu internet e intentá de nuevo.",
+      0
+    );
+  }
+
   const body = (await response.json().catch(() => null)) as
     | { data?: T; error?: string }
     | null;
 
   if (!response.ok) {
     throw new ApiError(
-      body?.error ?? "No se pudo completar la solicitud.",
+      getApiErrorMessage(response.status, body?.error),
       response.status
     );
   }

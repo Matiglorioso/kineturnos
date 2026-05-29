@@ -4,6 +4,8 @@ import { NewProfessionalDialog } from "@/components/professionals/NewProfessiona
 import { ProfessionalCard } from "@/components/professionals/ProfessionalCard";
 import { ProfessionalDetailDialog } from "@/components/professionals/ProfessionalDetailDialog";
 import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
+import { DataLoadError } from "@/components/shared/DataLoadError";
+import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
@@ -27,6 +29,7 @@ export default function ProfesionalesPage() {
     professionals,
     isLoading,
     error,
+    refresh,
     createProfessional,
     updateProfessional,
     deleteProfessional,
@@ -154,29 +157,14 @@ export default function ProfesionalesPage() {
     : "";
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Profesionales"
-          description="Cargando profesionales..."
-        />
-        <p className="text-sm text-muted-foreground">
-          Conectando con la base de datos...
-        </p>
-      </div>
-    );
+    return <PageLoadingState title="Profesionales" />;
   }
 
   if (error) {
     return (
       <div className="space-y-6">
         <PageHeader title="Profesionales" description="Error al cargar" />
-        <EmptyStateFromPreset
-          preset={emptyStates.professionals.none}
-          actionLabel="Reintentar"
-          onAction={() => window.location.reload()}
-        />
-        <p className="text-sm text-destructive">{error}</p>
+        <DataLoadError message={error} onRetry={() => void refresh()} />
       </div>
     );
   }

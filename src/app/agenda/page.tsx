@@ -5,6 +5,8 @@ import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
 import { AppointmentActions } from "@/components/appointments/AppointmentActions";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
+import { DataLoadError } from "@/components/shared/DataLoadError";
+import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
   Select,
@@ -39,11 +41,13 @@ import { useMemo, useState } from "react";
 type AgendaViewMode = "list" | "week";
 
 export default function AgendaPage() {
-  const { patients, isLoading: patientsLoading } = usePatients();
-  const { professionals, isLoading: professionalsLoading } = useProfessionals();
+  const { patients, isLoading: patientsLoading, error: patientsError, refresh: refreshPatients } = usePatients();
+  const { professionals, isLoading: professionalsLoading, error: professionalsError, refresh: refreshProfessionals } = useProfessionals();
   const {
     appointments,
     isLoading: appointmentsLoading,
+    error: appointmentsError,
+    refresh: refreshAppointments,
     createAppointment,
     updateAppointment,
     updateAppointmentStatus,
@@ -169,13 +173,24 @@ export default function AgendaPage() {
   const isLoading =
     patientsLoading || professionalsLoading || appointmentsLoading;
 
+  const loadError =
+    appointmentsError ?? patientsError ?? professionalsError ?? null;
+
+  const handleRetry = () => {
+    void refreshAppointments();
+    void refreshPatients();
+    void refreshProfessionals();
+  };
+
   if (isLoading) {
+    return <PageLoadingState title="Agenda" />;
+  }
+
+  if (loadError) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Agenda" description="Cargando turnos..." />
-        <p className="text-sm text-muted-foreground">
-          Conectando con la base de datos...
-        </p>
+        <PageHeader title="Agenda" description="Error al cargar" />
+        <DataLoadError message={loadError} onRetry={handleRetry} />
       </div>
     );
   }
