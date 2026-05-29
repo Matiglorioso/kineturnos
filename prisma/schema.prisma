@@ -25,42 +25,43 @@ enum EstadoTurno {
 }
 
 model Paciente {
-  id           String         @id
-  nombre       String
-  nombrePila   String?        @map("nombre_pila")
-  apellido     String?
-  dni          String
-  telefono     String
-  obraSocial   String         @default("Particular") @map("obra_social")
-  email        String?
-  observaciones String?
-  estado       EstadoPaciente @default(activo)
-  ultimoTurno  String?        @map("ultimo_turno")
-  fechaAlta    String?        @map("fecha_alta")
-  turnos       Turno[]
+  id               String         @id
+  nombre           String
+  nombrePila       String?        @map("nombre_pila")
+  apellido         String?
+  dni              String
+  dniNormalizado   String         @unique @map("dni_normalizado")
+  telefono         String
+  obraSocial       String         @default("Particular") @map("obra_social")
+  email            String?
+  observaciones    String?
+  estado           EstadoPaciente @default(activo)
+  ultimoTurno      String?        @map("ultimo_turno")
+  fechaAlta        String?        @map("fecha_alta")
+  turnos           Turno[]
 
   @@index([estado])
-  @@index([dni])
   @@map("pacientes")
 }
 
 model Profesional {
-  id              String   @id
-  nombre          String
-  nombrePila      String   @map("nombre_pila")
-  apellido        String
-  matricula       String?
-  email           String?
-  telefono        String?
-  especialidad    String
-  diasAtencion    String[] @map("dias_atencion")
-  horarioInicio   String   @map("horario_inicio")
-  horarioFin      String   @map("horario_fin")
-  duracionDefault Int      @default(45) @map("duracion_default")
-  activo          Boolean  @default(true)
-  colorAvatar     String   @map("color_avatar")
-  observaciones   String?
-  turnos          Turno[]
+  id                   String   @id
+  nombre               String
+  nombrePila           String   @map("nombre_pila")
+  apellido             String
+  matricula            String?
+  matriculaNormalizada String?  @unique @map("matricula_normalizada")
+  email                String?
+  telefono             String?
+  especialidad         String
+  diasAtencion         String[] @map("dias_atencion")
+  horarioInicio        String   @map("horario_inicio")
+  horarioFin           String   @map("horario_fin")
+  duracionDefault      Int      @default(45) @map("duracion_default")
+  activo               Boolean  @default(true)
+  colorAvatar          String   @map("color_avatar")
+  observaciones        String?
+  turnos               Turno[]
 
   @@index([activo])
   @@map("profesionales")

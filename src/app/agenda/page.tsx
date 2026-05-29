@@ -13,16 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockAppointments } from "@/data/mockAppointments";
 import { areSameAppDay, getTodayAppDate } from "@/lib/date-utils";
-import { formatAppDate, formatAppDateLong, formatTimeShort } from "@/lib/datetime-format";
-import { mockPatients } from "@/data/mockPatients";
-import { mockProfessionals } from "@/data/mockProfessionals";
-import {
-  usePersistedAppointments,
-  usePersistedPatients,
-  usePersistedProfessionals,
-} from "@/hooks/use-persisted-data";
+import { formatAppDateLong } from "@/lib/datetime-format";
+import { useAppointments } from "@/hooks/use-appointments";
+import { useProfessionals } from "@/hooks/use-professionals";
+import { usePatients } from "@/hooks/use-patients";
 import {
   filterAgendaAppointments,
   formatWeekRangeLabel,
@@ -33,11 +28,9 @@ import {
 } from "@/lib/week-calendar";
 import {
   APPOINTMENT_STATUS_FILTERS,
-  getAppointmentStatusLabel,
 } from "@/lib/appointment-status";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import type { EmptyStatePreset } from "@/lib/empty-states";
-import { appToasts, showSuccessToast } from "@/lib/toast";
 import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, List, Plus } from "lucide-react";
@@ -46,10 +39,15 @@ import { useMemo, useState } from "react";
 type AgendaViewMode = "list" | "week";
 
 export default function AgendaPage() {
-  const { data: patients } = usePersistedPatients(mockPatients);
-  const { data: professionals } = usePersistedProfessionals(mockProfessionals);
-  const { data: appointments, setData: setAppointments } =
-    usePersistedAppointments(mockAppointments);
+  const { patients, isLoading: patientsLoading } = usePatients();
+  const { professionals, isLoading: professionalsLoading } = useProfessionals();
+  const {
+    appointments,
+    isLoading: appointmentsLoading,
+    createAppointment,
+    updateAppointment,
+    updateAppointmentStatus,
+  } = useAppointments();
   const [viewMode, setViewMode] = useState<AgendaViewMode>("list");
   const [weekStart, setWeekStart] = useState(() => getWeekStartMonday(new Date()));
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "todos">(
@@ -143,48 +141,19 @@ export default function AgendaPage() {
     }
   };
 
-  const handleFormSubmit = (appointment: Appointment) => {
+  const handleFormSubmit = async (appointment: Appointment) => {
     if (editingAppointment) {
-      setAppointments((prev) =>
-        prev.map((item) => (item.id === appointment.id ? appointment : item))
-      );
-      appToasts.appointment.updated(appointment.patientName);
+      await updateAppointment(appointment);
     } else {
-      setAppointments((prev) => [...prev, appointment]);
-      appToasts.appointment.created(
-        appointment.patientName,
-        formatAppDate(appointment.date),
-        formatTimeShort(appointment.time)
-      );
+      await createAppointment(appointment);
     }
   };
 
-  const handleStatusChange = (
+  const handleStatusChange = async (
     appointment: Appointment,
     status: AppointmentStatus
   ) => {
-    setAppointments((prev) =>
-      prev.map((item) =>
-        item.id === appointment.id ? { ...item, status } : item
-      )
-    );
-
-    switch (status) {
-      case "cancelado":
-        appToasts.appointment.cancelled(appointment.patientName);
-        break;
-      case "atendido":
-        appToasts.appointment.attended(appointment.patientName);
-        break;
-      case "ausente":
-        appToasts.appointment.absent(appointment.patientName);
-        break;
-      default:
-        showSuccessToast(
-          "Estado actualizado",
-          `Turno de ${appointment.patientName} marcado como ${getAppointmentStatusLabel(status)}.`
-        );
-    }
+    await updateAppointmentStatus(appointment, status);
   };
 
   const renderActions = (appointment: Appointment, variant: "table" | "card") => (
@@ -196,6 +165,20 @@ export default function AgendaPage() {
       onStatusChange={handleStatusChange}
     />
   );
+
+  const isLoading =
+    patientsLoading || professionalsLoading || appointmentsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Agenda" description="Cargando turnos..." />
+        <p className="text-sm text-muted-foreground">
+          Conectando con la base de datos...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

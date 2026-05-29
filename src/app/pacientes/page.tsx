@@ -9,29 +9,27 @@ import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { mockAppointments } from "@/data/mockAppointments";
-import { mockPatients } from "@/data/mockPatients";
-import {
-  usePersistedAppointments,
-  usePersistedPatients,
-} from "@/hooks/use-persisted-data";
+import { useAppointments } from "@/hooks/use-appointments";
+import { usePatients } from "@/hooks/use-patients";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
-import {
-  countPatientAppointments,
-  removePatientAppointments,
-} from "@/lib/patient-appointments";
-import { appToasts, showSuccessToast } from "@/lib/toast";
+import { countPatientAppointments } from "@/lib/patient-appointments";
+import { showSuccessToast } from "@/lib/toast";
 import { Patient } from "@/types";
 import { Search, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function PacientesPage() {
-  const { data: patients, setData: setPatients } =
-    usePersistedPatients(mockPatients);
-  const { data: appointments, setData: setAppointments } =
-    usePersistedAppointments(mockAppointments);
+  const {
+    patients,
+    isLoading,
+    error,
+    createPatient,
+    updatePatient,
+    deletePatient,
+  } = usePatients();
+  const { appointments } = useAppointments();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -40,6 +38,7 @@ export default function PacientesPage() {
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [patientToDeactivate, setPatientToDeactivate] =
     useState<Patient | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const deleteAppointmentCount = useMemo(() => {
     if (!patientToDelete) return 0;
@@ -79,15 +78,17 @@ export default function PacientesPage() {
     }
   };
 
-  const handlePatientSubmit = (patient: Patient) => {
-    if (editingPatient) {
-      setPatients((prev) =>
-        prev.map((item) => (item.id === patient.id ? patient : item))
-      );
-      appToasts.patient.updated(patient.name);
-    } else {
-      setPatients((prev) => [patient, ...prev]);
-      appToasts.patient.created(patient.name);
+  const handlePatientSubmit = async (patient: Patient) => {
+    setIsSaving(true);
+
+    try {
+      if (editingPatient) {
+        await updatePatient(patient);
+      } else {
+        await createPatient(patient);
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -108,48 +109,52 @@ export default function PacientesPage() {
     runAfterDetailClose(() => openEditDialog(patient));
   };
 
-  const setPatientStatus = (patient: Patient, status: Patient["status"]) => {
-    setPatients((prev) =>
-      prev.map((item) =>
-        item.id === patient.id ? { ...item, status } : item
-      )
-    );
-  };
-
-  const handleToggleStatus = (patient: Patient) => {
+  const handleToggleStatus = async (patient: Patient) => {
     if (patient.status === "inactivo") {
-      setPatientStatus(patient, "activo");
+      setIsSaving(true);
+      try {
+        await updatePatient({ ...patient, status: "activo" });
+      } finally {
+        setIsSaving(false);
+      }
       return;
     }
 
     runAfterDetailClose(() => setPatientToDeactivate(patient));
   };
 
-  const confirmDeactivatePatient = () => {
+  const confirmDeactivatePatient = async () => {
     if (!patientToDeactivate) return;
 
-    setPatientStatus(patientToDeactivate, "inactivo");
-    setPatientToDeactivate(null);
+    setIsSaving(true);
+    try {
+      await updatePatient({ ...patientToDeactivate, status: "inactivo" });
+      setPatientToDeactivate(null);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteRequest = (patient: Patient) => {
     runAfterDetailClose(() => setPatientToDelete(patient));
   };
 
-  const confirmDeletePatient = () => {
+  const confirmDeletePatient = async () => {
     if (!patientToDelete) return;
 
     const deletedName = patientToDelete.name;
 
-    setPatients((prev) =>
-      prev.filter((patient) => patient.id !== patientToDelete.id)
-    );
-    setAppointments((prev) =>
-      removePatientAppointments(prev, patientToDelete.id)
-    );
-
-    setPatientToDelete(null);
-    showSuccessToast("Paciente eliminado", `${deletedName} se elimino correctamente.`);
+    setIsSaving(true);
+    try {
+      await deletePatient(patientToDelete.id);
+      setPatientToDelete(null);
+      showSuccessToast(
+        "Paciente eliminado",
+        `${deletedName} se elimino correctamente.`
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   useSyncSelectedEntity({
@@ -174,6 +179,32 @@ export default function PacientesPage() {
       )
     : "";
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Pacientes"
+          description="Cargando pacientes..."
+        />
+        <p className="text-sm text-muted-foreground">Conectando con la base de datos...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Pacientes" description="Error al cargar" />
+        <EmptyStateFromPreset
+          preset={emptyStates.patients.none}
+          actionLabel="Reintentar"
+          onAction={() => window.location.reload()}
+        />
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -192,6 +223,7 @@ export default function PacientesPage() {
             placeholder="Buscar por nombre, DNI, teléfono u obra social…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            disabled={isSaving}
           />
         </div>
         <p className="text-sm text-muted-foreground">
@@ -241,6 +273,7 @@ export default function PacientesPage() {
         onOpenChange={handlePatientDialogChange}
         onSubmit={handlePatientSubmit}
         editingPatient={editingPatient}
+        existingPatients={patients}
       />
 
       <PatientDetailDialog

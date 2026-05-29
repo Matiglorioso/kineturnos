@@ -1,4 +1,9 @@
-import { getPatientsFromDb } from "@/lib/db/patients";
+import {
+  createPatientInDb,
+  getPatientsFromDb,
+} from "@/lib/db/patients";
+import { parsePatientWriteInput } from "@/lib/api/parse-patient-body";
+import { handleWriteError } from "@/lib/api/handle-write-error";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -16,5 +21,21 @@ export async function GET() {
       },
       { status: 503 }
     );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const parsed = parsePatientWriteInput(body);
+
+    if (!parsed.input) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const patient = await createPatientInDb(parsed.input);
+    return NextResponse.json({ data: patient }, { status: 201 });
+  } catch (error) {
+    return handleWriteError(error, "No se pudo registrar el paciente.");
   }
 }

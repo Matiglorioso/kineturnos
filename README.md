@@ -14,16 +14,16 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 | **Demo en vivo** | **[kineturnos.vercel.app](https://kineturnos.vercel.app/)** |
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
 | **Case study** | [kineturnos.vercel.app/proyecto](https://kineturnos.vercel.app/proyecto) |
-| **Versión** | Demo v0.1 · 2026 |
-| **Base de datos** | PostgreSQL (Neon) + Prisma — [guía de setup](docs/GUIA-NEON-PRISMA.md) |
+| **Versión** | Demo v0.2 · PostgreSQL · 2026 |
+| **Base de datos** | PostgreSQL (Neon) + Prisma — [setup local](docs/TU-PARTE-NEON.md) · [deploy Vercel](docs/TU-PARTE-VERCEL.md) |
 
 ---
 
 ## Descripción
 
-**KineTurnos** es una aplicación front-end que simula la operación diaria de un consultorio kinesiológico: panel de control, agenda por día o semana, fichas de pacientes y gestión del equipo profesional.
+**KineTurnos** es una aplicación full-stack para la operación diaria de un consultorio kinesiológico: panel de control, agenda por día o semana, fichas de pacientes y gestión del equipo profesional.
 
-La demo prioriza **claridad de flujos**, **feedback inmediato** (toasts, estados vacíos, confirmaciones) y una **experiencia responsive** (mobile, tablet y desktop), con persistencia local para que el evaluador pueda interactuar sin backend.
+La demo prioriza **claridad de flujos**, **feedback inmediato** (toasts, estados vacíos, confirmaciones) y una **experiencia responsive** (mobile, tablet y desktop), con **persistencia en PostgreSQL (Neon)** vía API REST y Prisma.
 
 ---
 
@@ -108,8 +108,8 @@ También podés explorar el **case study interactivo** en [/proyecto](https://ki
 | **Lucide React** | Iconografía consistente |
 | **date-fns** | Fechas en español y lógica de calendario |
 | **Sonner** | Notificaciones toast |
-| **Neon + Prisma** | PostgreSQL serverless + ORM (en progreso) |
-| **localStorage** | Persistencia actual de la demo (migración a DB en curso) |
+| **Neon + Prisma 6** | PostgreSQL serverless + ORM |
+| **API Routes (Next.js)** | CRUD REST: pacientes, profesionales, turnos |
 
 ---
 
@@ -146,26 +146,41 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run start` | Servidor de producción (post-build) |
 | `npm run lint` | ESLint |
 | `npm run clean` | Elimina caché de `.next` |
+| `npm run db:push` | Sincroniza schema → Neon |
+| `npm run db:seed` | Carga datos de demo |
+| `npm run db:studio` | Prisma Studio (UI de la DB) |
+| `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev`) |
 
-### Variables de entorno (opcional)
+### Variables de entorno
 
 ```env
-# URL base para metadata Open Graph (deploy)
+DATABASE_URL="postgresql://..."   # Neon (requerido para API y persistencia)
 NEXT_PUBLIC_SITE_URL=https://kineturnos.vercel.app
 ```
 
-Copiá la plantilla desde `env.example` y renombrala a `.env`.
+Copiá la plantilla desde `env.example` → `.env`.
 
-### Base de datos (Neon + Prisma)
-
-Guía completa: [`docs/GUIA-NEON-PRISMA.md`](docs/GUIA-NEON-PRISMA.md)  
-Checklist rápido (tu parte): [`docs/TU-PARTE-NEON.md`](docs/TU-PARTE-NEON.md)
+**Local:** guía rápida en [`docs/TU-PARTE-NEON.md`](docs/TU-PARTE-NEON.md)  
+**Producción (Vercel):** [`docs/TU-PARTE-VERCEL.md`](docs/TU-PARTE-VERCEL.md)  
+**Referencia completa:** [`docs/GUIA-NEON-PRISMA.md`](docs/GUIA-NEON-PRISMA.md)
 
 ```bash
 npm run db:push    # Crear tablas en Neon
 npm run db:seed    # Cargar datos de demo
 npm run db:studio  # Ver la DB en el navegador
+npm run verify:migration   # Verificar migración (con dev server activo)
 ```
+
+---
+
+## Deploy en Vercel
+
+1. Agregar **`DATABASE_URL`** (connection string **Pooled** de Neon) en Environment Variables
+2. Agregar **`NEXT_PUBLIC_SITE_URL`** = `https://kineturnos.vercel.app`
+3. **Redeploy**
+4. Probar `https://kineturnos.vercel.app/api/health/db`
+
+Detalle paso a paso: [`docs/TU-PARTE-VERCEL.md`](docs/TU-PARTE-VERCEL.md)
 
 ---
 
@@ -181,7 +196,8 @@ kineturnos/
     │   ├── agenda/         # Agenda lista y semanal
     │   ├── pacientes/      # Gestión de pacientes
     │   ├── profesionales/  # Gestión de kinesiólogos
-    │   └── proyecto/       # Case study del portfolio
+    │   ├── proyecto/       # Case study del portfolio
+    │   └── api/            # REST: patients, professionals, appointments, health/db
     ├── components/
     │   ├── agenda/         # Vistas de calendario
     │   ├── appointments/   # Turnos, badges, acciones
@@ -192,17 +208,18 @@ kineturnos/
     │   ├── professionals/  # Cards y formularios
     │   ├── shared/         # Componentes reutilizables
     │   └── ui/             # Primitivos (shadcn-style)
-    ├── data/               # Mocks iniciales
-    ├── hooks/              # Persistencia y estado de UI
-    ├── lib/                # Validación, fechas, toasts, dominio
+    ├── data/               # Mocks para seed
+    ├── hooks/              # usePatients, useProfessionals, useAppointments
+    ├── lib/                # Validación, fechas, toasts, capa DB
     └── types/              # Tipos TypeScript del dominio
 ```
 
 ### Decisiones técnicas destacadas
 
-- **Hooks de datos persistidos** (`usePersistedPatients`, `usePersistedAppointments`, `usePersistedProfessionals`) unifican lectura/escritura en `localStorage`
+- **Hooks de dominio** (`usePatients`, `useProfessionals`, `useAppointments`) consumen la API REST y mantienen estado en cliente con toasts de error
+- **Validación en cliente y servidor** (DNI/matrícula únicos, solapamiento de turnos, horarios del profesional)
 - **Formato de fecha `dd-MM-yyyy`** explícito en toda la app para evitar ambigüedad
-- **Validación de turnos en capa de dominio** (`lib/appointment-validation.ts`) antes del submit
+- **Validación de turnos en capa de dominio** (`lib/appointment-validation.ts`) reutilizada en formularios y API
 - **Patrón `closeDetailBeforeAction`** para evitar overlays congelados entre Dialog y AlertDialog
 
 ---
@@ -214,30 +231,30 @@ kineturnos/
 | UI / UX responsive | ✅ Completo |
 | CRUD pacientes, profesionales y turnos | ✅ Completo |
 | Agenda lista + semanal | ✅ Completo |
-| Validación de horarios y solapamientos | ✅ Completo |
-| Persistencia local | ✅ Completo |
-| Neon + Prisma (schema, seed, API) | 🔄 En progreso |
-| App conectada a Postgres | ⏳ Pendiente (requiere `DATABASE_URL`) |
+| Validación de horarios y solapamientos | ✅ Completo (cliente + servidor) |
+| PostgreSQL (Neon) + Prisma | ✅ Completo |
+| API REST + hooks conectados a DB | ✅ Completo |
+| Validación DNI / matrícula únicos | ✅ Completo |
+| Deploy Vercel con `DATABASE_URL` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
-| Backend / API | ❌ No incluido |
 | Autenticación y roles | ❌ No incluido |
 | Notificaciones externas (email / WhatsApp) | ❌ No incluido |
 
 ### Limitaciones de la demo
 
 - Sin autenticación ni permisos por rol
-- Datos en el navegador (`localStorage`); no hay sincronización entre dispositivos
 - Un solo consultorio (sin multi-sede)
 - Sin facturación, obras sociales avanzadas ni historial clínico detallado
+- Sin recordatorios automáticos por email o WhatsApp
 
 ---
 
 ## Roadmap futuro
 
 ### Corto plazo
-- Backend con API REST o tRPC + PostgreSQL
 - Autenticación y permisos por rol (recepción / profesional / admin)
-- Sincronización de nombre de paciente en turnos al editar ficha
+- Actualizar `ultimo_turno` del paciente al marcar sesiones atendidas
+- Migraciones Prisma formales (`db:migrate`) en CI/CD
 
 ### Mediano plazo
 - Recordatorios automáticos y confirmación por link
@@ -271,5 +288,5 @@ Proyecto de demostración para portfolio. _[Definir licencia si se publica en Gi
 ---
 
 <p align="center">
-  Hecho con Next.js y TypeScript · Demo v0.1 · 2026
+  Hecho con Next.js, TypeScript y PostgreSQL · Demo v0.2 · 2026
 </p>

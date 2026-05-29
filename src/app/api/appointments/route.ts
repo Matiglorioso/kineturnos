@@ -1,4 +1,11 @@
-import { getAppointmentsFromDb } from "@/lib/db/appointments";
+import {
+  createAppointmentInDb,
+  getAppointmentsFromDb,
+} from "@/lib/db/appointments";
+import {
+  parseAppointmentWriteInput,
+} from "@/lib/api/parse-appointment-body";
+import { handleWriteError } from "@/lib/api/handle-write-error";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -16,5 +23,21 @@ export async function GET() {
       },
       { status: 503 }
     );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const parsed = parseAppointmentWriteInput(body);
+
+    if (!parsed.input) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const appointment = await createAppointmentInDb(parsed.input);
+    return NextResponse.json({ data: appointment }, { status: 201 });
+  } catch (error) {
+    return handleWriteError(error, "No se pudo agendar el turno.");
   }
 }

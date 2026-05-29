@@ -21,122 +21,34 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  buildProfessionalFormValues,
+  INITIAL_PROFESSIONAL_FORM,
+  validateProfessionalForm,
+  type ProfessionalFormErrors,
+  type ProfessionalFormValues,
+} from "@/lib/professional-form";
+import {
   buildProfessionalName,
   pickAvatarColor,
   PROFESSIONAL_DURATION_OPTIONS,
   PROFESSIONAL_SPECIALTIES,
   WEEK_DAYS,
 } from "@/lib/professional-utils";
-import { isEndTimeAfterStart } from "@/lib/professional-schedule";
 import { appToasts } from "@/lib/toast";
-import { emailValidationError } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { Professional, WeekDay } from "@/types";
 import { Pencil, UserPlus } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
-export interface NewProfessionalFormValues {
-  firstName: string;
-  lastName: string;
-  license: string;
-  email: string;
-  phone: string;
-  specialty: string;
-  days: WeekDay[];
-  scheduleStart: string;
-  scheduleEnd: string;
-  defaultDuration: string;
-  active: boolean;
-  notes: string;
-}
-
-const initialForm: NewProfessionalFormValues = {
-  firstName: "",
-  lastName: "",
-  license: "",
-  email: "",
-  phone: "",
-  specialty: "",
-  days: [],
-  scheduleStart: "",
-  scheduleEnd: "",
-  defaultDuration: "45",
-  active: true,
-  notes: "",
-};
-
-type FormErrors = Partial<Record<keyof NewProfessionalFormValues | "days", string>>;
+export type { ProfessionalFormValues as NewProfessionalFormValues } from "@/lib/professional-form";
 
 interface NewProfessionalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (professional: Professional) => void;
+  onSubmit: (professional: Professional) => void | Promise<void>;
   editingProfessional?: Professional | null;
   existingCount?: number;
-}
-
-function buildFormFromProfessional(
-  professional: Professional
-): NewProfessionalFormValues {
-  return {
-    firstName: professional.firstName,
-    lastName: professional.lastName,
-    license: professional.license ?? "",
-    email: professional.email ?? "",
-    phone: professional.phone ?? "",
-    specialty: professional.specialty,
-    days: [...professional.days],
-    scheduleStart: professional.scheduleStart.slice(0, 5),
-    scheduleEnd: professional.scheduleEnd.slice(0, 5),
-    defaultDuration: String(professional.defaultDuration),
-    active: professional.active,
-    notes: professional.notes ?? "",
-  };
-}
-
-function validateForm(values: NewProfessionalFormValues): FormErrors {
-  const errors: FormErrors = {};
-
-  if (!values.firstName.trim()) {
-    errors.firstName = "El nombre es obligatorio";
-  }
-
-  if (!values.lastName.trim()) {
-    errors.lastName = "El apellido es obligatorio";
-  }
-
-  if (!values.specialty) {
-    errors.specialty = "La especialidad es obligatoria";
-  }
-
-  if (values.days.length === 0) {
-    errors.days = "Selecciona al menos un dia de atencion";
-  }
-
-  if (!values.scheduleStart) {
-    errors.scheduleStart = "La hora de inicio es obligatoria";
-  }
-
-  if (!values.scheduleEnd) {
-    errors.scheduleEnd = "La hora de fin es obligatoria";
-  }
-
-  if (
-    values.scheduleStart &&
-    values.scheduleEnd &&
-    !isEndTimeAfterStart(values.scheduleStart, values.scheduleEnd)
-  ) {
-    errors.scheduleEnd = "La hora de fin debe ser posterior a la de inicio";
-  }
-
-  if (!values.defaultDuration) {
-    errors.defaultDuration = "La duracion es obligatoria";
-  }
-
-  const emailError = emailValidationError(values.email);
-  if (emailError) errors.email = emailError;
-
-  return errors;
+  existingProfessionals?: Professional[];
 }
 
 export function NewProfessionalDialog({
@@ -145,29 +57,31 @@ export function NewProfessionalDialog({
   onSubmit,
   editingProfessional = null,
   existingCount = 0,
+  existingProfessionals = [],
 }: NewProfessionalDialogProps) {
   const isEditing = Boolean(editingProfessional);
-  const [form, setForm] = useState<NewProfessionalFormValues>(initialForm);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [form, setForm] = useState<ProfessionalFormValues>(INITIAL_PROFESSIONAL_FORM);
+  const [errors, setErrors] = useState<ProfessionalFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setForm(initialForm);
+      setForm(INITIAL_PROFESSIONAL_FORM);
       setErrors({});
       return;
     }
 
     if (editingProfessional) {
-      setForm(buildFormFromProfessional(editingProfessional));
+      setForm(buildProfessionalFormValues(editingProfessional));
     } else {
-      setForm(initialForm);
+      setForm(INITIAL_PROFESSIONAL_FORM);
     }
     setErrors({});
   }, [open, editingProfessional]);
 
-  const updateField = <K extends keyof NewProfessionalFormValues>(
+  const updateField = <K extends keyof ProfessionalFormValues>(
     key: K,
-    value: NewProfessionalFormValues[K]
+    value: ProfessionalFormValues[K]
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined, days: undefined }));
@@ -184,10 +98,13 @@ export function NewProfessionalDialog({
     setErrors((prev) => ({ ...prev, days: undefined }));
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const validationErrors = validateForm(form);
+    const validationErrors = validateProfessionalForm(form, {
+      excludeProfessionalId: editingProfessional?.id,
+      existingProfessionals,
+    });
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       appToasts.professional.validationError();
@@ -202,7 +119,7 @@ export function NewProfessionalDialog({
       name: buildProfessionalName(firstName, lastName),
       firstName,
       lastName,
-      license: form.license.trim() || undefined,
+      license: form.license.trim(),
       email: form.email.trim() || undefined,
       phone: form.phone.trim() || undefined,
       specialty: form.specialty,
@@ -216,8 +133,13 @@ export function NewProfessionalDialog({
       notes: form.notes.trim() || undefined,
     };
 
-    onSubmit(professional);
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(professional);
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -260,7 +182,7 @@ export function NewProfessionalDialog({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="license" label="Matricula">
+            <FormField id="license" label="Matricula" required error={errors.license}>
               <Input
                 id="license"
                 value={form.license}
@@ -421,7 +343,7 @@ export function NewProfessionalDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               {isEditing ? "Guardar cambios" : "Registrar profesional"}
             </Button>
           </DialogFooter>

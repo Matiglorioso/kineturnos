@@ -7,12 +7,8 @@ import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
-import { mockAppointments } from "@/data/mockAppointments";
-import { mockProfessionals } from "@/data/mockProfessionals";
-import {
-  usePersistedAppointments,
-  usePersistedProfessionals,
-} from "@/hooks/use-persisted-data";
+import { useAppointments } from "@/hooks/use-appointments";
+import { useProfessionals } from "@/hooks/use-professionals";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { getTodayAppDate } from "@/lib/date-utils";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
@@ -20,18 +16,22 @@ import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
 import {
   countProfessionalAppointments,
   getProfessionalTodayCount,
-  removeProfessionalAppointments,
 } from "@/lib/professional-utils";
-import { appToasts } from "@/lib/toast";
+import { showSuccessToast } from "@/lib/toast";
 import { Professional } from "@/types";
 import { UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function ProfesionalesPage() {
-  const { data: professionals, setData: setProfessionals } =
-    usePersistedProfessionals(mockProfessionals);
-  const { data: appointments, setData: setAppointments } =
-    usePersistedAppointments(mockAppointments);
+  const {
+    professionals,
+    isLoading,
+    error,
+    createProfessional,
+    updateProfessional,
+    deleteProfessional,
+  } = useProfessionals();
+  const { appointments } = useAppointments();
   const [today] = useState(() => getTodayAppDate());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -43,6 +43,7 @@ export default function ProfesionalesPage() {
     useState<Professional | null>(null);
   const [professionalToDelete, setProfessionalToDelete] =
     useState<Professional | null>(null);
+
   const deleteAppointmentCount = useMemo(() => {
     if (!professionalToDelete) return 0;
     return countProfessionalAppointments(
@@ -101,35 +102,17 @@ export default function ProfesionalesPage() {
     }
   };
 
-  const handleSubmit = (professional: Professional) => {
+  const handleSubmit = async (professional: Professional) => {
     if (editingProfessional) {
-      setProfessionals((prev) =>
-        prev.map((item) =>
-          item.id === professional.id ? professional : item
-        )
-      );
-      appToasts.professional.updated(professional.name);
+      await updateProfessional(professional);
     } else {
-      setProfessionals((prev) => [professional, ...prev]);
-      appToasts.professional.created(professional.name);
+      await createProfessional(professional);
     }
   };
 
-  const setProfessionalActive = (professional: Professional, active: boolean) => {
-    setProfessionals((prev) =>
-      prev.map((item) =>
-        item.id === professional.id ? { ...item, active } : item
-      )
-    );
-
-    if (!active) {
-      appToasts.professional.deactivated(professional.name);
-    }
-  };
-
-  const handleToggleActive = (professional: Professional) => {
+  const handleToggleActive = async (professional: Professional) => {
     if (!professional.active) {
-      setProfessionalActive(professional, true);
+      await updateProfessional({ ...professional, active: true });
       return;
     }
 
@@ -140,30 +123,27 @@ export default function ProfesionalesPage() {
     runAfterDetailClose(() => setProfessionalToDelete(professional));
   };
 
-  const confirmDeactivateProfessional = () => {
+  const confirmDeactivateProfessional = async () => {
     if (!professionalToDeactivate) return;
 
-    setProfessionalActive(professionalToDeactivate, false);
+    await updateProfessional({
+      ...professionalToDeactivate,
+      active: false,
+    });
     setProfessionalToDeactivate(null);
   };
 
-  const confirmDeleteProfessional = () => {
+  const confirmDeleteProfessional = async () => {
     if (!professionalToDelete) return;
 
     const deletedName = professionalToDelete.name;
-    const deletedAppointments = countProfessionalAppointments(
-      appointments,
-      professionalToDelete.id
-    );
 
-    setProfessionals((prev) =>
-      prev.filter((item) => item.id !== professionalToDelete.id)
-    );
-    setAppointments((prev) =>
-      removeProfessionalAppointments(prev, professionalToDelete.id)
-    );
-
+    await deleteProfessional(professionalToDelete.id);
     setProfessionalToDelete(null);
+    showSuccessToast(
+      "Profesional eliminado",
+      `${deletedName} se elimino correctamente.`
+    );
   };
 
   const deleteDescription = professionalToDelete
@@ -172,6 +152,34 @@ export default function ProfesionalesPage() {
         deleteAppointmentCount
       )
     : "";
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Profesionales"
+          description="Cargando profesionales..."
+        />
+        <p className="text-sm text-muted-foreground">
+          Conectando con la base de datos...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Profesionales" description="Error al cargar" />
+        <EmptyStateFromPreset
+          preset={emptyStates.professionals.none}
+          actionLabel="Reintentar"
+          onAction={() => window.location.reload()}
+        />
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -214,6 +222,7 @@ export default function ProfesionalesPage() {
         onSubmit={handleSubmit}
         editingProfessional={editingProfessional}
         existingCount={professionals.length}
+        existingProfessionals={professionals}
       />
 
       <ProfessionalDetailDialog

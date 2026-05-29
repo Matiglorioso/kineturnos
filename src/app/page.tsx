@@ -5,8 +5,8 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { StatusSummary } from "@/components/dashboard/StatusSummary";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockAppointments } from "@/data/mockAppointments";
-import { mockPatients } from "@/data/mockPatients";
+import { useAppointments } from "@/hooks/use-appointments";
+import { usePatients } from "@/hooks/use-patients";
 import { getRecentActivityItems } from "@/lib/dashboard-activity";
 import {
   getActivePatientsCount,
@@ -15,10 +15,6 @@ import {
   getUpcomingAppointments,
 } from "@/lib/dashboard-stats";
 import { formatTodayLongLabel } from "@/lib/date-utils";
-import {
-  usePersistedAppointments,
-  usePersistedPatients,
-} from "@/hooks/use-persisted-data";
 import {
   Ban,
   CalendarCheck,
@@ -31,8 +27,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 export default function DashboardPage() {
-  const { data: patients } = usePersistedPatients(mockPatients);
-  const { data: appointments } = usePersistedAppointments(mockAppointments);
+  const { patients } = usePatients();
+  const { appointments } = useAppointments();
   const [today] = useState(() => getTodayAppDate());
 
   const todayMetrics = useMemo(
