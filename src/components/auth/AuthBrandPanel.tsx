@@ -11,8 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
-const DOT_PATTERN =
-  "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E\")";
+const SOCIAL_PROOF_INITIALS = ["K", "M", "A"] as const;
 
 const capabilities = [
   { icon: CalendarDays, title: "Agenda diaria y semanal" },
@@ -40,11 +39,6 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: DOT_PATTERN }}
-      />
-      <div
-        aria-hidden
         className="pointer-events-none absolute -right-20 top-1/4 h-72 w-72 rounded-full bg-white/10 blur-3xl"
       />
       <div
@@ -55,8 +49,17 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.12),transparent_55%)]"
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(255,255,255,0.065) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+        }}
+      />
 
-      <div className="relative flex h-full w-full flex-col px-8 py-7 xl:px-12 xl:py-9">
+      <div className="relative z-[1] flex h-full w-full flex-col px-8 py-7 xl:px-12 xl:py-9">
         <header className="shrink-0">
           <div className="flex items-center gap-3.5">
             <LogoMark className="h-12 w-12 shrink-0" />
@@ -72,16 +75,16 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex flex-1 flex-col items-center justify-center gap-8 py-6 xl:gap-10 xl:py-8">
             <div className="w-full max-w-lg space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
                   {siteConfig.clinicName}
                 </p>
-                <div className="h-0.5 w-8 rounded-full bg-brand-300" aria-hidden />
+                <div aria-hidden className="h-0.5 w-8 rounded-full bg-brand-300" />
               </div>
               <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
                 Tu consultorio, organizado en un solo panel
               </h2>
-              <p className="max-w-md text-sm leading-relaxed text-brand-50/90 xl:text-base">
+              <p className="max-w-md text-sm leading-relaxed text-brand-50/90">
                 Menos papeleo. Más tiempo con tus pacientes.
               </p>
             </div>
@@ -91,6 +94,24 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
             </div>
           </div>
 
+          <div className="flex w-full shrink-0 items-center gap-3 px-0.5 pb-4">
+            <div className="flex">
+              {SOCIAL_PROOF_INITIALS.map((initial, index) => (
+                <div
+                  key={initial}
+                  className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-teal-400 to-brand-600 text-[9px] font-bold text-white"
+                  style={{ marginLeft: index > 0 ? "-6px" : "0" }}
+                >
+                  {initial}
+                </div>
+              ))}
+            </div>
+            <p className="text-[11.5px] text-white/65">
+              <strong className="font-semibold text-white/90">+120 profesionales</strong>{" "}
+              ya organizan su consultorio con KineTurnos
+            </p>
+          </div>
+
           <section
             aria-label="Funcionalidades principales"
             className="w-full max-w-xl shrink-0 pb-2"
@@ -98,11 +119,11 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
               Qué podés hacer
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-2">
               {capabilities.map((item) => (
                 <article
                   key={item.title}
-                  className="flex flex-col gap-2.5 rounded-xl border border-white/20 bg-white/15 p-3.5 backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:p-4"
+                  className="flex flex-col gap-2.5 rounded-xl border border-white/20 bg-white/15 p-3 backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 lg:p-3 xl:p-3.5"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
                     <item.icon className="h-4 w-4" />
