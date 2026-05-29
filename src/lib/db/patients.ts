@@ -7,6 +7,7 @@ import {
   type PatientWriteInput,
 } from "@/lib/db/patient-write";
 import { DuplicateFieldError } from "@/lib/db/errors";
+import { syncTurnoPatientName } from "@/lib/db/sync";
 import {
   DUPLICATE_DNI_MESSAGE,
   normalizeDni,
@@ -64,10 +65,17 @@ export async function updatePatientInDb(
 ): Promise<Patient> {
   await assertPatientDniAvailable(input.dni, id);
 
+  const existing = await getPatientByIdFromDb(id);
+  const writeData = toPacienteWriteData(input);
+
   const record = await prisma.paciente.update({
     where: { id },
-    data: toPacienteWriteData(input),
+    data: writeData,
   });
+
+  if (existing && existing.name !== writeData.nombre) {
+    await syncTurnoPatientName(id, writeData.nombre);
+  }
 
   return mapPatient(record);
 }

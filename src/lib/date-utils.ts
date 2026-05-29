@@ -83,3 +83,23 @@ export function areSameAppDay(dateA: string, dateB: string): boolean {
   if (!parsedA || !parsedB) return dateA === dateB;
   return toAppDate(parsedA) === toAppDate(parsedB);
 }
+
+/** Compara fechas dd-MM-yyyy. Retorna negativo si a < b, 0 si iguales, positivo si a > b. */
+export function compareAppDates(dateA: string, dateB: string): number {
+  const parsedA = parseAppDate(dateA);
+  const parsedB = parseAppDate(dateB);
+
+  if (!parsedA && !parsedB) return dateA.localeCompare(dateB);
+  if (!parsedA) return -1;
+  if (!parsedB) return 1;
+
+  return parsedA.getTime() - parsedB.getTime();
+}
+
+export function maxAppDate(dates: string[]): string | null {
+  if (dates.length === 0) return null;
+
+  return dates.reduce((latest, current) =>
+    compareAppDates(current, latest) > 0 ? current : latest
+  );
+}

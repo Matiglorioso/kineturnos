@@ -11,6 +11,7 @@ import {
   type AppointmentWriteInput,
 } from "@/lib/db/appointment-write";
 import { getProfessionalsFromDb } from "@/lib/db/professionals";
+import { recomputePatientLastAppointment } from "@/lib/db/sync";
 import { validateAppointmentForm } from "@/lib/appointment-validation";
 import { prisma } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
@@ -93,6 +94,10 @@ export async function createAppointmentInDb(
     },
   });
 
+  if (input.status === "atendido") {
+    await recomputePatientLastAppointment(input.patientId);
+  }
+
   return mapAppointment(record);
 }
 
@@ -101,6 +106,11 @@ export async function updateAppointmentInDb(
   input: AppointmentWriteInput
 ): Promise<Appointment> {
   await assertAppointmentInputValid(input, id);
+
+  const existing = await getAppointmentByIdFromDb(id);
+  if (!existing) {
+    throw new NotFoundError("Turno no encontrado.");
+  }
 
   const names = await resolveAppointmentNames(
     input.patientId,
@@ -111,6 +121,21 @@ export async function updateAppointmentInDb(
     where: { id },
     data: toTurnoWriteData(input, names),
   });
+
+  const statusChanged = existing.status !== input.status;
+  const patientChanged = existing.patientId !== input.patientId;
+
+  if (
+    statusChanged ||
+    patientChanged ||
+    existing.status === "atendido" ||
+    input.status === "atendido"
+  ) {
+    const patientIds = new Set([existing.patientId, input.patientId]);
+    await Promise.all(
+      [...patientIds].map((patientId) => recomputePatientLastAppointment(patientId))
+    );
+  }
 
   return mapAppointment(record);
 }

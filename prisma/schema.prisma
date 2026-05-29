@@ -24,6 +24,14 @@ enum EstadoTurno {
   @@map("estado_turno")
 }
 
+enum RolUsuario {
+  admin
+  recepcion
+  profesional
+
+  @@map("rol_usuario")
+}
+
 model Paciente {
   id               String         @id
   nombre           String
@@ -62,9 +70,23 @@ model Profesional {
   colorAvatar          String   @map("color_avatar")
   observaciones        String?
   turnos               Turno[]
+  usuario              Usuario?
 
   @@index([activo])
   @@map("profesionales")
+}
+
+model Usuario {
+  id            String       @id
+  email         String       @unique
+  nombre        String
+  passwordHash  String       @map("password_hash")
+  rol           RolUsuario   @default(recepcion)
+  activo        Boolean      @default(true)
+  profesionalId String?      @unique @map("profesional_id")
+  profesional   Profesional? @relation(fields: [profesionalId], references: [id], onDelete: SetNull)
+
+  @@map("usuarios")
 }
 
 model Turno {

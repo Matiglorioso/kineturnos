@@ -2,8 +2,10 @@
 
 import { LogoMark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
+import { getRoleLabel } from "@/lib/auth/roles";
 import { formatTodayLongLabel } from "@/lib/date-utils";
-import { Bell, Plus, Search } from "lucide-react";
+import { Bell, LogOut, Plus, Search } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 interface HeaderProps {
@@ -26,6 +28,9 @@ function TodayLabel() {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -65,6 +70,25 @@ export function Header({ title, subtitle }: HeaderProps) {
             <Plus className="h-4 w-4" />
             Agendar turno
           </Button>
+
+          {user && (
+            <div className="hidden items-center gap-2 sm:flex">
+              <div className="text-right">
+                <p className="text-xs font-semibold text-slate-900">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {getRoleLabel(user.role)}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Cerrar sesión"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
 
           <LogoMark className="h-9 w-9" />
         </div>

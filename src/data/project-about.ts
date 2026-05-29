@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  CheckCircle2,
   Database,
   LayoutDashboard,
   Shield,
@@ -11,7 +12,7 @@ import {
 export const projectMeta = {
   title: "KineTurnos",
   tagline: "Gestion de turnos para consultorios kinesiologicos",
-  version: "Demo v0.2",
+  version: "Demo v0.3",
   year: "2026",
 };
 
@@ -62,10 +63,16 @@ export const mainFeatures: {
       "CRUD de kinesiologos con dias, horarios, duracion por defecto y validacion al asignar turnos dentro de su agenda.",
   },
   {
-    icon: Shield,
+    icon: CheckCircle2,
     title: "Estados y confirmaciones",
     description:
       "Flujos para cancelar, marcar atendido o ausente, con dialogos de confirmacion y toasts de exito o error.",
+  },
+  {
+    icon: Shield,
+    title: "Autenticacion y roles",
+    description:
+      "Login con Auth.js, sesion JWT y usuarios demo (admin, recepcion, profesional). Rutas y API protegidas por middleware.",
   },
   {
     icon: Database,
@@ -129,11 +136,11 @@ export const technicalDecisions: {
 ];
 
 export const demoLimitations: string[] = [
-  "Sin autenticacion ni roles (recepcion vs profesional vs admin).",
+  "Roles definidos pero sin restricciones finas por pantalla (todos ven el mismo módulo).",
   "Sin envio de recordatorios por email o WhatsApp.",
   "Sin facturacion, obras sociales avanzadas ni historial clinico detallado.",
   "Un solo consultorio; no hay multi-sede.",
-  "Deploy en Vercel requiere configurar DATABASE_URL (ver docs/TU-PARTE-VERCEL.md).",
+  "Deploy en Vercel requiere DATABASE_URL y AUTH_SECRET (ver docs/TU-PARTE-VERCEL.md).",
 ];
 
 export const roadmap: {
@@ -143,9 +150,9 @@ export const roadmap: {
   {
     phase: "Corto plazo",
     items: [
-      "Autenticacion y permisos por rol.",
-      "Actualizar ultimo_turno del paciente al atender sesiones.",
+      "Permisos por rol en UI y API (recepcion vs profesional).",
       "Migraciones Prisma formales en CI/CD.",
+      "GitHub Action con verify:migration.",
     ],
   },
   {

@@ -3,12 +3,25 @@
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { usePathname } from "next/navigation";
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === "/login";
+
+  if (isAuthPage) {
+    return (
+      <>
+        {children}
+        <Toaster />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen gradient-subtle">
       <Sidebar />

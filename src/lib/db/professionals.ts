@@ -6,6 +6,7 @@ import {
   toProfesionalWriteData,
   type ProfessionalWriteInput,
 } from "@/lib/db/professional-write";
+import { syncTurnoProfessionalName } from "@/lib/db/sync";
 import {
   DUPLICATE_LICENSE_MESSAGE,
   normalizeLicense,
@@ -68,10 +69,17 @@ export async function updateProfessionalInDb(
 ): Promise<Professional> {
   await assertProfessionalLicenseAvailable(input.license, id);
 
+  const existing = await getProfessionalByIdFromDb(id);
+  const writeData = toProfesionalWriteData(input);
+
   const record = await prisma.profesional.update({
     where: { id },
-    data: toProfesionalWriteData(input),
+    data: writeData,
   });
+
+  if (existing && existing.name !== writeData.nombre) {
+    await syncTurnoProfessionalName(id, writeData.nombre);
+  }
 
   return mapProfessional(record);
 }
