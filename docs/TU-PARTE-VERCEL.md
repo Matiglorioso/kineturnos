@@ -1,12 +1,12 @@
 # Desplegar KineTurnos en Vercel con Neon (5 minutos)
 
-La app ya persiste **pacientes, profesionales, turnos y usuarios** en PostgreSQL, con **login** y **migraciones Prisma**. Para que la demo en **kineturnos.vercel.app** funcione al 100%, configurá las variables en Vercel y redeployá.
+La app ya persiste **pacientes, profesionales, turnos y usuarios** en PostgreSQL, con **login** y **migraciones Prisma**. Para producción en **kineturnos.vercel.app**, configurá las variables en Vercel y redeployá.
 
 ---
 
 ## Requisitos previos
 
-- Proyecto **Neon** creado y con tablas cargadas (`npm run db:migrate:deploy` + `npm run db:seed` desde tu PC)
+- Proyecto **Neon** creado y con tablas cargadas (`npm run db:migrate:deploy` + `npm run db:seed:minimal` para go-live, o `db:seed` en desarrollo)
 - Proyecto **Vercel** vinculado al repo [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos)
 - En local, `http://localhost:3000/api/health/db` responde `{ "ok": true }`
 
@@ -45,7 +45,7 @@ La app ya persiste **pacientes, profesionales, turnos y usuarios** en PostgreSQL
 4. Marcá los tres entornos: **Production**, **Preview**, **Development**
 5. **Save**
 
-> **Auth:** Sin `AUTH_SECRET`, el login no funciona en producción. Usuarios demo (contraseña `demo1234`): `recepcion@kineturnos.local`, `admin@kineturnos.local`, `profe@kineturnos.local`. Corré `npm run db:seed` después de aplicar migraciones para crearlos.
+> **Auth:** Sin `AUTH_SECRET`, el login no funciona en producción. Para **go-live** usá `npm run db:seed:minimal` con `SEED_INITIAL_PASSWORD` (ver README). Para desarrollo local, `npm run db:seed` carga mocks y usuarios.
 
 > **Build en Vercel:** `vercel.json` ejecuta `prisma migrate deploy` antes del build. La base Neon ya existente debe tener la migración inicial marcada como aplicada (ya hecho si seguiste el setup del repo).
 

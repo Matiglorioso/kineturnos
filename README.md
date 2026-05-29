@@ -104,7 +104,22 @@ _Login requerido. Regenerar desktop: `npm run screenshots:desktop` (Playwright).
 
 **[https://kineturnos.vercel.app/](https://kineturnos.vercel.app/)**
 
-La app requiere **login**. Los usuarios se crean por el administrador del sistema (ver `npm run db:seed` solo para entornos de desarrollo).
+La app requiere **login**. Los usuarios se crean con el seed mínimo o manualmente en la base.
+
+**Go-live (producción)** — base vacía de pacientes/turnos:
+
+```bash
+npm run db:migrate:deploy
+SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
+```
+
+Crea admin, recepción y profesional (sin vincular) para **Centro Kine Norte**. Cambiá emails y contraseña antes de entregar al cliente.
+
+**Desarrollo local** — datos de ejemplo completos:
+
+```bash
+npm run db:seed
+```
 
 La sección **Ayuda** (`/proyecto`) está disponible una vez autenticado.
 
@@ -162,7 +177,8 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run clean` | Elimina caché de `.next` |
 | `npm run db:push` | Sincroniza schema → DB (solo desarrollo puntual) |
 | `npm run db:migrate:deploy` | Aplica migraciones en producción / CI |
-| `npm run db:seed` | Carga datos iniciales (solo desarrollo) |
+| `npm run db:seed` | Datos completos de desarrollo (mocks + usuarios) |
+| `npm run db:seed:minimal` | Solo usuarios iniciales (go-live; requiere `SEED_INITIAL_PASSWORD`) |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
@@ -185,7 +201,8 @@ Copiá la plantilla desde `env.example` → `.env`.
 
 ```bash
 npm run db:push    # Crear tablas en Neon
-npm run db:seed    # Datos iniciales de desarrollo
+npm run db:seed          # Datos completos de desarrollo
+npm run db:seed:minimal  # Go-live: solo usuarios (requiere SEED_INITIAL_PASSWORD)
 npm run db:studio  # Ver la DB en el navegador
 npm run verify:migration   # Verificar migración (con dev server activo)
 ```
