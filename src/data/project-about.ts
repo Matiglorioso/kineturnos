@@ -151,8 +151,7 @@ export const roadmap: {
     phase: "Corto plazo",
     items: [
       "Permisos por rol en UI y API (recepcion vs profesional).",
-      "Migraciones Prisma formales en CI/CD.",
-      "Capturas en README y polish de portfolio.",
+      "Capturas desktop adicionales en README.",
     ],
   },
   {

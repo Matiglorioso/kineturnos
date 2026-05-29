@@ -12,8 +12,10 @@
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:backfill-documents": "tsx prisma/backfill-normalized-fields.ts",
     "verify:migration": "tsx scripts/verify-migration.ts",
+    "verify:production": "tsx scripts/verify-production.ts",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
