@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
@@ -84,6 +85,9 @@ export function LoginForm() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="text-center lg:text-left">
+        <div className="mb-5 flex justify-center lg:hidden">
+          <Logo size="lg" />
+        </div>
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
           {siteConfig.clinicName}
         </p>

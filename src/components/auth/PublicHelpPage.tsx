@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthPageShell } from "@/components/auth/AuthPageShell";
+import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import {
   getSupportMailto,
@@ -16,6 +17,9 @@ export function PublicHelpPage() {
     <AuthPageShell className="items-start lg:items-center" contentMaxWidth="2xl">
       <div className="w-full space-y-6 sm:space-y-8">
         <div className="text-center sm:text-left">
+          <div className="mb-5 flex justify-center sm:justify-start lg:hidden">
+            <Logo size="lg" />
+          </div>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
             {siteConfig.clinicName}
           </p>
