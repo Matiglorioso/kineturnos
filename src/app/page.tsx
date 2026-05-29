@@ -4,6 +4,8 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { StatusSummary } from "@/components/dashboard/StatusSummary";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
+import { DataLoadBanner } from "@/components/shared/DataLoadBanner";
+import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
@@ -27,9 +29,27 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 export default function DashboardPage() {
-  const { patients } = usePatients();
-  const { appointments } = useAppointments();
+  const {
+    patients,
+    isLoading: patientsLoading,
+    error: patientsError,
+    refresh: refreshPatients,
+  } = usePatients();
+  const {
+    appointments,
+    isLoading: appointmentsLoading,
+    error: appointmentsError,
+    refresh: refreshAppointments,
+  } = useAppointments();
   const [today] = useState(() => getTodayAppDate());
+
+  const isLoading = patientsLoading || appointmentsLoading;
+  const loadError = patientsError ?? appointmentsError;
+
+  const handleRetry = () => {
+    void refreshPatients();
+    void refreshAppointments();
+  };
 
   const todayMetrics = useMemo(
     () => getTodayDashboardMetrics(appointments, today),
@@ -59,6 +79,24 @@ export default function DashboardPage() {
           (todayMetrics.todayConfirmed / todayMetrics.todayTotal) * 100
         )
       : 0;
+
+  if (isLoading) {
+    return <PageLoadingState title="Resumen del día" description="Cargando panel..." />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-slide-up">
+          <p className="text-sm font-medium text-brand-600">Panel del consultorio</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Resumen del día
+          </h1>
+        </div>
+        <DataLoadBanner message={loadError} onRetry={handleRetry} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

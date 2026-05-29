@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/appointments-client";
 import { ApiError } from "@/lib/api/fetch-json";
 import { formatAppDate, formatTimeShort } from "@/lib/datetime-format";
+import { getLoadErrorMessage } from "@/lib/api-error-message";
 import { appToasts, showSuccessToast } from "@/lib/toast";
 import { getAppointmentStatusLabel } from "@/lib/appointment-status";
 import type { Appointment, AppointmentStatus } from "@/types";
@@ -26,11 +27,9 @@ export function useAppointments() {
       const data = await fetchAppointments();
       setAppointments(data);
     } catch (loadError) {
-      const message =
-        loadError instanceof Error
-          ? loadError.message
-          : "No se pudieron cargar los turnos.";
-      setError(message);
+      setError(
+        getLoadErrorMessage(loadError, "No se pudieron cargar los turnos.")
+      );
     } finally {
       setIsLoading(false);
     }

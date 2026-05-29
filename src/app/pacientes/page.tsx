@@ -5,6 +5,8 @@ import { PatientCard } from "@/components/patients/PatientCard";
 import { PatientDetailDialog } from "@/components/patients/PatientDetailDialog";
 import { PatientTable } from "@/components/patients/PatientTable";
 import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
+import { DataLoadError } from "@/components/shared/DataLoadError";
+import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import { Input } from "@/components/ui/input";
@@ -25,6 +27,7 @@ export default function PacientesPage() {
     patients,
     isLoading,
     error,
+    refresh,
     createPatient,
     updatePatient,
     deletePatient,
@@ -180,27 +183,14 @@ export default function PacientesPage() {
     : "";
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Pacientes"
-          description="Cargando pacientes..."
-        />
-        <p className="text-sm text-muted-foreground">Conectando con la base de datos...</p>
-      </div>
-    );
+    return <PageLoadingState title="Pacientes" />;
   }
 
   if (error) {
     return (
       <div className="space-y-6">
         <PageHeader title="Pacientes" description="Error al cargar" />
-        <EmptyStateFromPreset
-          preset={emptyStates.patients.none}
-          actionLabel="Reintentar"
-          onAction={() => window.location.reload()}
-        />
-        <p className="text-sm text-destructive">{error}</p>
+        <DataLoadError message={error} onRetry={() => void refresh()} />
       </div>
     );
   }

@@ -8,6 +8,7 @@ import {
   Stethoscope,
   UserPlus,
   Users,
+  WifiOff,
   type LucideIcon,
 } from "lucide-react";
 
@@ -111,6 +112,14 @@ export const emptyStates = {
       title: "Sin turnos próximos",
       description:
         "Este profesional no tiene sesiones asignadas. Podés agendar un turno desde la agenda.",
+    },
+  },
+  global: {
+    loadError: {
+      icon: WifiOff,
+      title: "No pudimos cargar los datos",
+      description:
+        "Revisá tu conexión o volvé a intentar. Si el problema continúa, la sesión puede haber expirado.",
     },
   },
 } as const satisfies Record<string, Record<string, EmptyStatePreset>>;

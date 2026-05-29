@@ -7,6 +7,7 @@ import {
   updateProfessionalRequest,
 } from "@/lib/api/professionals-client";
 import { ApiError } from "@/lib/api/fetch-json";
+import { getLoadErrorMessage } from "@/lib/api-error-message";
 import { appToasts } from "@/lib/toast";
 import type { Professional } from "@/types";
 import { useCallback, useEffect, useState } from "react";
@@ -24,11 +25,12 @@ export function useProfessionals() {
       const data = await fetchProfessionals();
       setProfessionals(data);
     } catch (loadError) {
-      const message =
-        loadError instanceof Error
-          ? loadError.message
-          : "No se pudieron cargar los profesionales.";
-      setError(message);
+      setError(
+        getLoadErrorMessage(
+          loadError,
+          "No se pudieron cargar los profesionales."
+        )
+      );
     } finally {
       setIsLoading(false);
     }

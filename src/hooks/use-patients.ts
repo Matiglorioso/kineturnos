@@ -7,6 +7,7 @@ import {
   updatePatientRequest,
 } from "@/lib/api/patients-client";
 import { ApiError } from "@/lib/api/fetch-json";
+import { getLoadErrorMessage } from "@/lib/api-error-message";
 import { appToasts } from "@/lib/toast";
 import type { Patient } from "@/types";
 import { useCallback, useEffect, useState } from "react";
@@ -24,11 +25,9 @@ export function usePatients() {
       const data = await fetchPatients();
       setPatients(data);
     } catch (loadError) {
-      const message =
-        loadError instanceof Error
-          ? loadError.message
-          : "No se pudieron cargar los pacientes.";
-      setError(message);
+      setError(
+        getLoadErrorMessage(loadError, "No se pudieron cargar los pacientes.")
+      );
     } finally {
       setIsLoading(false);
     }
