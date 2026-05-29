@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kineturnos
+      AUTH_SECRET: ci-build-auth-secret-minimum-32-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  verify:
+    name: Verify DB + API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kineturnos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kineturnos
+      AUTH_SECRET: ci-verify-auth-secret-minimum-32-characters
+      VERIFY_SECRET: ci-verify-secret-for-api-bypass
+      VERIFY_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:push
+      - run: npm run db:seed
+      - name: Start dev server
+        run: |
+          npm run dev &
+          for i in $(seq 1 45); do
+            if curl -sf http://localhost:3000/api/health/db > /dev/null; then
+              echo "Server ready after ${i} attempt(s)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Dev server did not become ready in time"
+          exit 1
+      - run: npm run verify:migration
