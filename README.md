@@ -77,6 +77,18 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 ## Capturas
 
+### Desktop (1440px)
+
+| Dashboard | Agenda semanal |
+|:---:|:---:|
+| ![Dashboard desktop](./docs/screenshots/dashboard-desktop.png) | ![Agenda semanal desktop](./docs/screenshots/agenda-semana-desktop.png) |
+
+| Pacientes | Profesionales |
+|:---:|:---:|
+| ![Pacientes desktop](./docs/screenshots/pacientes-desktop.png) | ![Profesionales desktop](./docs/screenshots/profesionales-desktop.png) |
+
+### Mobile
+
 | Dashboard | Agenda semanal |
 |:---:|:---:|
 | ![Dashboard](./docs/screenshots/dashboard.png) | ![Agenda semanal](./docs/screenshots/agenda-semana.png) |
@@ -85,7 +97,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 |:---:|:---:|
 | ![Pacientes](./docs/screenshots/pacientes.png) | ![Profesionales](./docs/screenshots/profesionales.png) |
 
-_Vista mobile del panel (login requerido). Más capturas desktop en el repo._
+_Login requerido. Regenerar desktop: `npm run screenshots:desktop` (Playwright)._
 
 ---
 
@@ -271,7 +283,6 @@ kineturnos/
 
 ### Corto plazo
 - Permisos por rol en UI y API (recepción / profesional / admin)
-- Capturas desktop adicionales en README
 
 ### Mediano plazo
 - Recordatorios automáticos y confirmación por link

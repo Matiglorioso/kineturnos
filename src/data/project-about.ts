@@ -151,7 +151,6 @@ export const roadmap: {
     phase: "Corto plazo",
     items: [
       "Permisos por rol en UI y API (recepcion vs profesional).",
-      "Capturas desktop adicionales en README.",
     ],
   },
   {
