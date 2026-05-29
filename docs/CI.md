@@ -8,7 +8,7 @@ El repositorio incluye un workflow de GitHub Actions (`.github/workflows/ci.yml`
 |-----|------------|
 | **Lint** | `npm run lint` |
 | **Build** | `npm run build` (con `DATABASE_URL` y `AUTH_SECRET` de prueba) |
-| **Verify DB + API** | PostgreSQL efímero en el runner → `db:push` → `db:seed` → `dev` → `verify:migration` |
+| **Verify DB + API** | PostgreSQL efímero → `db:migrate:deploy` → `db:seed` → `dev` → `verify:migration` |
 
 No hace falta configurar secrets en GitHub: el job **Verify** levanta Postgres 16 como servicio del workflow.
 

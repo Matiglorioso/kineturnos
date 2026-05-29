@@ -77,15 +77,15 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 ## Capturas
 
-> _Agregar imágenes del proyecto en `docs/screenshots/` y referenciarlas aquí._
-
 | Dashboard | Agenda semanal |
 |:---:|:---:|
-| _![Dashboard](./docs/screenshots/dashboard.png)_ | _![Agenda](./docs/screenshots/agenda-semana.png)_ |
+| ![Dashboard](./docs/screenshots/dashboard.png) | ![Agenda semanal](./docs/screenshots/agenda-semana.png) |
 
 | Pacientes | Profesionales |
 |:---:|:---:|
-| _![Pacientes](./docs/screenshots/pacientes.png)_ | _![Profesionales](./docs/screenshots/profesionales.png)_ |
+| ![Pacientes](./docs/screenshots/pacientes.png) | ![Profesionales](./docs/screenshots/profesionales.png) |
+
+_Vista mobile del panel (login requerido). Más capturas desktop en el repo._
 
 ---
 
@@ -155,10 +155,12 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run start` | Servidor de producción (post-build) |
 | `npm run lint` | ESLint |
 | `npm run clean` | Elimina caché de `.next` |
-| `npm run db:push` | Sincroniza schema → Neon |
+| `npm run db:push` | Sincroniza schema → DB (solo desarrollo puntual) |
+| `npm run db:migrate:deploy` | Aplica migraciones en producción / CI |
 | `npm run db:seed` | Carga datos de demo |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
+| `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
 
 ### Variables de entorno
 
@@ -250,6 +252,7 @@ kineturnos/
 | Autenticación (login + middleware) | ✅ Completo |
 | Sync `ultimo_turno` y nombres en turnos | ✅ Completo |
 | CI GitHub Actions (lint, build, verify) | ✅ Completo |
+| Migraciones Prisma formales | ✅ Completo |
 | Deploy Vercel con `DATABASE_URL` + `AUTH_SECRET` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
 | Permisos finos por rol en UI/API | ❌ Pendiente |
@@ -268,8 +271,7 @@ kineturnos/
 
 ### Corto plazo
 - Permisos por rol en UI y API (recepción / profesional / admin)
-- Migraciones Prisma formales (`db:migrate`) en CI/CD
-- Capturas en README y polish de portfolio
+- Capturas desktop adicionales en README
 
 ### Mediano plazo
 - Recordatorios automáticos y confirmación por link
