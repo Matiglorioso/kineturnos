@@ -92,43 +92,43 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
             <div className="flex w-full justify-center">
               <AuthPanelPreview />
             </div>
-          </div>
 
-          <div className="flex w-full shrink-0 items-center gap-3 px-0.5 pb-4">
-            <div className="flex">
-              {SOCIAL_PROOF_INITIALS.map((initial, index) => (
-                <div
-                  key={initial}
-                  className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-teal-400 to-brand-600 text-[9px] font-bold text-white"
-                  style={{ marginLeft: index > 0 ? "-6px" : "0" }}
-                >
-                  {initial}
-                </div>
-              ))}
+            <div className="flex w-full items-center gap-3 px-0.5">
+              <div className="flex shrink-0">
+                {SOCIAL_PROOF_INITIALS.map((initial, index) => (
+                  <div
+                    key={initial}
+                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-teal-400 to-brand-600 text-[9px] font-bold text-white"
+                    style={{ marginLeft: index > 0 ? "-6px" : "0" }}
+                  >
+                    {initial}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11.5px] leading-snug text-white/65">
+                <strong className="font-semibold text-white/90">+120 profesionales</strong>{" "}
+                ya organizan con KineTurnos
+              </p>
             </div>
-            <p className="text-[11.5px] text-white/65">
-              <strong className="font-semibold text-white/90">+120 profesionales</strong>{" "}
-              ya organizan su consultorio con KineTurnos
-            </p>
           </div>
 
           <section
             aria-label="Funcionalidades principales"
-            className="w-full max-w-xl shrink-0 pb-2"
+            className="w-full shrink-0 pb-2"
           >
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
               Qué podés hacer
             </p>
-            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {capabilities.map((item) => (
                 <article
                   key={item.title}
-                  className="flex flex-col gap-2.5 rounded-xl border border-white/20 bg-white/15 p-3 backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 lg:p-3 xl:p-3.5"
+                  className="flex items-start gap-2 rounded-xl border border-white/20 bg-white/15 p-2.5 backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:p-3"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-                    <item.icon className="h-4 w-4" />
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20">
+                    <item.icon className="h-3.5 w-3.5" />
                   </span>
-                  <p className="text-[13px] font-medium leading-snug text-brand-50">
+                  <p className="text-[11px] font-medium leading-snug text-brand-50 xl:text-xs">
                     {item.title}
                   </p>
                 </article>
