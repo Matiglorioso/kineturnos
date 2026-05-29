@@ -34,6 +34,12 @@ export const appToasts = {
         "Revisá el formulario",
         "Completá los campos obligatorios antes de continuar."
       ),
+    saveError: (description?: string) =>
+      showErrorToast(
+        "No se pudo guardar",
+        description ??
+          "Revisá la conexión con la base de datos e intentá de nuevo."
+      ),
   },
   appointment: {
     created: (patientName: string, dateLabel: string, time: string) =>
@@ -66,10 +72,10 @@ export const appToasts = {
         "Revisá el formulario",
         "Corregí los campos marcados o el conflicto de horario."
       ),
-    saveError: () =>
+    saveError: (description?: string) =>
       showErrorToast(
         "No se pudo guardar",
-        "Seleccioná un paciente y un profesional válidos."
+        description ?? "Seleccioná un paciente y un profesional válidos."
       ),
   },
   professional: {
@@ -92,6 +98,12 @@ export const appToasts = {
       showErrorToast(
         "Revisá el formulario",
         "Completá los campos obligatorios antes de continuar."
+      ),
+    saveError: (description?: string) =>
+      showErrorToast(
+        "No se pudo guardar",
+        description ??
+          "Revisá la conexión con la base de datos e intentá de nuevo."
       ),
   },
 } as const;

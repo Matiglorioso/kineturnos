@@ -2,8 +2,35 @@ import { PrismaClient } from "@prisma/client";
 import { mockAppointments } from "../src/data/mockAppointments";
 import { mockPatients } from "../src/data/mockPatients";
 import { mockProfessionals } from "../src/data/mockProfessionals";
+import { resolveNameParts } from "../src/lib/person-name";
+import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
+import type { Patient } from "../src/types";
 
 const prisma = new PrismaClient();
+
+function buildPacienteSeedData(patient: Patient) {
+  const { firstName, lastName } = resolveNameParts(
+    patient.name,
+    patient.firstName,
+    patient.lastName
+  );
+
+  return {
+    id: patient.id,
+    nombre: patient.name,
+    nombrePila: firstName,
+    apellido: lastName,
+    dni: patient.dni,
+    dniNormalizado: normalizeDni(patient.dni),
+    telefono: patient.phone,
+    obraSocial: patient.insurance,
+    email: patient.email ?? null,
+    observaciones: patient.notes ?? null,
+    estado: patient.status,
+    ultimoTurno: patient.lastAppointment ?? null,
+    fechaAlta: patient.createdAt ?? null,
+  };
+}
 
 async function main() {
   console.log("Limpiando tablas...");
@@ -19,9 +46,12 @@ async function main() {
         nombre: professional.name,
         nombrePila: professional.firstName,
         apellido: professional.lastName,
-        matricula: professional.license,
-        email: professional.email,
-        telefono: professional.phone,
+        matricula: professional.license ?? null,
+        matriculaNormalizada: professional.license
+          ? normalizeLicense(professional.license)
+          : null,
+        email: professional.email ?? null,
+        telefono: professional.phone ?? null,
         especialidad: professional.specialty,
         diasAtencion: professional.days,
         horarioInicio: professional.scheduleStart,
@@ -29,7 +59,7 @@ async function main() {
         duracionDefault: professional.defaultDuration,
         activo: professional.active,
         colorAvatar: professional.avatarColor,
-        observaciones: professional.notes,
+        observaciones: professional.notes ?? null,
       },
     });
   }
@@ -37,20 +67,7 @@ async function main() {
   console.log("Insertando pacientes...");
   for (const patient of mockPatients) {
     await prisma.paciente.create({
-      data: {
-        id: patient.id,
-        nombre: patient.name,
-        nombrePila: patient.firstName,
-        apellido: patient.lastName,
-        dni: patient.dni,
-        telefono: patient.phone,
-        obraSocial: patient.insurance,
-        email: patient.email,
-        observaciones: patient.notes,
-        estado: patient.status,
-        ultimoTurno: patient.lastAppointment,
-        fechaAlta: patient.createdAt,
-      },
+      data: buildPacienteSeedData(patient),
     });
   }
 
@@ -68,7 +85,7 @@ async function main() {
         duracion: appointment.duration,
         estado: appointment.status,
         tipoSesion: appointment.sessionType,
-        observaciones: appointment.notes,
+        observaciones: appointment.notes ?? null,
       },
     });
   }

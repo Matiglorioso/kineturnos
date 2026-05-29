@@ -1,7 +1,9 @@
 # Guía: Neon + Prisma + PostgreSQL para KineTurnos
 
 Esta guía te lleva de cero a tener la base de datos conectada.  
-**La app sigue usando `localStorage` por ahora**; este paso prepara Postgres. Después conectaremos las pantallas a la DB.
+**La app ya persiste en PostgreSQL** (pacientes, profesionales, turnos) vía API REST y Prisma.
+
+Para **producción en Vercel**, seguí [`TU-PARTE-VERCEL.md`](./TU-PARTE-VERCEL.md).
 
 ---
 
@@ -13,7 +15,8 @@ Esta guía te lleva de cero a tener la base de datos conectada.
 4. Ejecutar **`npm run db:push`** (crea tablas)
 5. Ejecutar **`npm run db:seed`** (carga datos de demo)
 6. Probar **`http://localhost:3000/api/health/db`**
-7. (Opcional) Agregar `DATABASE_URL` en **Vercel**
+7. Agregar `DATABASE_URL` en **Vercel** → [`TU-PARTE-VERCEL.md`](./TU-PARTE-VERCEL.md)
+8. (Opcional) `npm run verify:migration` con el dev server activo
 
 ---
 
@@ -183,11 +186,19 @@ Por ahora, con `db:push` local alcanza para desarrollo. En producción podés co
 prisma/
   schema.prisma    # Modelos TS; tablas/columnas en español vía @map / @@map
   seed.ts          # Datos iniciales desde mocks
+scripts/
+  verify-migration.ts   # Pruebas automáticas DB + API
 src/
   lib/
     prisma.ts      # Cliente Prisma (singleton)
-    db-health.ts   # Chequeo de conexión
-  app/api/health/db/route.ts   # GET para probar conexión
+    db/            # Capa de acceso: patients, professionals, appointments
+  app/api/
+    health/db/     # GET — chequeo de conexión
+    patients/      # GET, POST + [id] PATCH, DELETE
+    professionals/ # GET, POST + [id] PATCH, DELETE
+    appointments/  # GET, POST + [id] PATCH
+  hooks/
+    use-patients.ts, use-professionals.ts, use-appointments.ts
 ```
 
 **Tablas en Neon:** `pacientes`, `profesionales`, `turnos` (columnas en snake_case español, ej. `paciente_nombre`, `obra_social`, `tipo_sesion`).
@@ -196,13 +207,12 @@ src/
 
 ## ¿Qué sigue después de esto?
 
-La app **todavía guarda en `localStorage`**. El próximo paso de desarrollo sería:
+Posibles mejoras:
 
-1. Crear **Server Actions** o **API routes** (`/api/patients`, etc.)
-2. Reemplazar `usePersistedPatients` por fetch a la DB
-3. Mantener validaciones en `src/lib/` como ahora
-
-Cuando quieras, podemos hacer esa migración módulo por módulo (pacientes primero, etc.).
+1. **Autenticación** y permisos por rol
+2. **Migraciones formales** (`db:migrate`) en lugar de solo `db:push`
+3. **Actualizar `ultimo_turno`** del paciente al marcar sesiones atendidas
+4. **CI** con `npm run verify:migration` en pull requests
 
 ---
 

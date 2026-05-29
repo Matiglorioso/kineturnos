@@ -62,7 +62,7 @@ type FormErrors = AppointmentFormErrors;
 interface NewAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (appointment: Appointment) => void;
+  onSubmit: (appointment: Appointment) => void | Promise<void>;
   patients: Patient[];
   professionals: Professional[];
   existingAppointments: Appointment[];
@@ -128,6 +128,7 @@ export function NewAppointmentDialog({
     buildInitialForm(defaultDate)
   );
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -166,7 +167,7 @@ export function NewAppointmentDialog({
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const validationErrors = validateAppointmentForm(
@@ -203,8 +204,13 @@ export function NewAppointmentDialog({
       notes: form.notes.trim() || undefined,
     };
 
-    onSubmit(appointment);
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(appointment);
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -417,7 +423,7 @@ export function NewAppointmentDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               {isEditing ? "Guardar cambios" : "Confirmar turno"}
             </Button>
           </DialogFooter>

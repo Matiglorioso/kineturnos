@@ -37,8 +37,9 @@ export type { PatientFormValues as NewPatientFormValues } from "@/lib/patient-fo
 interface NewPatientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (patient: Patient) => void;
+  onSubmit: (patient: Patient) => void | Promise<void>;
   editingPatient?: Patient | null;
+  existingPatients?: Patient[];
 }
 
 export function NewPatientDialog({
@@ -46,10 +47,12 @@ export function NewPatientDialog({
   onOpenChange,
   onSubmit,
   editingPatient = null,
+  existingPatients = [],
 }: NewPatientDialogProps) {
   const isEditing = Boolean(editingPatient);
   const [form, setForm] = useState<PatientFormValues>(INITIAL_PATIENT_FORM);
   const [errors, setErrors] = useState<PatientFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -74,10 +77,13 @@ export function NewPatientDialog({
     }
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const validationErrors = validatePatientForm(form);
+    const validationErrors = validatePatientForm(form, {
+      excludePatientId: editingPatient?.id,
+      existingPatients,
+    });
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       appToasts.patient.validationError();
@@ -102,8 +108,13 @@ export function NewPatientDialog({
       createdAt: editingPatient?.createdAt ?? toAppDate(new Date()),
     };
 
-    onSubmit(patient);
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(patient);
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -233,7 +244,7 @@ export function NewPatientDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               {isEditing ? "Guardar cambios" : "Registrar paciente"}
             </Button>
           </DialogFooter>

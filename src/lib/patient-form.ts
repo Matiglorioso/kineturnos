@@ -1,4 +1,10 @@
 import { Patient, PatientStatus } from "@/types";
+import {
+  dniFormatValidationError,
+  DUPLICATE_DNI_MESSAGE,
+  isDuplicateDni,
+} from "@/lib/document-validation";
+import { resolveNameParts } from "@/lib/person-name";
 import { emailValidationError, requiredFieldError } from "@/lib/validation";
 
 export interface PatientFormValues {
@@ -14,6 +20,11 @@ export interface PatientFormValues {
 
 export type PatientFormErrors = Partial<Record<keyof PatientFormValues, string>>;
 
+export interface PatientFormValidationOptions {
+  excludePatientId?: string;
+  existingPatients?: Array<Pick<Patient, "id" | "dni">>;
+}
+
 export const INITIAL_PATIENT_FORM: PatientFormValues = {
   firstName: "",
   lastName: "",
@@ -26,10 +37,11 @@ export const INITIAL_PATIENT_FORM: PatientFormValues = {
 };
 
 export function buildPatientFormValues(patient: Patient): PatientFormValues {
-  const nameParts = patient.name.trim().split(/\s+/);
-  const firstName = patient.firstName ?? nameParts[0] ?? "";
-  const lastName =
-    patient.lastName ?? (nameParts.length > 1 ? nameParts.slice(1).join(" ") : "");
+  const { firstName, lastName } = resolveNameParts(
+    patient.name,
+    patient.firstName,
+    patient.lastName
+  );
 
   return {
     firstName,
@@ -43,7 +55,10 @@ export function buildPatientFormValues(patient: Patient): PatientFormValues {
   };
 }
 
-export function validatePatientForm(values: PatientFormValues): PatientFormErrors {
+export function validatePatientForm(
+  values: PatientFormValues,
+  options?: PatientFormValidationOptions
+): PatientFormErrors {
   const errors: PatientFormErrors = {};
 
   const firstNameError = requiredFieldError(
@@ -58,8 +73,15 @@ export function validatePatientForm(values: PatientFormValues): PatientFormError
   );
   if (lastNameError) errors.lastName = lastNameError;
 
-  const dniError = requiredFieldError(values.dni, "El DNI es obligatorio");
-  if (dniError) errors.dni = dniError;
+  const dniError = dniFormatValidationError(values.dni);
+  if (dniError) {
+    errors.dni = dniError;
+  } else if (
+    options?.existingPatients &&
+    isDuplicateDni(values.dni, options.existingPatients, options.excludePatientId)
+  ) {
+    errors.dni = DUPLICATE_DNI_MESSAGE;
+  }
 
   const phoneError = requiredFieldError(values.phone, "El telefono es obligatorio");
   if (phoneError) errors.phone = phoneError;

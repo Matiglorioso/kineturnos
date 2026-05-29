@@ -1,6 +1,6 @@
 # Lo que necesitás hacer vos (5 minutos)
 
-El código ya está preparado. Solo falta **conectar tu base Neon**.
+El código ya está conectado a PostgreSQL. Solo falta **tu base Neon** en local y, para producción, **Vercel**.
 
 ## 1. Crear Neon (si aún no lo hiciste)
 
@@ -23,7 +23,7 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 
 > Podés copiar la plantilla: renombrá `env.example` → `.env`
 
-## 4. Ejecutar estos 3 comandos
+## 4. Ejecutar estos comandos
 
 ```powershell
 cd C:\Users\matias.aliaga\kineturnos
@@ -32,9 +32,9 @@ npm.cmd run db:seed
 npm.cmd run dev
 ```
 
-> **Windows / PowerShell:** si `npm run ...` falla con *"la ejecución de scripts está deshabilitada"*, usá **`npm.cmd`** en lugar de `npm` (es lo mismo, evita el bloqueo de PowerShell).
+> **Windows / PowerShell:** si `npm run ...` falla, usá **`npm.cmd`**.
 
-**Orden importante:** primero `db:push` (crea tablas), después `db:seed` (carga datos). Si el seed dice que la tabla no existe, falta correr `db:push`.
+**Orden importante:** primero `db:push` (crea tablas), después `db:seed` (carga datos).
 
 ## 5. Probar en el navegador
 
@@ -42,14 +42,31 @@ npm.cmd run dev
 |-----|-------------------|
 | http://localhost:3000/api/health/db | `{ "ok": true, ... }` |
 | http://localhost:3000/api/patients | Lista JSON de pacientes |
+| http://localhost:3000/api/professionals | Lista JSON de profesionales |
 | http://localhost:3000/api/appointments | Lista JSON de turnos |
+| http://localhost:3000/pacientes | UI con pacientes del seed |
 
-## 6. Vercel (producción)
+## 6. Verificación automática
+
+Con `npm run dev` activo, en otra terminal:
+
+```powershell
+npm.cmd run verify:migration
+```
+
+Debería terminar con **25 OK, 0 FAIL**.
+
+## 7. Vercel (producción)
+
+Guía detallada: **[`docs/TU-PARTE-VERCEL.md`](./TU-PARTE-VERCEL.md)**
+
+Resumen:
 
 1. Vercel → **kineturnos** → **Settings** → **Environment Variables**
-2. Name: `DATABASE_URL`  
-   Value: connection string **Pooled** de Neon
-3. **Redeploy**
+2. `DATABASE_URL` = connection string **Pooled** de Neon
+3. `NEXT_PUBLIC_SITE_URL` = `https://kineturnos.vercel.app`
+4. **Redeploy**
+5. Probar `https://kineturnos.vercel.app/api/health/db`
 
 ---
 
@@ -57,7 +74,7 @@ npm.cmd run dev
 
 **No me envíes la connection string por chat** (tiene tu contraseña).
 
-Con que me digas *"listo, ya corrí db:push y health/db responde ok"* alcanza para seguir con la migración de la app a la base de datos.
+Con que me digas *"listo, health/db responde ok en Vercel"* alcanza.
 
 ## Si algo falla
 

@@ -11,7 +11,7 @@ import {
 export const projectMeta = {
   title: "KineTurnos",
   tagline: "Gestion de turnos para consultorios kinesiologicos",
-  version: "Demo v0.1",
+  version: "Demo v0.2",
   year: "2026",
 };
 
@@ -69,9 +69,9 @@ export const mainFeatures: {
   },
   {
     icon: Database,
-    title: "Persistencia local",
+    title: "PostgreSQL + API REST",
     description:
-      "Datos en localStorage con validacion y mocks iniciales; sin backend, ideal para demo y portfolio.",
+      "Persistencia en Neon con Prisma: CRUD de pacientes, profesionales y turnos via API Routes y hooks de dominio.",
   },
 ];
 
@@ -83,7 +83,8 @@ export const technologies = [
   { name: "shadcn/ui + Radix", detail: "Dialogos, selects, alertas accesibles" },
   { name: "date-fns", detail: "Fechas en espanol y logica de calendario" },
   { name: "Sonner", detail: "Toasts para feedback de acciones" },
-  { name: "localStorage", detail: "Persistencia sin base de datos en la demo" },
+  { name: "Neon + Prisma", detail: "PostgreSQL serverless, ORM y seed desde mocks" },
+  { name: "API Routes", detail: "REST en Next.js: /api/patients, professionals, appointments" },
 ];
 
 export const technicalDecisions: {
@@ -96,9 +97,9 @@ export const technicalDecisions: {
       "Separar Dashboard, Agenda, Pacientes y Profesionales facilita escalar el producto y que un reclutador navegue el alcance en minutos.",
   },
   {
-    title: "Hooks de datos persistidos",
+    title: "Hooks de dominio + API REST",
     rationale:
-      "usePersistedPatients, usePersistedAppointments y usePersistedProfessionals unifican lectura/escritura en localStorage con validacion centralizada.",
+      "usePatients, useProfessionals y useAppointments centralizan fetch, CRUD y toasts; la validacion se repite en cliente y servidor.",
   },
   {
     title: "Formato de fecha dd-MM-yyyy",
@@ -116,6 +117,11 @@ export const technicalDecisions: {
       "Cerrar modales de detalle antes de abrir confirmaciones evita overlays congelados con Radix Dialog + AlertDialog.",
   },
   {
+    title: "Unicidad de DNI y matricula",
+    rationale:
+      "Normalizacion en document-validation.ts, constraints en Postgres (dni_normalizado, matricula_normalizada) y rechazo 409 en la API.",
+  },
+  {
     title: "Empty states y toasts centralizados",
     rationale:
       "Presets en empty-states.ts y appToasts en toast.ts mantienen mensajes coherentes en toda la experiencia.",
@@ -124,11 +130,10 @@ export const technicalDecisions: {
 
 export const demoLimitations: string[] = [
   "Sin autenticacion ni roles (recepcion vs profesional vs admin).",
-  "Sin base de datos ni API: los datos viven en el navegador (localStorage).",
   "Sin envio de recordatorios por email o WhatsApp.",
   "Sin facturacion, obras sociales avanzadas ni historial clinico detallado.",
-  "Un solo consultorio; no hay multi-sede ni sincronizacion entre dispositivos.",
-  "Los mocks iniciales se mezclan con datos creados por el usuario en la misma sesion.",
+  "Un solo consultorio; no hay multi-sede.",
+  "Deploy en Vercel requiere configurar DATABASE_URL (ver docs/TU-PARTE-VERCEL.md).",
 ];
 
 export const roadmap: {
@@ -138,9 +143,9 @@ export const roadmap: {
   {
     phase: "Corto plazo",
     items: [
-      "Backend con API REST o tRPC y base PostgreSQL.",
       "Autenticacion y permisos por rol.",
-      "Sincronizacion de nombre de paciente en turnos al editar ficha.",
+      "Actualizar ultimo_turno del paciente al atender sesiones.",
+      "Migraciones Prisma formales en CI/CD.",
     ],
   },
   {
