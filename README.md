@@ -110,6 +110,18 @@ La app requiere **login**. Los usuarios se crean con el seed mínimo o manualmen
 
 ```bash
 npm run db:migrate:deploy
+```
+
+PowerShell (Windows):
+
+```powershell
+$env:SEED_INITIAL_PASSWORD="tu-contraseña-segura"
+npm run db:seed:minimal
+```
+
+Bash / macOS / Linux:
+
+```bash
 SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
 ```
 
