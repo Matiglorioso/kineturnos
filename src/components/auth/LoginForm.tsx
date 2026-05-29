@@ -1,6 +1,5 @@
 "use client";
 
-import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
@@ -83,18 +82,15 @@ export function LoginForm() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="text-center lg:text-left">
-        <div className="mb-6 flex justify-center lg:justify-start">
-          <Logo size="lg" className="lg:hidden" />
-        </div>
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
           {siteConfig.clinicName}
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+        <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-[1.75rem]">
           Ingresá a {siteConfig.name}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
           Acceso para recepción, profesionales y administración.
         </p>
       </div>
@@ -102,16 +98,16 @@ export function LoginForm() {
       {authNotice && (
         <div
           role="status"
-          className="flex items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          className="flex items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-3 text-sm text-amber-950 sm:px-4"
         >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <p>{authNotice}</p>
+          <p className="leading-relaxed">{authNotice}</p>
         </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm"
+        className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6"
         noValidate
       >
         <FormField id="email" label="Email">
@@ -120,6 +116,7 @@ export function LoginForm() {
             id="email"
             type="email"
             autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
@@ -128,6 +125,7 @@ export function LoginForm() {
             placeholder="nombre@consultorio.com"
             required
             aria-invalid={Boolean(formError)}
+            className="h-11 sm:h-10"
           />
         </FormField>
 
@@ -142,6 +140,7 @@ export function LoginForm() {
             }}
             required
             aria-invalid={Boolean(formError)}
+            className="h-11 sm:h-10"
           />
         </FormField>
 
@@ -149,20 +148,24 @@ export function LoginForm() {
           <p
             role="alert"
             className={cn(
-              "rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+              "rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm leading-relaxed text-destructive"
             )}
           >
             {formError}
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          className="h-11 w-full sm:h-10"
+          disabled={loading}
+        >
           {loading ? "Ingresando…" : "Ingresar"}
         </Button>
       </form>
 
       <div className="space-y-3 text-center text-sm text-muted-foreground lg:text-left">
-        <p>
+        <p className="leading-relaxed">
           ¿Olvidaste tu contraseña?{" "}
           <a
             href={getSupportMailto()}
@@ -171,11 +174,11 @@ export function LoginForm() {
             Contactá soporte
           </a>
         </p>
-        <p className="text-xs leading-relaxed">
+        <p className="text-xs leading-relaxed sm:text-sm">
           Soporte:{" "}
           <a
             href={getSupportMailto()}
-            className="font-medium text-brand-600 hover:underline"
+            className="break-all font-medium text-brand-600 hover:underline sm:break-normal"
           >
             {siteConfig.supportEmail}
           </a>
