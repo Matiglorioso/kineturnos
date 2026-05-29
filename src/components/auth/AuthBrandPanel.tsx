@@ -11,8 +11,6 @@ import {
   Users,
 } from "lucide-react";
 
-const SOCIAL_PROOF_INITIALS = ["K", "M", "A"] as const;
-
 const capabilities = [
   { icon: CalendarDays, title: "Agenda diaria y semanal" },
   { icon: Users, title: "Pacientes e historial" },
@@ -73,8 +71,8 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex flex-1 flex-col items-center justify-center gap-8 py-6 xl:gap-10 xl:py-8">
-            <div className="w-full max-w-lg space-y-4">
+          <div className="flex flex-1 flex-col justify-center gap-8 py-6 xl:gap-10 xl:py-8">
+            <div className="w-full space-y-4 text-left">
               <div className="space-y-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
                   {siteConfig.clinicName}
@@ -84,31 +82,13 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
               <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
                 Tu consultorio, organizado en un solo panel
               </h2>
-              <p className="max-w-md text-sm leading-relaxed text-brand-50/90">
+              <p className="text-sm leading-relaxed text-brand-50/90 xl:text-base">
                 Menos papeleo. Más tiempo con tus pacientes.
               </p>
             </div>
 
             <div className="flex w-full justify-center">
               <AuthPanelPreview />
-            </div>
-
-            <div className="flex w-full items-center gap-3 px-0.5">
-              <div className="flex shrink-0">
-                {SOCIAL_PROOF_INITIALS.map((initial, index) => (
-                  <div
-                    key={initial}
-                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-teal-400 to-brand-600 text-[9px] font-bold text-white"
-                    style={{ marginLeft: index > 0 ? "-6px" : "0" }}
-                  >
-                    {initial}
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11.5px] leading-snug text-white/65">
-                <strong className="font-semibold text-white/90">+120 profesionales</strong>{" "}
-                ya organizan con KineTurnos
-              </p>
             </div>
           </div>
 
