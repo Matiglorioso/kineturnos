@@ -95,7 +95,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <nav className="space-y-1 px-4 pb-2">
+      <nav className="space-y-1 px-4 pb-4">
         <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
           Proyecto
         </p>
@@ -130,22 +130,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      <div className="border-t border-slate-200/60 p-4">
-        <Link
-          href="/proyecto"
-          onClick={() => setMobileOpen(false)}
-          className={cn(
-            "block rounded-2xl bg-gradient-to-br from-brand-50 to-teal-50 p-4 ring-1 ring-brand-100/50 transition-all hover:ring-brand-200",
-            pathname.startsWith("/proyecto") && "ring-2 ring-brand-300"
-          )}
-        >
-          <p className="text-xs font-semibold text-brand-800">Demo · Case study</p>
-          <p className="mt-1 text-xs leading-relaxed text-brand-600/90">
-            Stack, decisiones técnicas y roadmap del producto.
-          </p>
-        </Link>
-      </div>
     </>
   );
 
