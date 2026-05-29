@@ -83,18 +83,18 @@ export function LoginForm() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-5">
       <div className="text-center lg:text-left">
-        <div className="mb-5 flex justify-center lg:hidden">
+        <div className="mb-4 flex justify-center lg:hidden">
           <Logo size="lg" />
         </div>
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
           {siteConfig.clinicName}
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-[1.75rem]">
+        <h1 className="mt-1.5 text-2xl font-semibold text-slate-900 lg:text-[1.65rem]">
           Ingresá a {siteConfig.name}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Acceso para recepción, profesionales y administración.
         </p>
       </div>
@@ -111,7 +111,7 @@ export function LoginForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6"
+        className="space-y-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:space-y-4 lg:p-5"
         noValidate
       >
         <FormField id="email" label="Email">
@@ -168,7 +168,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <div className="space-y-3 text-center text-sm text-muted-foreground lg:text-left">
+      <div className="space-y-2 text-center text-sm text-muted-foreground lg:text-left">
         <p className="leading-relaxed">
           ¿Olvidaste tu contraseña?{" "}
           <a
@@ -177,20 +177,18 @@ export function LoginForm() {
           >
             Contactá soporte
           </a>
+          <span className="hidden lg:inline"> · </span>
+          <Link href="/ayuda" className="font-medium text-brand-600 hover:underline lg:inline">
+            Ayuda
+          </Link>
         </p>
-        <p className="text-xs leading-relaxed sm:text-sm">
-          Soporte:{" "}
+        <p className="text-xs leading-relaxed">
           <a
             href={getSupportMailto()}
-            className="break-all font-medium text-brand-600 hover:underline sm:break-normal"
+            className="break-all font-medium text-brand-600 hover:underline lg:break-normal"
           >
             {siteConfig.supportEmail}
           </a>
-        </p>
-        <p>
-          <Link href="/ayuda" className="font-medium text-brand-600 hover:underline">
-            Ver ayuda antes de ingresar
-          </Link>
         </p>
       </div>
     </div>
