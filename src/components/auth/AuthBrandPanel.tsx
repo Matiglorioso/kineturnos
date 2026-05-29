@@ -37,16 +37,20 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-24 top-0 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+        className="pointer-events-none absolute -right-20 top-1/4 h-72 w-72 rounded-full bg-white/10 blur-3xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-24 left-1/4 h-64 w-64 rounded-full bg-teal-300/15 blur-3xl"
+        className="pointer-events-none absolute -bottom-20 left-0 h-72 w-72 rounded-full bg-teal-300/15 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.12),transparent_55%)]"
       />
 
-      <div className="relative grid h-full w-full grid-rows-[auto_minmax(0,1fr)_auto] px-7 py-6 xl:px-10 xl:py-7">
-        <header className="max-w-xl">
-          <div className="flex items-center gap-2.5">
+      <div className="relative flex h-full w-full flex-col px-8 py-7 xl:px-12 xl:py-9">
+        <header className="shrink-0">
+          <div className="flex items-center gap-3">
             <LogoMark className="h-10 w-10 shrink-0" />
             <div>
               <p className="text-base font-bold tracking-tight">{siteConfig.name}</p>
@@ -55,58 +59,62 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
               </p>
             </div>
           </div>
-
-          <p className="mt-4 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
-            {siteConfig.clinicName}
-          </p>
-          <h2 className="mt-1.5 text-xl font-bold leading-tight tracking-tight xl:text-2xl">
-            Tu consultorio, organizado en un solo panel
-          </h2>
-          <p className="mt-2 max-w-md text-xs leading-relaxed text-brand-50/90 xl:text-sm">
-            Turnos, pacientes y profesionales en una sola plataforma.
-          </p>
         </header>
 
-        <div className="grid min-h-0 items-center gap-4 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-6 xl:gap-8">
-          <section aria-label="Funcionalidades principales" className="min-w-0">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-brand-100">
-              Qué podés hacer
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {capabilities.map((item) => (
-                <article
-                  key={item.title}
-                  className="flex items-start gap-2 rounded-lg border border-white/15 bg-white/10 px-2.5 py-2 backdrop-blur-sm"
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/15">
-                    <item.icon className="h-3.5 w-3.5" />
-                  </span>
-                  <p className="text-[11px] font-medium leading-snug text-brand-50 xl:text-xs">
-                    {item.title}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
+        <div className="flex min-h-0 flex-1 items-center py-6 xl:py-8">
+          <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-8 xl:gap-12">
+            <div className="flex flex-col justify-center gap-8 xl:gap-9">
+              <div className="max-w-md space-y-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
+                  {siteConfig.clinicName}
+                </p>
+                <h2 className="text-2xl font-bold leading-tight tracking-tight xl:text-[1.75rem] xl:leading-snug">
+                  Tu consultorio, organizado en un solo panel
+                </h2>
+                <p className="text-sm leading-relaxed text-brand-50/90">
+                  Turnos, pacientes y profesionales en una sola plataforma.
+                </p>
+              </div>
 
-          <div className="hidden shrink-0 lg:block">
-            <AuthPanelPreview />
+              <section aria-label="Funcionalidades principales" className="max-w-lg">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
+                  Qué podés hacer
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {capabilities.map((item) => (
+                    <article
+                      key={item.title}
+                      className="flex flex-col gap-2.5 rounded-xl border border-white/15 bg-white/10 p-3.5 backdrop-blur-sm xl:p-4"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+                        <item.icon className="h-4 w-4" />
+                      </span>
+                      <p className="text-xs font-medium leading-snug text-brand-50 xl:text-[13px]">
+                        {item.title}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <div className="flex items-center justify-center lg:justify-end xl:justify-center">
+              <AuthPanelPreview />
+            </div>
           </div>
         </div>
 
-        <footer className="flex flex-wrap items-center gap-2 border-t border-white/15 pt-4">
+        <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-white/15 pt-5">
           {trustSignals.map((item) => (
             <span
               key={item.label}
-              className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-brand-50"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-brand-50"
             >
-              <item.icon className="h-3 w-3 shrink-0" />
+              <item.icon className="h-3.5 w-3.5 shrink-0" />
               {item.label}
             </span>
           ))}
-          <span className="text-[11px] text-brand-100/90">
-            {siteConfig.name} · v1.0
-          </span>
+          <span className="text-xs text-brand-100/90">{siteConfig.name} · v1.0</span>
         </footer>
       </div>
     </aside>
