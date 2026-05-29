@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const siteConfig = {
   name: "KineTurnos",
   tagline: "Gestión kinesiológica",
+  clinicName: "Centro Kine Norte",
   url: "https://kineturnos.vercel.app",
   repo: "https://github.com/Matiglorioso/kineturnos",
   description:
@@ -41,9 +42,9 @@ export const pageMetadata = {
       "Equipo de kinesiólogos, horarios de atención y turnos asignados por profesional.",
   },
   proyecto: {
-    title: "Acerca del proyecto",
+    title: "Ayuda",
     description:
-      "Case study de KineTurnos: stack técnico, decisiones de arquitectura y roadmap.",
+      "Guía de uso de KineTurnos: módulos, estados de turnos y soporte para el equipo del consultorio.",
   },
 } as const;
 

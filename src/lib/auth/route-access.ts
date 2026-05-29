@@ -1,5 +1,5 @@
 export function isPublicPath(pathname: string): boolean {
-  const publicPaths = ["/login", "/proyecto"];
+  const publicPaths = ["/login"];
 
   return (
     publicPaths.some(

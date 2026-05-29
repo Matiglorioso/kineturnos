@@ -1,10 +1,7 @@
-import { mockActivity } from "@/data/mockActivity";
 import { getAppointmentDateTime, parseAppDate } from "@/lib/date-utils";
 import { formatAppDate, formatTimeShort } from "@/lib/datetime-format";
 import { ActivityItem, Appointment, Patient } from "@/types";
 import { parseISO } from "date-fns";
-
-const MIN_ACTIVITY_ITEMS = 3;
 
 function getPatientActivityTimestamp(patient: Patient): Date | null {
   if (patient.createdAt) {
@@ -100,28 +97,5 @@ export function getRecentActivityItems(
   appointments: Appointment[],
   maxItems = 6
 ): ActivityItem[] {
-  const generated = buildActivityFromData(patients, appointments).slice(
-    0,
-    maxItems
-  );
-
-  if (generated.length >= MIN_ACTIVITY_ITEMS) {
-    return generated;
-  }
-
-  if (generated.length === 0) {
-    return [];
-  }
-
-  const seen = new Set(generated.map((item) => item.id));
-  const demoFill = mockActivity
-    .filter((item) => !seen.has(item.id))
-    .slice(0, maxItems - generated.length);
-
-  return [...generated, ...demoFill]
-    .sort(
-      (a, b) =>
-        parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime()
-    )
-    .slice(0, maxItems);
+  return buildActivityFromData(patients, appointments).slice(0, maxItems);
 }

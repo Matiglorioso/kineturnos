@@ -17,6 +17,7 @@ import {
   getUpcomingAppointments,
 } from "@/lib/dashboard-stats";
 import { formatTodayLongLabel } from "@/lib/date-utils";
+import { siteConfig } from "@/lib/site-config";
 import {
   Ban,
   CalendarCheck,
@@ -88,7 +89,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="animate-slide-up">
-          <p className="text-sm font-medium text-brand-600">Panel del consultorio</p>
+          <p className="text-sm font-medium text-brand-600">{siteConfig.clinicName}</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Resumen del día
           </h1>

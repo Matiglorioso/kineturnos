@@ -100,14 +100,14 @@ async function main() {
     {
       id: "u-admin",
       email: "admin@kineturnos.local",
-      nombre: "Administrador Demo",
+      nombre: "Carolina Viera",
       rol: "admin" as const,
       profesionalId: null,
     },
     {
       id: "u-recepcion",
       email: "recepcion@kineturnos.local",
-      nombre: "Recepción Demo",
+      nombre: "Laura Mendoza",
       rol: "recepcion" as const,
       profesionalId: null,
     },

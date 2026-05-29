@@ -4,6 +4,7 @@ import { LogoMark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { getRoleLabel } from "@/lib/auth/roles";
 import { formatTodayLongLabel } from "@/lib/date-utils";
+import { siteConfig } from "@/lib/site-config";
 import { Bell, LogOut, Plus, Search } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -46,7 +47,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           ) : (
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-brand-600">
-                Panel del consultorio
+                {siteConfig.clinicName}
               </p>
               <TodayLabel />
             </div>
