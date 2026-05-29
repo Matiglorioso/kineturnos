@@ -2,10 +2,15 @@ import { PrismaClient } from "@prisma/client";
 import { mockAppointments } from "../src/data/mockAppointments";
 import { mockPatients } from "../src/data/mockPatients";
 import { mockProfessionals } from "../src/data/mockProfessionals";
-import { hashPassword } from "../src/lib/auth/password";
 import { resolveNameParts } from "../src/lib/person-name";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
 import type { Patient } from "../src/types";
+import {
+  clearAllTables,
+  getDefaultUsers,
+  resolveSeedPassword,
+  seedUsers,
+} from "./seed-shared";
 
 const prisma = new PrismaClient();
 
@@ -34,11 +39,11 @@ function buildPacienteSeedData(patient: Patient) {
 }
 
 async function main() {
+  console.log("Seed completo — datos de desarrollo (mocks + usuarios)");
+  const password = resolveSeedPassword({ mode: "dev" });
+
   console.log("Limpiando tablas...");
-  await prisma.turno.deleteMany();
-  await prisma.usuario.deleteMany();
-  await prisma.paciente.deleteMany();
-  await prisma.profesional.deleteMany();
+  await clearAllTables(prisma);
 
   console.log("Insertando profesionales...");
   for (const professional of mockProfessionals) {
@@ -92,47 +97,15 @@ async function main() {
     });
   }
 
-  console.log("Insertando usuarios...");
-  const demoPasswordHash = await hashPassword("demo1234");
   const firstProfessionalId = mockProfessionals[0]?.id ?? null;
+  const users = getDefaultUsers(firstProfessionalId).map((user) =>
+    user.id === "u-profe" && firstProfessionalId
+      ? { ...user, nombre: mockProfessionals[0]?.name ?? user.nombre }
+      : user
+  );
 
-  const demoUsers = [
-    {
-      id: "u-admin",
-      email: "admin@kineturnos.local",
-      nombre: "Carolina Viera",
-      rol: "admin" as const,
-      profesionalId: null,
-    },
-    {
-      id: "u-recepcion",
-      email: "recepcion@kineturnos.local",
-      nombre: "Laura Mendoza",
-      rol: "recepcion" as const,
-      profesionalId: null,
-    },
-    {
-      id: "u-profe",
-      email: "profe@kineturnos.local",
-      nombre: mockProfessionals[0]?.name ?? "Profesional Demo",
-      rol: "profesional" as const,
-      profesionalId: firstProfessionalId,
-    },
-  ];
-
-  for (const user of demoUsers) {
-    await prisma.usuario.create({
-      data: {
-        id: user.id,
-        email: user.email,
-        nombre: user.nombre,
-        passwordHash: demoPasswordHash,
-        rol: user.rol,
-        activo: true,
-        profesionalId: user.profesionalId,
-      },
-    });
-  }
+  console.log("Insertando usuarios...");
+  await seedUsers(prisma, users, password);
 
   const counts = {
     profesionales: await prisma.profesional.count(),
