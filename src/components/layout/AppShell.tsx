@@ -11,9 +11,9 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login";
+  const isStandalonePage = pathname === "/login" || pathname === "/ayuda";
 
-  if (isAuthPage) {
+  if (isStandalonePage) {
     return (
       <>
         {children}
