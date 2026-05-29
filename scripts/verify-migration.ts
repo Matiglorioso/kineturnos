@@ -57,6 +57,7 @@ async function verifyDbIntegrity() {
   const pacientes = await prisma.paciente.findMany();
   const profesionales = await prisma.profesional.findMany();
   const turnos = await prisma.turno.findMany();
+  const usuarios = await prisma.usuario.findMany();
 
   if (pacientes.length === 0) {
     fail("DB pacientes", "No hay pacientes. Ejecutá npm run db:seed");
@@ -71,6 +72,19 @@ async function verifyDbIntegrity() {
   }
 
   pass("DB turnos", `${turnos.length} registros (seed)`);
+
+  if (usuarios.length < 3) {
+    fail("DB usuarios", `Se esperaban 3 usuarios demo, hay ${usuarios.length}`);
+  } else {
+    pass("DB usuarios", `${usuarios.length} usuarios (admin, recepcion, profesional)`);
+  }
+
+  const roles = new Set(usuarios.map((u) => u.rol));
+  if (!roles.has("admin") || !roles.has("recepcion") || !roles.has("profesional")) {
+    fail("Roles usuarios", "Faltan roles admin, recepcion o profesional en seed");
+  } else {
+    pass("Roles usuarios", "admin, recepcion y profesional presentes");
+  }
 
   const pacientesSinDniNorm = pacientes.filter(
     (p) => !p.dniNormalizado || p.dniNormalizado !== normalizeDni(p.dni)
@@ -525,6 +539,21 @@ async function verifySyncBehavior() {
   await fetchApi(`/api/patients/${patientId}`, { method: "DELETE" });
 }
 
+async function verifyAuthProtection() {
+  const res = await fetch(`${BASE}/api/patients`);
+  const body = (await res.json().catch(() => null)) as { error?: string } | null;
+
+  if (res.status === 401) {
+    pass("API sin auth", "Rechaza 401 sin sesion ni VERIFY_SECRET");
+    return;
+  }
+
+  fail(
+    "API sin auth",
+    `Esperado 401, recibido ${res.status}: ${body?.error ?? "sin mensaje"}`
+  );
+}
+
 async function main() {
   console.log("Verificando migracion a PostgreSQL...\n");
   console.log(`Base URL: ${BASE}\n`);
@@ -589,6 +618,15 @@ async function main() {
     } catch (error) {
       fail(
         "Sync dominio",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    try {
+      await verifyAuthProtection();
+    } catch (error) {
+      fail(
+        "Auth API",
         error instanceof Error ? error.message : String(error)
       );
     }

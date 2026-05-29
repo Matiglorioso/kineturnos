@@ -8,6 +8,7 @@ Sistema web de demostración para organizar turnos, pacientes y profesionales en
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+![CI](https://github.com/Matiglorioso/kineturnos/actions/workflows/ci.yml/badge.svg)
 
 | | |
 |---|---|
@@ -157,12 +158,14 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run db:push` | Sincroniza schema → Neon |
 | `npm run db:seed` | Carga datos de demo |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
-| `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev`) |
+| `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
 
 ### Variables de entorno
 
 ```env
-DATABASE_URL="postgresql://..."   # Neon (requerido para API y persistencia)
+DATABASE_URL="postgresql://..."   # Neon (requerido)
+AUTH_SECRET="..."                 # Auth.js (requerido para login)
+VERIFY_SECRET="..."               # Bypass auth en verify:migration (local/CI)
 NEXT_PUBLIC_SITE_URL=https://kineturnos.vercel.app
 ```
 
@@ -170,6 +173,7 @@ Copiá la plantilla desde `env.example` → `.env`.
 
 **Local:** guía rápida en [`docs/TU-PARTE-NEON.md`](docs/TU-PARTE-NEON.md)  
 **Producción (Vercel):** [`docs/TU-PARTE-VERCEL.md`](docs/TU-PARTE-VERCEL.md)  
+**CI / verify:** [`docs/CI.md`](docs/CI.md)  
 **Referencia completa:** [`docs/GUIA-NEON-PRISMA.md`](docs/GUIA-NEON-PRISMA.md)
 
 ```bash
@@ -184,9 +188,9 @@ npm run verify:migration   # Verificar migración (con dev server activo)
 ## Deploy en Vercel
 
 1. Agregar **`DATABASE_URL`** (connection string **Pooled** de Neon) en Environment Variables
-2. Agregar **`NEXT_PUBLIC_SITE_URL`** = `https://kineturnos.vercel.app`
+2. Agregar **`AUTH_SECRET`** y **`NEXT_PUBLIC_SITE_URL`** = `https://kineturnos.vercel.app`
 3. **Redeploy**
-4. Probar `https://kineturnos.vercel.app/api/health/db`
+4. Probar login en `https://kineturnos.vercel.app/login` y `/api/health/db`
 
 Detalle paso a paso: [`docs/TU-PARTE-VERCEL.md`](docs/TU-PARTE-VERCEL.md)
 
@@ -243,14 +247,17 @@ kineturnos/
 | PostgreSQL (Neon) + Prisma | ✅ Completo |
 | API REST + hooks conectados a DB | ✅ Completo |
 | Validación DNI / matrícula únicos | ✅ Completo |
-| Deploy Vercel con `DATABASE_URL` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
+| Autenticación (login + middleware) | ✅ Completo |
+| Sync `ultimo_turno` y nombres en turnos | ✅ Completo |
+| CI GitHub Actions (lint, build, verify) | ✅ Completo |
+| Deploy Vercel con `DATABASE_URL` + `AUTH_SECRET` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
-| Autenticación y roles | ❌ No incluido |
+| Permisos finos por rol en UI/API | ❌ Pendiente |
 | Notificaciones externas (email / WhatsApp) | ❌ No incluido |
 
 ### Limitaciones de la demo
 
-- Sin autenticación ni permisos por rol
+- Roles definidos pero sin restricciones por pantalla (todos ven los mismos módulos)
 - Un solo consultorio (sin multi-sede)
 - Sin facturación, obras sociales avanzadas ni historial clínico detallado
 - Sin recordatorios automáticos por email o WhatsApp
@@ -260,9 +267,9 @@ kineturnos/
 ## Roadmap futuro
 
 ### Corto plazo
-- Autenticación y permisos por rol (recepción / profesional / admin)
-- Actualizar `ultimo_turno` del paciente al marcar sesiones atendidas
+- Permisos por rol en UI y API (recepción / profesional / admin)
 - Migraciones Prisma formales (`db:migrate`) en CI/CD
+- Capturas en README y polish de portfolio
 
 ### Mediano plazo
 - Recordatorios automáticos y confirmación por link
@@ -296,5 +303,5 @@ Proyecto de demostración para portfolio. _[Definir licencia si se publica en Gi
 ---
 
 <p align="center">
-  Hecho con Next.js, TypeScript y PostgreSQL · Demo v0.2 · 2026
+  Hecho con Next.js, TypeScript y PostgreSQL · Demo v0.3 · 2026
 </p>

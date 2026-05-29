@@ -152,7 +152,7 @@ export const roadmap: {
     items: [
       "Permisos por rol en UI y API (recepcion vs profesional).",
       "Migraciones Prisma formales en CI/CD.",
-      "GitHub Action con verify:migration.",
+      "Capturas en README y polish de portfolio.",
     ],
   },
   {
