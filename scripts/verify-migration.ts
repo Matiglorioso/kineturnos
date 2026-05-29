@@ -550,7 +550,7 @@ async function verifyAuthProtection() {
 
   fail(
     "API sin auth",
-    `Esperado 401, recibido ${res.status}: ${body?.error ?? "sin mensaje"}`
+    `Esperado 401, recibido ${res.status}: ${body?.error ?? JSON.stringify(body) ?? "sin mensaje"}`
   );
 }
 

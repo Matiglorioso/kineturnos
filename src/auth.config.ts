@@ -10,35 +10,7 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
-    authorized({ auth, request }) {
-      const { pathname } = request.nextUrl;
-      const publicPaths = ["/login", "/proyecto"];
-
-      const isPublic =
-        publicPaths.some(
-          (path) => pathname === path || pathname.startsWith(`${path}/`)
-        ) ||
-        pathname.startsWith("/api/auth") ||
-        pathname.startsWith("/api/health");
-
-      const verifySecret = process.env.VERIFY_SECRET;
-      if (
-        verifySecret &&
-        request.headers.get("x-verify-secret") === verifySecret &&
-        pathname.startsWith("/api/")
-      ) {
-        return true;
-      }
-
-      if (isPublic) {
-        if (auth && pathname === "/login") {
-          return Response.redirect(new URL("/", request.nextUrl));
-        }
-        return true;
-      }
-
-      return !!auth;
-    },
+    authorized: () => true,
     jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
