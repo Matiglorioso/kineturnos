@@ -28,6 +28,7 @@ export default auth((req) => {
     }
 
     const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("reason", "auth_required");
     if (pathname !== "/") {
       loginUrl.searchParams.set("callbackUrl", pathname);
     }

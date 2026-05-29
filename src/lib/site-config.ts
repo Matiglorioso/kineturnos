@@ -4,6 +4,8 @@ export const siteConfig = {
   name: "KineTurnos",
   tagline: "Gestión kinesiológica",
   clinicName: "Centro Kine Norte",
+  supportEmail:
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "soporte@kineturnos.local",
   url: "https://kineturnos.vercel.app",
   repo: "https://github.com/Matiglorioso/kineturnos",
   description:
@@ -45,6 +47,15 @@ export const pageMetadata = {
     title: "Ayuda",
     description:
       "Guía de uso de KineTurnos: módulos, estados de turnos y soporte para el equipo del consultorio.",
+  },
+  ayuda: {
+    title: "Ayuda para ingresar",
+    description:
+      "Preguntas frecuentes sobre acceso, contraseñas y uso inicial de KineTurnos.",
+  },
+  login: {
+    title: "Ingresar",
+    description: "Acceso seguro al panel de KineTurnos para el equipo del consultorio.",
   },
 } as const;
 
