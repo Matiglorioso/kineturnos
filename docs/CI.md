@@ -12,6 +12,8 @@ El repositorio incluye un workflow de GitHub Actions (`.github/workflows/ci.yml`
 
 No hace falta configurar secrets en GitHub: el job **Verify** levanta Postgres 16 como servicio del workflow.
 
+El workflow usa `actions/checkout@v6` y `actions/setup-node@v6` con Node.js 24 (sin warnings de deprecación de Node 20).
+
 ---
 
 ## Verificación local
