@@ -57,12 +57,12 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
         }}
       />
 
-      <div className="relative z-[1] flex h-full w-full flex-col px-8 py-7 xl:px-12 xl:py-9">
+      <div className="relative z-[1] flex h-full min-h-0 w-full flex-col overflow-y-auto px-6 py-5 lg:gap-3 xl:overflow-visible xl:gap-0 xl:px-12 xl:py-9">
         <header className="shrink-0">
-          <div className="flex items-center gap-3.5">
-            <LogoMark className="h-12 w-12 shrink-0" />
+          <div className="flex items-center gap-2.5 xl:gap-3.5">
+            <LogoMark className="h-10 w-10 shrink-0 xl:h-12 xl:w-12" />
             <div>
-              <p className="text-lg font-bold tracking-tight">{siteConfig.name}</p>
+              <p className="text-base font-bold tracking-tight xl:text-lg">{siteConfig.name}</p>
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/60">
                 {siteConfig.tagline}
               </p>
@@ -70,43 +70,43 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="w-full shrink-0 space-y-4 pt-4 text-left xl:pt-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 lg:justify-start xl:gap-0">
+          <div className="w-full shrink-0 space-y-2.5 pt-3 text-left lg:space-y-2 xl:space-y-4 xl:pt-5">
             <div className="space-y-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-100">
                 {siteConfig.clinicName}
               </p>
               <div aria-hidden className="h-0.5 w-8 rounded-full bg-brand-300" />
             </div>
-            <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
+            <h2 className="text-[1.65rem] font-extrabold leading-snug tracking-tight xl:text-4xl xl:leading-tight">
               Tu consultorio, organizado en un solo panel
             </h2>
-            <p className="text-sm leading-relaxed text-brand-50/90 xl:text-base">
+            <p className="text-xs leading-relaxed text-brand-50/90 xl:text-base">
               Menos papeleo. Más tiempo con tus pacientes.
             </p>
           </div>
 
-          <div className="flex min-h-0 flex-1 items-center justify-center py-6 xl:py-8">
+          <div className="flex shrink-0 items-center justify-center py-1 lg:flex-none xl:min-h-0 xl:flex-1 xl:py-8">
             <AuthPanelPreview />
           </div>
 
           <section
             aria-label="Funcionalidades principales"
-            className="w-full shrink-0 pb-2"
+            className="w-full shrink-0 pb-1 xl:pb-2"
           >
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-100">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-brand-100 xl:mb-3">
               Qué podés hacer
             </p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
               {capabilities.map((item) => (
                 <article
                   key={item.title}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-white/20 bg-white/15 p-2.5 text-center backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:p-3"
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-white/20 bg-white/15 p-2 text-center backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 xl:gap-2 xl:p-3"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/20 xl:h-7 xl:w-7">
                     <item.icon className="h-3.5 w-3.5" />
                   </span>
-                  <p className="text-[11px] font-medium leading-snug text-brand-50 xl:text-xs">
+                  <p className="text-[10px] font-medium leading-snug text-brand-50 xl:text-xs">
                     {item.title}
                   </p>
                 </article>
@@ -115,7 +115,7 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
           </section>
         </div>
 
-        <footer className="mt-4 flex shrink-0 flex-wrap items-center gap-3 border-t border-white/25 pt-5">
+        <footer className="mt-2 flex shrink-0 flex-wrap items-center gap-2 border-t border-white/25 pt-3 xl:mt-4 xl:gap-3 xl:pt-5">
           {trustSignals.map((item) => (
             <span
               key={item.label}
