@@ -5,11 +5,11 @@ export function AuthPanelPreview() {
   return (
     <div
       aria-hidden
-      className="relative w-full max-w-[220px] lg:max-w-[220px] xl:max-w-[320px]"
+      className="relative mx-auto w-full max-w-[220px] @[52rem]:max-w-[320px]"
     >
-      <div className="absolute -right-2 top-6 h-full w-full rotate-6 rounded-2xl bg-white/[0.08] xl:top-8" />
-      <div className="absolute -right-3 top-4 h-full w-full rotate-3 rounded-2xl bg-white/15 ring-1 ring-white/25 xl:top-6" />
-      <div className="relative overflow-hidden rounded-2xl bg-white/95 p-3 text-slate-900 shadow-2xl shadow-teal-950/40 ring-1 ring-white/40 xl:p-4">
+      <div className="absolute -right-2 top-6 hidden h-full w-full rotate-6 rounded-2xl bg-white/[0.08] @[52rem]:block @[52rem]:top-8" />
+      <div className="absolute -right-3 top-4 hidden h-full w-full rotate-3 rounded-2xl bg-white/15 ring-1 ring-white/25 @[52rem]:block @[52rem]:top-6" />
+      <div className="relative overflow-hidden rounded-2xl bg-white/95 p-3 text-slate-900 shadow-2xl shadow-teal-950/40 ring-1 ring-white/40 @[52rem]:p-4">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-600">
@@ -26,13 +26,13 @@ export function AuthPanelPreview() {
           </span>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-1.5 tabular-nums xl:mt-4 xl:gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-1.5 tabular-nums @[52rem]:mt-4 @[52rem]:gap-2">
           <PreviewStat icon={CalendarCheck} label="Turnos" value="8" tone="brand" />
           <PreviewStat icon={Clock} label="Pend." value="2" tone="amber" />
           <PreviewStat icon={Users} label="Activos" value="7" tone="violet" />
         </div>
 
-        <div className="mt-3 xl:mt-4">
+        <div className="mt-3 @[52rem]:mt-4">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
             Próximo turno
           </p>
@@ -66,13 +66,15 @@ function PreviewStat({
   };
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-2 xl:p-2.5">
+    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-2 @[52rem]:p-2.5">
       <span
         className={`inline-flex h-6 w-6 items-center justify-center rounded-md ${tones[tone]}`}
       >
         <Icon className="h-3.5 w-3.5" />
       </span>
-      <p className="mt-1.5 text-base font-bold leading-none text-slate-900 xl:mt-2 xl:text-lg">{value}</p>
+      <p className="mt-1.5 text-base font-bold leading-none text-slate-900 @[52rem]:mt-2 @[52rem]:text-lg">
+        {value}
+      </p>
       <p className="mt-1 text-[10px] text-slate-500">{label}</p>
     </div>
   );
