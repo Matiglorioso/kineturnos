@@ -13,12 +13,12 @@ export function AuthPageShell({
   contentMaxWidth = "md",
 }: AuthPageShellProps) {
   return (
-    <div className="h-[100dvh] overflow-hidden lg:grid lg:grid-cols-2">
+    <div className="h-[100dvh] overflow-hidden lg:grid lg:grid-cols-2 lg:[&>*]:min-w-0">
       <AuthBrandPanel />
 
       <div
         className={cn(
-          "flex h-[100dvh] min-h-0 flex-col justify-center overflow-hidden gradient-subtle px-4 py-6 sm:px-6 lg:bg-gradient-to-b lg:from-slate-50/80 lg:via-white lg:to-white lg:px-8 lg:py-6 xl:px-10",
+          "flex h-[100dvh] min-h-0 flex-col justify-center overflow-hidden gradient-subtle px-4 py-6 sm:px-6 lg:bg-gradient-to-b lg:from-slate-50/80 lg:via-white lg:to-white lg:px-8 lg:py-6 2xl:px-10",
           className
         )}
       >
