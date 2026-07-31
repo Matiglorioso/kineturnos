@@ -1,3 +1,5 @@
+import { canAccessPage } from "@/lib/auth/permissions";
+
 export function isPublicPath(pathname: string): boolean {
   const publicPaths = ["/login", "/ayuda"];
 
@@ -18,4 +20,13 @@ export function hasVerifyBypass(request: Request, pathname: string): boolean {
     request.headers.get("x-verify-secret") === verifySecret &&
     pathname.startsWith("/api/")
   );
+}
+
+/** Solo páginas UI (no /api). */
+export function canAccessAppPath(
+  role: "admin" | "recepcion" | "profesional",
+  pathname: string
+): boolean {
+  if (pathname.startsWith("/api/")) return true;
+  return canAccessPage(role, pathname);
 }

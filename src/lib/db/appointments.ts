@@ -19,8 +19,13 @@ import type { Appointment, AppointmentStatus } from "@/types";
 export type { AppointmentWriteInput } from "@/lib/db/appointment-write";
 export { appointmentToWriteInput } from "@/lib/db/appointment-write";
 
-export async function getAppointmentsFromDb(): Promise<Appointment[]> {
+export async function getAppointmentsFromDb(options?: {
+  professionalId?: string;
+}): Promise<Appointment[]> {
   const records = await prisma.turno.findMany({
+    where: options?.professionalId
+      ? { profesionalId: options.professionalId }
+      : undefined,
     orderBy: [{ fecha: "asc" }, { hora: "asc" }],
   });
 

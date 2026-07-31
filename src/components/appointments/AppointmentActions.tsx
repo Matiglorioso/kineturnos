@@ -28,6 +28,7 @@ interface AppointmentActionsProps {
   onEdit: (appointment: Appointment) => void;
   onStatusChange: (appointment: Appointment, status: AppointmentStatus) => void;
   variant?: "table" | "card";
+  canEdit?: boolean;
 }
 
 function runAfterDropdownClose(action: () => void) {
@@ -40,6 +41,7 @@ export function AppointmentActions({
   onEdit,
   onStatusChange,
   variant = "table",
+  canEdit = true,
 }: AppointmentActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -85,15 +87,17 @@ export function AppointmentActions({
             <Eye className="text-muted-foreground" />
             Ver detalle
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              closeMenuThen(() => onEdit(appointment));
-            }}
-          >
-            <Pencil className="text-muted-foreground" />
-            Editar
-          </DropdownMenuItem>
+          {canEdit && (
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                closeMenuThen(() => onEdit(appointment));
+              }}
+            >
+              <Pencil className="text-muted-foreground" />
+              Editar
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             disabled={appointment.status === "atendido"}
