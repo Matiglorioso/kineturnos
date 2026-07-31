@@ -15,6 +15,7 @@ export const authConfig = {
       if (user) {
         token.id = user.id!;
         token.role = user.role;
+        token.professionalId = user.professionalId ?? null;
       }
       return token;
     },
@@ -22,6 +23,8 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as "admin" | "recepcion" | "profesional";
+        session.user.professionalId =
+          (token.professionalId as string | null | undefined) ?? null;
       }
       return session;
     },

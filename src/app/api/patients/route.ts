@@ -4,11 +4,15 @@ import {
 } from "@/lib/db/patients";
 import { parsePatientWriteInput } from "@/lib/api/parse-patient-body";
 import { handleWriteError } from "@/lib/api/handle-write-error";
+import { requireApiPermission } from "@/lib/auth/require-session";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const access = await requireApiPermission(request, "patients:read");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const patients = await getPatientsFromDb();
     return NextResponse.json({ data: patients });
@@ -25,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const access = await requireApiPermission(request, "patients:write");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const body = await request.json();
     const parsed = parsePatientWriteInput(body);
