@@ -1,5 +1,6 @@
 import { parsePatientWriteInput } from "@/lib/api/parse-patient-body";
 import { handleWriteError } from "@/lib/api/handle-write-error";
+import { requireApiPermission } from "@/lib/auth/require-session";
 import {
   countPatientAppointmentsInDb,
   deletePatientFromDb,
@@ -14,7 +15,10 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "patients:read");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const { id } = await context.params;
     const patient = await getPatientByIdFromDb(id);
@@ -37,6 +41,9 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "patients:write");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const { id } = await context.params;
     const existing = await getPatientByIdFromDb(id);
@@ -67,7 +74,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "patients:delete");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const { id } = await context.params;
     const existing = await getPatientByIdFromDb(id);

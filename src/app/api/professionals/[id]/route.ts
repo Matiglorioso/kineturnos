@@ -1,6 +1,11 @@
 import { parseProfessionalWriteInput } from "@/lib/api/parse-professional-body";
 import { handleWriteError } from "@/lib/api/handle-write-error";
 import {
+  forbiddenResponse,
+  getOwnProfessionalId,
+  requireApiPermission,
+} from "@/lib/auth/require-session";
+import {
   countProfessionalAppointmentsInDb,
   deleteProfessionalFromDb,
   getProfessionalByIdFromDb,
@@ -14,9 +19,17 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "professionals:read");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const { id } = await context.params;
+    const ownProfessionalId = getOwnProfessionalId(access.session.user);
+    if (ownProfessionalId && id !== ownProfessionalId) {
+      return forbiddenResponse("No tenés acceso a este profesional.");
+    }
+
     const professional = await getProfessionalByIdFromDb(id);
 
     if (!professional) {
@@ -37,6 +50,9 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "professionals:write");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const { id } = await context.params;
     const existing = await getProfessionalByIdFromDb(id);
@@ -66,7 +82,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "professionals:delete");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const { id } = await context.params;
     const existing = await getProfessionalByIdFromDb(id);

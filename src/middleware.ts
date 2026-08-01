@@ -1,5 +1,9 @@
 import { authConfig } from "@/auth.config";
-import { hasVerifyBypass, isPublicPath } from "@/lib/auth/route-access";
+import {
+  canAccessAppPath,
+  hasVerifyBypass,
+  isPublicPath,
+} from "@/lib/auth/route-access";
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -33,6 +37,11 @@ export default auth((req) => {
       loginUrl.searchParams.set("callbackUrl", pathname);
     }
     return NextResponse.redirect(loginUrl);
+  }
+
+  const role = req.auth.user.role;
+  if (!pathname.startsWith("/api/") && !canAccessAppPath(role, pathname)) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();

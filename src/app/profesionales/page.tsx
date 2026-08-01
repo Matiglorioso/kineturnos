@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import { useAppointments } from "@/hooks/use-appointments";
 import { useProfessionals } from "@/hooks/use-professionals";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { getTodayAppDate } from "@/lib/date-utils";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
@@ -35,6 +36,7 @@ export default function ProfesionalesPage() {
     deleteProfessional,
   } = useProfessionals();
   const { appointments } = useAppointments();
+  const { canManageProfessionals } = usePermissions();
   const [today] = useState(() => getTodayAppDate());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -174,16 +176,24 @@ export default function ProfesionalesPage() {
       <PageHeader
         title="Profesionales"
         description={`${professionals.length} kinesiólogos · ${activeCount} activos · ${totalToday} turnos hoy`}
-        actionLabel={emptyStateActions.registerProfessional}
-        actionIcon={UserPlus}
-        onAction={openCreateDialog}
+        actionLabel={
+          canManageProfessionals
+            ? emptyStateActions.registerProfessional
+            : undefined
+        }
+        actionIcon={canManageProfessionals ? UserPlus : undefined}
+        onAction={canManageProfessionals ? openCreateDialog : undefined}
       />
 
       {professionals.length === 0 ? (
         <EmptyStateFromPreset
           preset={emptyStates.professionals.none}
-          actionLabel={emptyStateActions.registerProfessional}
-          onAction={openCreateDialog}
+          actionLabel={
+            canManageProfessionals
+              ? emptyStateActions.registerProfessional
+              : undefined
+          }
+          onAction={canManageProfessionals ? openCreateDialog : undefined}
         />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -197,21 +207,25 @@ export default function ProfesionalesPage() {
                 today
               )}
               onViewDetail={openDetailDialog}
-              onEdit={openEditDialog}
-              onToggleActive={handleToggleActive}
+              onEdit={canManageProfessionals ? openEditDialog : undefined}
+              onToggleActive={
+                canManageProfessionals ? handleToggleActive : undefined
+              }
             />
           ))}
         </div>
       )}
 
-      <NewProfessionalDialog
-        open={dialogOpen}
-        onOpenChange={handleDialogChange}
-        onSubmit={handleSubmit}
-        editingProfessional={editingProfessional}
-        existingCount={professionals.length}
-        existingProfessionals={professionals}
-      />
+      {canManageProfessionals && (
+        <NewProfessionalDialog
+          open={dialogOpen}
+          onOpenChange={handleDialogChange}
+          onSubmit={handleSubmit}
+          editingProfessional={editingProfessional}
+          existingCount={professionals.length}
+          existingProfessionals={professionals}
+        />
+      )}
 
       <ProfessionalDetailDialog
         professional={selectedProfessional}
@@ -221,7 +235,9 @@ export default function ProfesionalesPage() {
           setDetailOpen(open);
           if (!open) setSelectedProfessional(null);
         }}
-        onDeleteRequest={handleDeleteRequest}
+        onDeleteRequest={
+          canManageProfessionals ? handleDeleteRequest : undefined
+        }
       />
 
       <ConfirmAlertDialog

@@ -4,14 +4,27 @@ import {
 } from "@/lib/db/professionals";
 import { parseProfessionalWriteInput } from "@/lib/api/parse-professional-body";
 import { handleWriteError } from "@/lib/api/handle-write-error";
+import {
+  getOwnProfessionalId,
+  requireApiPermission,
+} from "@/lib/auth/require-session";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const access = await requireApiPermission(request, "professionals:read");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const professionals = await getProfessionalsFromDb();
-    return NextResponse.json({ data: professionals });
+    const ownProfessionalId = getOwnProfessionalId(access.session.user);
+
+    const data = ownProfessionalId
+      ? professionals.filter((item) => item.id === ownProfessionalId)
+      : professionals;
+
+    return NextResponse.json({ data });
   } catch (error) {
     console.error("GET /api/professionals", error);
     return NextResponse.json(
@@ -25,6 +38,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const access = await requireApiPermission(request, "professionals:write");
+  if (access.unauthorized) return access.unauthorized;
+
   try {
     const body = await request.json();
     const parsed = parseProfessionalWriteInput(body);
