@@ -1,6 +1,6 @@
 import { toAppDate } from "@/lib/date-utils";
 import { normalizeDni } from "@/lib/document-validation";
-import { resolveNameParts } from "@/lib/person-name";
+import { resolveNameParts, toTitleCaseName } from "@/lib/person-name";
 import type { Patient, PatientStatus } from "@/types";
 
 export interface PatientWriteInput {
@@ -40,12 +40,12 @@ export function patientToWriteInput(patient: Patient): PatientWriteInput {
 }
 
 export function toPacienteWriteData(input: PatientWriteInput) {
-  const firstName = input.firstName.trim();
-  const lastName = input.lastName.trim();
+  const firstName = toTitleCaseName(input.firstName);
+  const lastName = toTitleCaseName(input.lastName);
   const dni = input.dni.trim();
 
   return {
-    nombre: `${firstName} ${lastName}`,
+    nombre: `${firstName} ${lastName}`.trim(),
     nombrePila: firstName,
     apellido: lastName,
     dni,

@@ -2,14 +2,16 @@
 
 import { LogoMark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { usePermissions } from "@/hooks/use-permissions";
 import { getRoleLabel } from "@/lib/auth/roles";
 import { formatTodayLongLabel } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
-import { Bell, LogOut, Plus, Search } from "lucide-react";
+import { LogOut, Plus, Search } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 interface HeaderProps {
   title?: string;
@@ -31,9 +33,20 @@ function TodayLabel() {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
   const { canSchedule, canManagePatients } = usePermissions();
+  const [patientQuery, setPatientQuery] = useState("");
+
+  const handlePatientSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = patientQuery.trim();
+    const href = query
+      ? `/pacientes?q=${encodeURIComponent(query)}`
+      : "/pacientes";
+    router.push(href);
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
@@ -58,19 +71,22 @@ export function Header({ title, subtitle }: HeaderProps) {
 
         <div className="flex items-center gap-2 sm:gap-3">
           {canManagePatients && (
-            <Link
-              href="/pacientes"
-              className="hidden items-center gap-2 rounded-xl border border-input bg-muted/50 px-3 py-2 transition-colors hover:bg-muted md:flex"
+            <form
+              onSubmit={handlePatientSearch}
+              className="relative hidden md:block"
+              role="search"
             >
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Buscar pacientes</span>
-            </Link>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={patientQuery}
+                onChange={(event) => setPatientQuery(event.target.value)}
+                placeholder="Buscar pacientes…"
+                aria-label="Buscar pacientes por nombre o DNI"
+                className="w-56 bg-muted/50 pl-9 lg:w-64"
+              />
+            </form>
           )}
-
-          <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-white" />
-          </Button>
 
           {canSchedule && (
             <>

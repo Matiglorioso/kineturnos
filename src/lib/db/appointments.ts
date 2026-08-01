@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/appointment-write";
 import { getProfessionalsFromDb } from "@/lib/db/professionals";
 import { recomputePatientLastAppointment } from "@/lib/db/sync";
+import { isFinalAppointmentStatus } from "@/lib/appointment-status";
 import { validateAppointmentForm } from "@/lib/appointment-validation";
 import { prisma } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
@@ -63,6 +64,7 @@ export async function assertAppointmentInputValid(
   input: AppointmentWriteInput,
   excludeId?: string
 ): Promise<void> {
+  // create/update pasan por validateAppointmentForm (días de atención + overlap).
   const [appointments, professionals] = await Promise.all([
     getAppointmentsFromDb(),
     getProfessionalsFromDb(),
@@ -158,4 +160,27 @@ export async function updateAppointmentStatusInDb(
     ...appointmentToWriteInput(existing),
     status,
   });
+}
+
+/**
+ * Elimina el turno de forma permanente.
+ * Solo permitido para estados finales (atendido / cancelado / ausente).
+ */
+export async function deleteAppointmentFromDb(id: string): Promise<Appointment> {
+  const existing = await getAppointmentByIdFromDb(id);
+  if (!existing) {
+    throw new NotFoundError("Turno no encontrado.");
+  }
+
+  if (!isFinalAppointmentStatus(existing.status)) {
+    throw new ValidationError(
+      "Solo se pueden eliminar turnos en estado final (atendido, cancelado o ausente). Cancelá el turno activo primero.",
+      "status"
+    );
+  }
+
+  await prisma.turno.delete({ where: { id } });
+  await recomputePatientLastAppointment(existing.patientId);
+
+  return existing;
 }

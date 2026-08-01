@@ -52,3 +52,9 @@ export async function updateAppointmentStatusRequest(
     body: JSON.stringify({ status }),
   });
 }
+
+export async function deleteAppointmentRequest(id: string): Promise<void> {
+  await fetchJson<{ id: string }>(`/api/appointments/${id}`, {
+    method: "DELETE",
+  });
+}

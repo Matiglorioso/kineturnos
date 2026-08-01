@@ -58,7 +58,7 @@ export function AppShell({ children }: AppShellProps) {
       />
       <div
         className={cn(
-          "transition-[padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "relative z-0 transition-[padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           sidebarCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-72"
         )}
       >

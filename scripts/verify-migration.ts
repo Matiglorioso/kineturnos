@@ -322,15 +322,18 @@ async function verifyProfessionalsApi() {
     try {
       await fetchApi(`/api/professionals/${withTurnos.id}`, { method: "DELETE" });
       fail(
-        "DELETE profesional con turnos",
-        "Deberia bloquear eliminacion si tiene turnos"
+        "DELETE profesional con turnos activos",
+        "Deberia bloquear eliminacion si tiene turnos pendientes o confirmados"
       );
     } catch (error) {
       const msg = error instanceof Error ? error.message : "";
-      if (msg.includes("turno")) {
-        pass("DELETE profesional con turnos", "Bloqueado correctamente");
+      if (msg.includes("turno") && (msg.includes("activo") || msg.includes("asignado"))) {
+        pass(
+          "DELETE profesional con turnos activos",
+          "Bloqueado correctamente"
+        );
       } else {
-        fail("DELETE profesional con turnos", msg);
+        fail("DELETE profesional con turnos activos", msg);
       }
     }
   }

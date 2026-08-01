@@ -50,9 +50,9 @@ export const emptyStates = {
     },
     noToday: {
       icon: Calendar,
-      title: "Sin turnos para hoy",
+      title: "Sin turnos para esta fecha",
       description:
-        "No hay sesiones programadas para esta fecha. Podés agendar una nueva o revisar otra vista.",
+        "No hay sesiones programadas para el día seleccionado. Podés agendar una nueva o elegir otra fecha.",
     },
     noWeek: {
       icon: CalendarDays,

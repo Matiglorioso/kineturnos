@@ -21,9 +21,26 @@ import { countPatientAppointments } from "@/lib/patient-appointments";
 import { showSuccessToast } from "@/lib/toast";
 import { Patient } from "@/types";
 import { Search, UserPlus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 export default function PacientesPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageLoadingState
+          title="Pacientes"
+          description="Cargando listado de pacientes..."
+        />
+      }
+    >
+      <PacientesPageContent />
+    </Suspense>
+  );
+}
+
+function PacientesPageContent() {
+  const searchParams = useSearchParams();
   const {
     patients,
     isLoading,
@@ -44,6 +61,13 @@ export default function PacientesPage() {
   const [patientToDeactivate, setPatientToDeactivate] =
     useState<Patient | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query != null) {
+      setSearch(query);
+    }
+  }, [searchParams]);
 
   const deleteAppointmentCount = useMemo(() => {
     if (!patientToDelete) return 0;

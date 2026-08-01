@@ -1,3 +1,4 @@
+import { ACTIVE_APPOINTMENT_STATUSES } from "@/lib/appointment-status";
 import { mapProfessional } from "@/lib/db/mappers";
 import { DeleteBlockedError, DuplicateFieldError } from "@/lib/db/errors";
 import {
@@ -90,14 +91,31 @@ export async function countProfessionalAppointmentsInDb(
   return prisma.turno.count({ where: { profesionalId: professionalId } });
 }
 
-export async function deleteProfessionalFromDb(id: string): Promise<void> {
-  const appointmentCount = await countProfessionalAppointmentsInDb(id);
+export async function countProfessionalActiveAppointmentsInDb(
+  professionalId: string
+): Promise<number> {
+  return prisma.turno.count({
+    where: {
+      profesionalId: professionalId,
+      estado: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
+    },
+  });
+}
 
-  if (appointmentCount > 0) {
+/**
+ * Elimina el profesional. Bloquea si tiene turnos activos (pendiente/confirmado).
+ * Si solo hay turnos finales (atendido/cancelado/ausente), se borran en cascada.
+ */
+export async function deleteProfessionalFromDb(id: string): Promise<number> {
+  const activeCount = await countProfessionalActiveAppointmentsInDb(id);
+
+  if (activeCount > 0) {
     throw new DeleteBlockedError(
-      `No se puede eliminar el profesional porque tiene ${appointmentCount} turno(s) asignado(s).`
+      `No se puede eliminar el profesional porque tiene ${activeCount} turno(s) activo(s) (pendiente o confirmado). Cancelalos o atendelos antes de eliminar.`
     );
   }
 
+  const deletedAppointments = await countProfessionalAppointmentsInDb(id);
   await prisma.profesional.delete({ where: { id } });
+  return deletedAppointments;
 }

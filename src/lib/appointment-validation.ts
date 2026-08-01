@@ -66,6 +66,12 @@ export type AppointmentFormErrors = Partial<
   Record<keyof AppointmentFormInput | "overlap" | "schedule", string>
 >;
 
+/**
+ * Validación compartida de alta/edición de turnos (UI + `assertAppointmentInputValid`).
+ * Invariantes críticos (cubiertos por `appointment-validation.test.ts`):
+ * 1) día de atención del profesional (`schedule` / `date` vía professional-schedule)
+ * 2) sin solapamiento con turnos bloqueantes del mismo profesional (`overlap`)
+ */
 export function validateAppointmentForm(
   values: AppointmentFormInput,
   existingAppointments: Appointment[],

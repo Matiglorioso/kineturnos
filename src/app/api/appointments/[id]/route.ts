@@ -12,6 +12,7 @@ import {
 import { hasPermission } from "@/lib/auth/permissions";
 import {
   getAppointmentByIdFromDb,
+  deleteAppointmentFromDb,
   updateAppointmentInDb,
   updateAppointmentStatusInDb,
 } from "@/lib/db/appointments";
@@ -126,5 +127,30 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ data: appointment });
   } catch (error) {
     return handleWriteError(error, "No se pudo actualizar el turno.");
+  }
+}
+
+export async function DELETE(request: Request, context: RouteContext) {
+  const access = await requireApiPermission(request, "appointments:write");
+  if (access.unauthorized) return access.unauthorized;
+
+  try {
+    const { id } = await context.params;
+    const existing = await getAppointmentByIdFromDb(id);
+
+    if (!existing) {
+      return NextResponse.json({ error: "Turno no encontrado." }, { status: 404 });
+    }
+
+    const owned = assertOwnAppointment(
+      getOwnProfessionalId(access.session.user),
+      existing.professionalId
+    );
+    if (owned) return owned;
+
+    const deleted = await deleteAppointmentFromDb(id);
+    return NextResponse.json({ data: { id: deleted.id } });
+  } catch (error) {
+    return handleWriteError(error, "No se pudo eliminar el turno.");
   }
 }

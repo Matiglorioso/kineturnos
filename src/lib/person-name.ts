@@ -19,6 +19,29 @@ export function splitFullName(fullName: string): {
   };
 }
 
+/** Title Case para nombres propios (ej. "juan PÉREZ" → "Juan Pérez"). */
+export function toTitleCaseName(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase("es-AR")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      if (word.includes("-")) {
+        return word
+          .split("-")
+          .map((part) =>
+            part
+              ? part.charAt(0).toLocaleUpperCase("es-AR") + part.slice(1)
+              : part
+          )
+          .join("-");
+      }
+      return word.charAt(0).toLocaleUpperCase("es-AR") + word.slice(1);
+    })
+    .join(" ");
+}
+
 export function resolveNameParts(
   fullName: string,
   firstName?: string,

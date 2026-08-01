@@ -61,7 +61,7 @@ function buildActivityFromData(
         items.push({
           id: `cancel-${appointment.id}`,
           type: "cancellation",
-          message: `${appointment.patientName} cancelo su turno del ${dateLabel} a las ${timeLabel}`,
+          message: `Se canceló el turno de ${appointment.patientName} del ${dateLabel} a las ${timeLabel}`,
           timestamp: timestamp.toISOString(),
         });
         break;

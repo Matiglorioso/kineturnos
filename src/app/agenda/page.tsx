@@ -1,5 +1,6 @@
 "use client";
 
+import { AgendaDatePicker } from "@/components/agenda/AgendaDatePicker";
 import { AgendaListView } from "@/components/agenda/AgendaListView";
 import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
 import { AppointmentActions } from "@/components/appointments/AppointmentActions";
@@ -15,7 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { areSameAppDay, getTodayAppDate } from "@/lib/date-utils";
+import {
+  areSameAppDay,
+  getTodayAppDate,
+  isValidAppDate,
+  normalizeAppDate,
+} from "@/lib/date-utils";
 import { formatAppDateLong } from "@/lib/datetime-format";
 import { useAppointments } from "@/hooks/use-appointments";
 import { useProfessionals } from "@/hooks/use-professionals";
@@ -52,6 +58,7 @@ export default function AgendaPage() {
     createAppointment,
     updateAppointment,
     updateAppointmentStatus,
+    deleteAppointment,
   } = useAppointments();
   const {
     canSchedule,
@@ -60,6 +67,7 @@ export default function AgendaPage() {
   } = usePermissions();
   const [viewMode, setViewMode] = useState<AgendaViewMode>("list");
   const [weekStart, setWeekStart] = useState(() => getWeekStartMonday(new Date()));
+  const [listDate, setListDate] = useState(() => getTodayAppDate());
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "todos">(
     "todos"
   );
@@ -79,7 +87,10 @@ export default function AgendaPage() {
   );
   const [detailOpen, setDetailOpen] = useState(false);
   const today = getTodayAppDate();
-  const todayDateLabel = formatAppDateLong(today);
+  const selectedListDate = isValidAppDate(listDate)
+    ? normalizeAppDate(listDate)
+    : today;
+  const selectedListDateLabel = formatAppDateLong(selectedListDate);
 
   const filteredByCommon = useMemo(
     () =>
@@ -94,10 +105,10 @@ export default function AgendaPage() {
     () =>
       sortAppointmentsByTime(
         filteredByCommon.filter((appointment) =>
-          areSameAppDay(appointment.date, today)
+          areSameAppDay(appointment.date, selectedListDate)
         )
       ),
-    [filteredByCommon, today]
+    [filteredByCommon, selectedListDate]
   );
 
   const weekAppointments = useMemo(
@@ -112,7 +123,7 @@ export default function AgendaPage() {
 
   const pageDescription =
     viewMode === "list"
-      ? `Turnos de hoy — ${todayDateLabel}`
+      ? `Turnos del ${selectedListDateLabel}`
       : `Vista semanal — ${formatWeekRangeLabel(weekStart)}`;
 
   const hasActiveFilters =
@@ -175,6 +186,14 @@ export default function AgendaPage() {
     await updateAppointmentStatus(appointment, status);
   };
 
+  const handleDeleteAppointment = async (appointment: Appointment) => {
+    await deleteAppointment(appointment);
+    if (viewingAppointment?.id === appointment.id) {
+      setDetailOpen(false);
+      setViewingAppointment(null);
+    }
+  };
+
   const renderActions = (appointment: Appointment, variant: "table" | "card") => (
     <AppointmentActions
       appointment={appointment}
@@ -182,7 +201,9 @@ export default function AgendaPage() {
       onView={openDetailDialog}
       onEdit={openEditDialog}
       onStatusChange={handleStatusChange}
+      onDelete={handleDeleteAppointment}
       canEdit={canSchedule}
+      canDelete={canSchedule}
     />
   );
 
@@ -277,6 +298,10 @@ export default function AgendaPage() {
           )}
         </div>
 
+        {viewMode === "list" && (
+          <AgendaDatePicker value={listDate} onChange={setListDate} />
+        )}
+
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {APPOINTMENT_STATUS_FILTERS.map((filter) => (
             <button
@@ -299,7 +324,7 @@ export default function AgendaPage() {
       {viewMode === "list" ? (
         <AgendaListView
           appointments={listAppointments}
-          dateLabel={todayDateLabel}
+          dateLabel={selectedListDateLabel}
           renderActions={renderActions}
           onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
@@ -332,7 +357,7 @@ export default function AgendaPage() {
           patients={patients}
           professionals={professionals}
           existingAppointments={appointments}
-          defaultDate={today}
+          defaultDate={viewMode === "list" ? selectedListDate : today}
           editingAppointment={editingAppointment}
         />
       )}

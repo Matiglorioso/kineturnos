@@ -67,6 +67,11 @@ export const appToasts = {
         "Ausencia registrada",
         `El turno de ${patientName} quedó marcado como ausente.`
       ),
+    deleted: (patientName: string) =>
+      showSuccessToast(
+        "Turno eliminado",
+        `El registro de ${patientName} se eliminó de forma permanente.`
+      ),
     validationError: () =>
       showErrorToast(
         "Revisá el formulario",
@@ -76,6 +81,11 @@ export const appToasts = {
       showErrorToast(
         "No se pudo guardar",
         description ?? "Seleccioná un paciente y un profesional válidos."
+      ),
+    deleteError: (description?: string) =>
+      showErrorToast(
+        "No se pudo eliminar",
+        description ?? "Intentá de nuevo o revisá el estado del turno."
       ),
   },
   professional: {

@@ -190,3 +190,101 @@ export function getAppointmentHeight(
 ): number {
   return Math.max(minHeight, (duration / 60) * hourHeight - 4);
 }
+
+function appointmentsOverlap(a: Appointment, b: Appointment): boolean {
+  const aStart = timeToMinutes(a.time);
+  const aEnd = aStart + a.duration;
+  const bStart = timeToMinutes(b.time);
+  const bEnd = bStart + b.duration;
+  return aStart < bEnd && bStart < aEnd;
+}
+
+export type PositionedWeekAppointment = {
+  appointment: Appointment;
+  column: number;
+  columnCount: number;
+};
+
+/**
+ * Asigna columnas a turnos del mismo día que se solapan (estilo Google Calendar),
+ * para que ninguno quede oculto detrás de otro.
+ */
+export function layoutDayAppointments(
+  appointments: Appointment[]
+): PositionedWeekAppointment[] {
+  if (appointments.length === 0) return [];
+
+  const sorted = sortAppointmentsByTime(appointments);
+  const n = sorted.length;
+  const parent = Array.from({ length: n }, (_, index) => index);
+
+  const find = (index: number): number => {
+    let current = index;
+    while (parent[current] !== current) {
+      parent[current] = parent[parent[current]];
+      current = parent[current];
+    }
+    return current;
+  };
+
+  const union = (a: number, b: number) => {
+    const rootA = find(a);
+    const rootB = find(b);
+    if (rootA !== rootB) parent[rootA] = rootB;
+  };
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      if (appointmentsOverlap(sorted[i], sorted[j])) {
+        union(i, j);
+      }
+    }
+  }
+
+  const clusters = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    const group = clusters.get(root) ?? [];
+    group.push(i);
+    clusters.set(root, group);
+  }
+
+  const positioned: PositionedWeekAppointment[] = [];
+
+  for (const indices of clusters.values()) {
+    const cluster = indices.map((index) => sorted[index]);
+    const columnEndMinutes: number[] = [];
+    const columns: number[] = [];
+
+    for (const appointment of cluster) {
+      const start = timeToMinutes(appointment.time);
+      const end = start + appointment.duration;
+      let placed = false;
+
+      for (let column = 0; column < columnEndMinutes.length; column++) {
+        if (columnEndMinutes[column] <= start) {
+          columnEndMinutes[column] = end;
+          columns.push(column);
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        columns.push(columnEndMinutes.length);
+        columnEndMinutes.push(end);
+      }
+    }
+
+    const columnCount = Math.max(1, columnEndMinutes.length);
+    cluster.forEach((appointment, index) => {
+      positioned.push({
+        appointment,
+        column: columns[index] ?? 0,
+        columnCount,
+      });
+    });
+  }
+
+  return positioned;
+}
