@@ -19,6 +19,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+/**
+ * Patrón de portales SaaS (Linear / Notion / dashboards):
+ * - Toggle en el header del sidebar, junto al logo (no en el borde ni como ítem de nav).
+ * - Collapsed = rail de íconos; labels con tooltip nativo.
+ * - Animación de ancho fluida; íconos anclados a la izquierda.
+ */
+const SIDEBAR_TRANSITION =
+  "duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
+
 const navigation = [
   {
     name: "Dashboard",
@@ -70,26 +79,46 @@ export function Sidebar({
     ? secondaryNavigation.filter((item) => canAccessPage(role, item.href))
     : secondaryNavigation;
 
-  const renderNav = (options: { compact: boolean; onNavigate?: () => void }) => {
-    const { compact, onNavigate } = options;
+  const renderNavLinks = (options: {
+    compact: boolean;
+    onNavigate?: () => void;
+    animateLabels?: boolean;
+  }) => {
+    const { compact, onNavigate, animateLabels = false } = options;
+    const hideLabels = compact;
+
+    const linkClass = (isActive: boolean) =>
+      cn(
+        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200",
+        isActive
+          ? "bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100"
+          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+      );
+
+    const labelClass = cn(
+      "whitespace-nowrap",
+      animateLabels
+        ? cn(
+            "overflow-hidden transition-[opacity,max-width] duration-200 ease-out",
+            hideLabels ? "max-w-0 opacity-0" : "max-w-[11rem] opacity-100"
+          )
+        : hideLabels && "sr-only"
+    );
+
+    const sectionLabelClass = cn(
+      "mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400",
+      animateLabels
+        ? cn(
+            "overflow-hidden transition-[opacity,max-height,margin] duration-200",
+            hideLabels ? "mb-0 max-h-0 opacity-0" : "max-h-6 opacity-100"
+          )
+        : hideLabels && "sr-only"
+    );
 
     return (
       <>
-        <div
-          className={cn(
-            "flex h-16 items-center border-b border-slate-200/60",
-            compact ? "justify-center px-2" : "px-6"
-          )}
-        >
-          <Logo href="/" size="md" showText={!compact} showTagline={!compact} />
-        </div>
-
-        <nav className={cn("flex-1 space-y-1", compact ? "p-2" : "p-4")}>
-          {!compact && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              Menu principal
-            </p>
-          )}
+        <nav className="flex-1 space-y-1 overflow-hidden p-3">
+          <p className={sectionLabelClass}>Menu principal</p>
           {visibleNavigation.map((item) => {
             const isActive =
               item.href === "/"
@@ -100,18 +129,10 @@ export function Sidebar({
               <Link
                 key={item.href}
                 href={item.href}
-                title={compact ? item.name : undefined}
-                aria-label={compact ? item.name : undefined}
+                title={hideLabels ? item.name : undefined}
+                aria-label={hideLabels ? item.name : undefined}
                 onClick={onNavigate}
-                className={cn(
-                  "group flex items-center rounded-xl text-sm font-medium transition-all duration-200",
-                  compact
-                    ? "justify-center px-2 py-2.5"
-                    : "gap-3 px-3 py-2.5",
-                  isActive
-                    ? "bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                )}
+                className={linkClass(isActive)}
               >
                 <item.icon
                   className={cn(
@@ -121,21 +142,17 @@ export function Sidebar({
                       : "text-slate-400 group-hover:text-slate-600"
                   )}
                 />
-                {!compact && item.name}
-                {!compact && isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-500" />
+                <span className={labelClass}>{item.name}</span>
+                {isActive && !hideLabels && (
+                  <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        <nav className={cn("space-y-1", compact ? "px-2 pb-2" : "px-4 pb-4")}>
-          {!compact && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              Soporte
-            </p>
-          )}
+        <nav className="space-y-1 overflow-hidden px-3 pb-3">
+          <p className={sectionLabelClass}>Soporte</p>
           {visibleSecondary.map((item) => {
             const isActive = pathname.startsWith(item.href);
 
@@ -143,18 +160,10 @@ export function Sidebar({
               <Link
                 key={item.href}
                 href={item.href}
-                title={compact ? item.name : undefined}
-                aria-label={compact ? item.name : undefined}
+                title={hideLabels ? item.name : undefined}
+                aria-label={hideLabels ? item.name : undefined}
                 onClick={onNavigate}
-                className={cn(
-                  "group flex items-center rounded-xl text-sm font-medium transition-all duration-200",
-                  compact
-                    ? "justify-center px-2 py-2.5"
-                    : "gap-3 px-3 py-2.5",
-                  isActive
-                    ? "bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                )}
+                className={linkClass(isActive)}
               >
                 <item.icon
                   className={cn(
@@ -164,34 +173,13 @@ export function Sidebar({
                       : "text-slate-400 group-hover:text-slate-600"
                   )}
                 />
-                {!compact && item.name}
-                {!compact && isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-500" />
+                <span className={labelClass}>{item.name}</span>
+                {isActive && !hideLabels && (
+                  <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
                 )}
               </Link>
             );
           })}
-
-          {onToggleCollapsed && (
-            <button
-              type="button"
-              onClick={onToggleCollapsed}
-              title={collapsed ? "Expandir menú" : "Colapsar menú"}
-              aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-              aria-expanded={!collapsed}
-              className={cn(
-                "mt-2 hidden w-full items-center rounded-xl text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 lg:flex",
-                compact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
-              )}
-            >
-              {collapsed ? (
-                <PanelLeftOpen className="h-5 w-5 shrink-0 text-slate-400" />
-              ) : (
-                <PanelLeftClose className="h-5 w-5 shrink-0 text-slate-400" />
-              )}
-              {!compact && (collapsed ? "Expandir" : "Colapsar")}
-            </button>
-          )}
         </nav>
       </>
     );
@@ -228,17 +216,55 @@ export function Sidebar({
         >
           <X className="h-4 w-4 text-slate-500" />
         </button>
-        {renderNav({ compact: false, onNavigate: () => setMobileOpen(false) })}
+        <div className="flex h-16 shrink-0 items-center border-b border-slate-200/60 px-5">
+          <Logo href="/" size="md" />
+        </div>
+        {renderNavLinks({
+          compact: false,
+          onNavigate: () => setMobileOpen(false),
+        })}
       </aside>
 
       {/* Rail fijo desktop / notebook */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-md transition-[width] duration-300 ease-out lg:flex",
-          collapsed ? "w-20" : "w-72"
+          "fixed inset-y-0 left-0 z-30 hidden flex-col overflow-hidden border-r border-slate-200/80 bg-white/95 backdrop-blur-md transition-[width] lg:flex",
+          SIDEBAR_TRANSITION,
+          collapsed ? "w-[4.5rem]" : "w-72"
         )}
       >
-        {renderNav({ compact: collapsed })}
+        {/* Header: logo + toggle (patrón Linear / Notion / dashboards SaaS) */}
+        <div
+          className={cn(
+            "flex h-16 shrink-0 items-center border-b border-slate-200/60",
+            collapsed ? "justify-center px-2" : "gap-1 px-3 pr-2"
+          )}
+        >
+          {!collapsed && (
+            <div className="min-w-0 flex-1 overflow-hidden px-1">
+              <Logo href="/" size="md" showText showTagline />
+            </div>
+          )}
+
+          {onToggleCollapsed && (
+            <button
+              type="button"
+              onClick={onToggleCollapsed}
+              title={collapsed ? "Expandir menú" : "Colapsar menú"}
+              aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+              aria-expanded={!collapsed}
+              className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:inline-flex"
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </button>
+          )}
+        </div>
+
+        {renderNavLinks({ compact: collapsed, animateLabels: true })}
       </aside>
     </>
   );
