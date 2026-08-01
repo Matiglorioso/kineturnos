@@ -102,7 +102,7 @@ model Turno {
   tipoSesion         String      @map("tipo_sesion")
   observaciones      String?
   paciente           Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
-  profesional        Profesional @relation(fields: [profesionalId], references: [id], onDelete: Restrict)
+  profesional        Profesional @relation(fields: [profesionalId], references: [id], onDelete: Cascade)
 
   @@index([fecha])
   @@index([estado])

@@ -8,6 +8,7 @@ import {
 } from "@/lib/db/patient-write";
 import { DuplicateFieldError } from "@/lib/db/errors";
 import { syncTurnoPatientName } from "@/lib/db/sync";
+import { maxAppDate } from "@/lib/date-utils";
 import {
   DUPLICATE_DNI_MESSAGE,
   normalizeDni,
@@ -21,14 +22,39 @@ export { patientToWriteInput } from "@/lib/db/patient-write";
 export async function getPatientsFromDb(): Promise<Patient[]> {
   const records = await prisma.paciente.findMany({
     orderBy: { nombre: "asc" },
+    include: {
+      turnos: {
+        select: { fecha: true },
+      },
+    },
   });
 
-  return records.map(mapPatient);
+  return records.map((record) => {
+    const latestFromTurnos = maxAppDate(record.turnos.map((t) => t.fecha));
+    return mapPatient({
+      ...record,
+      ultimoTurno: latestFromTurnos ?? record.ultimoTurno,
+    });
+  });
 }
 
 export async function getPatientByIdFromDb(id: string): Promise<Patient | null> {
-  const record = await prisma.paciente.findUnique({ where: { id } });
-  return record ? mapPatient(record) : null;
+  const record = await prisma.paciente.findUnique({
+    where: { id },
+    include: {
+      turnos: {
+        select: { fecha: true },
+      },
+    },
+  });
+
+  if (!record) return null;
+
+  const latestFromTurnos = maxAppDate(record.turnos.map((t) => t.fecha));
+  return mapPatient({
+    ...record,
+    ultimoTurno: latestFromTurnos ?? record.ultimoTurno,
+  });
 }
 
 export async function assertPatientDniAvailable(

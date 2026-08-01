@@ -6,7 +6,6 @@ import {
   requireApiPermission,
 } from "@/lib/auth/require-session";
 import {
-  countProfessionalAppointmentsInDb,
   deleteProfessionalFromDb,
   getProfessionalByIdFromDb,
   updateProfessionalInDb,
@@ -97,8 +96,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       );
     }
 
-    const deletedAppointments = await countProfessionalAppointmentsInDb(id);
-    await deleteProfessionalFromDb(id);
+    const deletedAppointments = await deleteProfessionalFromDb(id);
 
     return NextResponse.json({
       data: {
