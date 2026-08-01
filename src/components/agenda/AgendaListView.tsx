@@ -17,7 +17,7 @@ interface AgendaListViewProps {
   appointments: Appointment[];
   dateLabel: string;
   renderActions: (appointment: Appointment, variant: "table" | "card") => React.ReactNode;
-  onCreateAppointment: () => void;
+  onCreateAppointment?: () => void;
   emptyPreset: EmptyStatePreset;
   showClearFilters?: boolean;
   onClearFilters?: () => void;
@@ -36,7 +36,11 @@ export function AgendaListView({
     return (
       <EmptyStateFromPreset
         preset={emptyPreset}
-        actionLabel={emptyStateActions.scheduleAppointment}
+        actionLabel={
+          onCreateAppointment
+            ? emptyStateActions.scheduleAppointment
+            : undefined
+        }
         onAction={onCreateAppointment}
         secondaryActionLabel={
           showClearFilters ? emptyStateActions.clearFilters : undefined

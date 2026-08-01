@@ -35,8 +35,9 @@ import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import type { EmptyStatePreset } from "@/lib/empty-states";
 import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/use-permissions";
 import { LayoutGrid, List, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type AgendaViewMode = "list" | "week";
 
@@ -52,12 +53,23 @@ export default function AgendaPage() {
     updateAppointment,
     updateAppointmentStatus,
   } = useAppointments();
+  const {
+    canSchedule,
+    isScopedProfessional,
+    professionalId: sessionProfessionalId,
+  } = usePermissions();
   const [viewMode, setViewMode] = useState<AgendaViewMode>("list");
   const [weekStart, setWeekStart] = useState(() => getWeekStartMonday(new Date()));
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "todos">(
     "todos"
   );
   const [professionalFilter, setProfessionalFilter] = useState("todos");
+
+  useEffect(() => {
+    if (isScopedProfessional && sessionProfessionalId) {
+      setProfessionalFilter(sessionProfessionalId);
+    }
+  }, [isScopedProfessional, sessionProfessionalId]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(
     null
@@ -104,7 +116,8 @@ export default function AgendaPage() {
       : `Vista semanal — ${formatWeekRangeLabel(weekStart)}`;
 
   const hasActiveFilters =
-    statusFilter !== "todos" || professionalFilter !== "todos";
+    statusFilter !== "todos" ||
+    (!isScopedProfessional && professionalFilter !== "todos");
 
   const agendaEmptyPreset = useMemo((): EmptyStatePreset => {
     if (appointments.length === 0) {
@@ -120,7 +133,9 @@ export default function AgendaPage() {
 
   const clearAgendaFilters = () => {
     setStatusFilter("todos");
-    setProfessionalFilter("todos");
+    if (!isScopedProfessional) {
+      setProfessionalFilter("todos");
+    }
   };
 
   const openCreateDialog = () => {
@@ -167,6 +182,7 @@ export default function AgendaPage() {
       onView={openDetailDialog}
       onEdit={openEditDialog}
       onStatusChange={handleStatusChange}
+      canEdit={canSchedule}
     />
   );
 
@@ -200,9 +216,11 @@ export default function AgendaPage() {
       <PageHeader
         title="Agenda"
         description={pageDescription}
-        actionLabel={emptyStateActions.scheduleAppointment}
-        actionIcon={Plus}
-        onAction={openCreateDialog}
+        actionLabel={
+          canSchedule ? emptyStateActions.scheduleAppointment : undefined
+        }
+        actionIcon={canSchedule ? Plus : undefined}
+        onAction={canSchedule ? openCreateDialog : undefined}
       />
 
       <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
@@ -236,25 +254,27 @@ export default function AgendaPage() {
             </button>
           </div>
 
-          <div className="w-full sm:w-56">
-            <Select
-              value={professionalFilter}
-              onValueChange={setProfessionalFilter}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos los profesionales" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos los profesionales</SelectItem>
-                {professionals.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                    {!p.active ? " (inactivo)" : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!isScopedProfessional && (
+            <div className="w-full sm:w-56">
+              <Select
+                value={professionalFilter}
+                onValueChange={setProfessionalFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los profesionales" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los profesionales</SelectItem>
+                  {professionals.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {!p.active ? " (inactivo)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -281,7 +301,7 @@ export default function AgendaPage() {
           appointments={listAppointments}
           dateLabel={todayDateLabel}
           renderActions={renderActions}
-          onCreateAppointment={openCreateDialog}
+          onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
           showClearFilters={hasActiveFilters && appointments.length > 0}
           onClearFilters={clearAgendaFilters}
@@ -297,29 +317,31 @@ export default function AgendaPage() {
           renderActions={(appointment, variant = "card") =>
             renderActions(appointment, variant)
           }
-          onCreateAppointment={openCreateDialog}
+          onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
           showClearFilters={hasActiveFilters && appointments.length > 0}
           onClearFilters={clearAgendaFilters}
         />
       )}
 
-      <NewAppointmentDialog
-        open={formDialogOpen}
-        onOpenChange={handleFormDialogChange}
-        onSubmit={handleFormSubmit}
-        patients={patients}
-        professionals={professionals}
-        existingAppointments={appointments}
-        defaultDate={today}
-        editingAppointment={editingAppointment}
-      />
+      {canSchedule && (
+        <NewAppointmentDialog
+          open={formDialogOpen}
+          onOpenChange={handleFormDialogChange}
+          onSubmit={handleFormSubmit}
+          patients={patients}
+          professionals={professionals}
+          existingAppointments={appointments}
+          defaultDate={today}
+          editingAppointment={editingAppointment}
+        />
+      )}
 
       <AppointmentDetailDialog
         appointment={viewingAppointment}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onEdit={openEditDialog}
+        onEdit={canSchedule ? openEditDialog : undefined}
       />
     </div>
   );

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
@@ -33,6 +34,7 @@ export default function PacientesPage() {
     deletePatient,
   } = usePatients();
   const { appointments } = useAppointments();
+  const { canManagePatients } = usePermissions();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -200,9 +202,11 @@ export default function PacientesPage() {
       <PageHeader
         title="Pacientes"
         description={`${patients.length} registrados · ${activeCount} activos`}
-        actionLabel={emptyStateActions.registerPatient}
-        actionIcon={UserPlus}
-        onAction={openDialog}
+        actionLabel={
+          canManagePatients ? emptyStateActions.registerPatient : undefined
+        }
+        actionIcon={canManagePatients ? UserPlus : undefined}
+        onAction={canManagePatients ? openDialog : undefined}
       />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -228,8 +232,14 @@ export default function PacientesPage() {
               ? emptyStates.patients.noResults
               : emptyStates.patients.none
           }
-          actionLabel={search.trim() ? undefined : emptyStateActions.registerPatient}
-          onAction={search.trim() ? undefined : openDialog}
+          actionLabel={
+            search.trim() || !canManagePatients
+              ? undefined
+              : emptyStateActions.registerPatient
+          }
+          onAction={
+            search.trim() || !canManagePatients ? undefined : openDialog
+          }
           secondaryActionLabel={
             search.trim() ? emptyStateActions.clearSearch : undefined
           }
@@ -251,29 +261,37 @@ export default function PacientesPage() {
                 key={patient.id}
                 patient={patient}
                 onViewDetail={openPatientDetail}
-                onToggleStatus={handleToggleStatus}
+                onToggleStatus={
+                  canManagePatients ? handleToggleStatus : undefined
+                }
               />
             ))}
           </div>
         </>
       )}
 
-      <NewPatientDialog
-        open={dialogOpen}
-        onOpenChange={handlePatientDialogChange}
-        onSubmit={handlePatientSubmit}
-        editingPatient={editingPatient}
-        existingPatients={patients}
-      />
+      {canManagePatients && (
+        <NewPatientDialog
+          open={dialogOpen}
+          onOpenChange={handlePatientDialogChange}
+          onSubmit={handlePatientSubmit}
+          editingPatient={editingPatient}
+          existingPatients={patients}
+        />
+      )}
 
       <PatientDetailDialog
         patient={selectedPatient}
         appointments={appointments}
         open={detailOpen}
         onOpenChange={handleDetailOpenChange}
-        onDeleteRequest={handleDeleteRequest}
-        onToggleStatus={handleToggleStatus}
-        onEdit={openEditFromDetail}
+        onDeleteRequest={
+          canManagePatients ? handleDeleteRequest : undefined
+        }
+        onToggleStatus={
+          canManagePatients ? handleToggleStatus : undefined
+        }
+        onEdit={canManagePatients ? openEditFromDetail : undefined}
       />
 
       <ConfirmAlertDialog

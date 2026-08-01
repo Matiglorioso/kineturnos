@@ -2,6 +2,7 @@
 
 import { LogoMark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/hooks/use-permissions";
 import { getRoleLabel } from "@/lib/auth/roles";
 import { formatTodayLongLabel } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
@@ -32,6 +33,7 @@ function TodayLabel() {
 export function Header({ title, subtitle }: HeaderProps) {
   const { data: session } = useSession();
   const user = session?.user;
+  const { canSchedule, canManagePatients } = usePermissions();
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
@@ -55,31 +57,37 @@ export function Header({ title, subtitle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/pacientes"
-            className="hidden items-center gap-2 rounded-xl border border-input bg-muted/50 px-3 py-2 transition-colors hover:bg-muted md:flex"
-          >
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Buscar pacientes</span>
-          </Link>
+          {canManagePatients && (
+            <Link
+              href="/pacientes"
+              className="hidden items-center gap-2 rounded-xl border border-input bg-muted/50 px-3 py-2 transition-colors hover:bg-muted md:flex"
+            >
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Buscar pacientes</span>
+            </Link>
+          )}
 
           <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">
             <Bell className="h-5 w-5" />
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-white" />
           </Button>
 
-          <Button size="icon" className="sm:hidden" asChild>
-            <Link href="/agenda" aria-label="Agendar turno">
-              <Plus className="h-4 w-4" />
-            </Link>
-          </Button>
+          {canSchedule && (
+            <>
+              <Button size="icon" className="sm:hidden" asChild>
+                <Link href="/agenda" aria-label="Agendar turno">
+                  <Plus className="h-4 w-4" />
+                </Link>
+              </Button>
 
-          <Button size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/agenda">
-              <Plus className="h-4 w-4" />
-              Agendar turno
-            </Link>
-          </Button>
+              <Button size="sm" className="hidden sm:inline-flex" asChild>
+                <Link href="/agenda">
+                  <Plus className="h-4 w-4" />
+                  Agendar turno
+                </Link>
+              </Button>
+            </>
+          )}
 
           {user && (
             <div className="hidden items-center gap-2 sm:flex">

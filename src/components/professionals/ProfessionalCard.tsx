@@ -10,8 +10,8 @@ interface ProfessionalCardProps {
   professional: Professional;
   todayAppointments: number;
   onViewDetail: (professional: Professional) => void;
-  onEdit: (professional: Professional) => void;
-  onToggleActive: (professional: Professional) => void;
+  onEdit?: (professional: Professional) => void;
+  onToggleActive?: (professional: Professional) => void;
   className?: string;
 }
 
@@ -102,7 +102,12 @@ export function ProfessionalCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-slate-100 bg-muted/20 p-4">
+      <div
+        className={cn(
+          "grid gap-2 border-t border-slate-100 bg-muted/20 p-4",
+          onEdit ? "grid-cols-2" : "grid-cols-1"
+        )}
+      >
         <Button
           variant="outline"
           size="sm"
@@ -112,24 +117,28 @@ export function ProfessionalCard({
           <Eye className="h-4 w-4 shrink-0" />
           <span className="truncate">Ver detalle</span>
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => onEdit(professional)}
-        >
-          <Pencil className="h-4 w-4" />
-          Editar
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="col-span-2 w-full text-muted-foreground"
-          onClick={() => onToggleActive(professional)}
-        >
-          <UserX className="h-4 w-4" />
-          {professional.active ? "Desactivar" : "Activar"}
-        </Button>
+        {onEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => onEdit(professional)}
+          >
+            <Pencil className="h-4 w-4" />
+            Editar
+          </Button>
+        )}
+        {onToggleActive && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="col-span-full w-full text-muted-foreground"
+            onClick={() => onToggleActive(professional)}
+          >
+            <UserX className="h-4 w-4" />
+            {professional.active ? "Desactivar" : "Activar"}
+          </Button>
+        )}
       </div>
     </Card>
   );
