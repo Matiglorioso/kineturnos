@@ -2,6 +2,7 @@
 
 import {
   createAppointmentRequest,
+  deleteAppointmentRequest,
   fetchAppointments,
   updateAppointmentRequest,
   updateAppointmentStatusRequest,
@@ -123,6 +124,21 @@ export function useAppointments() {
     []
   );
 
+  const deleteAppointment = useCallback(async (appointment: Appointment) => {
+    try {
+      await deleteAppointmentRequest(appointment.id);
+      setAppointments((prev) =>
+        prev.filter((item) => item.id !== appointment.id)
+      );
+      appToasts.appointment.deleted(appointment.patientName);
+    } catch (deleteError) {
+      appToasts.appointment.deleteError(
+        deleteError instanceof ApiError ? deleteError.message : undefined
+      );
+      throw deleteError;
+    }
+  }, []);
+
   return {
     appointments,
     isLoading,
@@ -131,6 +147,7 @@ export function useAppointments() {
     createAppointment,
     updateAppointment,
     updateAppointmentStatus,
+    deleteAppointment,
   };
 }
 

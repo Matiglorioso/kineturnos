@@ -96,8 +96,10 @@ export function getProfessionalUpcomingAppointments(
   return getProfessionalAppointments(appointments, professionalId)
     .filter(
       (appointment) =>
+        (appointment.status === "pendiente" ||
+          appointment.status === "confirmado") &&
         getAppointmentDateTime(appointment.date, appointment.time) >=
-        referenceDate
+          referenceDate
     )
     .sort(
       (a, b) =>

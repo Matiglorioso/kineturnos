@@ -87,7 +87,7 @@ export const appointmentStatuses: {
   },
   {
     name: "Atendido",
-    description: "Sesión realizada. Actualiza el último turno del paciente.",
+    description: "Sesión realizada. Actualiza el historial del paciente.",
   },
   {
     name: "Cancelado",

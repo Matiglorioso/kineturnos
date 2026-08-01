@@ -1,4 +1,5 @@
 import { getAppointmentDateTime } from "@/lib/date-utils";
+import { isActiveAppointmentStatus } from "@/lib/appointment-status";
 import { Appointment } from "@/types";
 
 export { getAppointmentDateTime };
@@ -39,8 +40,11 @@ export function splitPatientAppointments(
       appointment.date,
       appointment.time
     );
+    const isUpcomingSlot =
+      appointmentDate >= referenceDate &&
+      isActiveAppointmentStatus(appointment.status);
 
-    if (appointmentDate >= referenceDate) {
+    if (isUpcomingSlot) {
       upcoming.push(appointment);
     } else {
       past.push(appointment);

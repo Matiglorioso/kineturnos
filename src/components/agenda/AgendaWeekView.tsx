@@ -13,6 +13,7 @@ import {
   getWeekHourBounds,
   groupAppointmentsByAppDate,
   isSameWorkWeek,
+  layoutDayAppointments,
 } from "@/lib/week-calendar";
 import { cn } from "@/lib/utils";
 import { Appointment } from "@/types";
@@ -148,6 +149,7 @@ export function AgendaWeekView({
           {weekDays.map((day) => {
             const header = formatDayColumnHeader(day);
             const dayAppointments = grouped[header.appDate] ?? [];
+            const positioned = layoutDayAppointments(dayAppointments);
 
             return (
               <div
@@ -166,27 +168,34 @@ export function AgendaWeekView({
                   />
                 ))}
 
-                {dayAppointments.map((appointment) => (
-                  <WeekAppointmentBlock
-                    key={appointment.id}
-                    appointment={appointment}
-                    onClick={onAppointmentClick}
-                    actions={renderActions(appointment, "table")}
-                    compact
-                    className="absolute left-1 right-1 z-10"
-                    style={{
-                      top: getAppointmentTopOffset(
-                        appointment.time,
-                        startHour,
-                        HOUR_HEIGHT
-                      ),
-                      height: getAppointmentHeight(
-                        appointment.duration,
-                        HOUR_HEIGHT
-                      ),
-                    }}
-                  />
-                ))}
+                {positioned.map(({ appointment, column, columnCount }) => {
+                  const widthPercent = 100 / columnCount;
+                  const leftPercent = column * widthPercent;
+
+                  return (
+                    <WeekAppointmentBlock
+                      key={appointment.id}
+                      appointment={appointment}
+                      onClick={onAppointmentClick}
+                      actions={renderActions(appointment, "table")}
+                      compact
+                      className="absolute z-10"
+                      style={{
+                        top: getAppointmentTopOffset(
+                          appointment.time,
+                          startHour,
+                          HOUR_HEIGHT
+                        ),
+                        height: getAppointmentHeight(
+                          appointment.duration,
+                          HOUR_HEIGHT
+                        ),
+                        left: `calc(${leftPercent}% + 2px)`,
+                        width: `calc(${widthPercent}% - 4px)`,
+                      }}
+                    />
+                  );
+                })}
               </div>
             );
           })}

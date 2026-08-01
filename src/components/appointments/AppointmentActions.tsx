@@ -4,6 +4,10 @@ import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import { Button } from "@/components/ui/button";
 import { formatAppointmentSlotLabel } from "@/lib/datetime-format";
 import {
+  isActiveAppointmentStatus,
+  isFinalAppointmentStatus,
+} from "@/lib/appointment-status";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -18,6 +22,7 @@ import {
   Eye,
   MoreHorizontal,
   Pencil,
+  Trash2,
   UserX,
 } from "lucide-react";
 import { useState } from "react";
@@ -27,8 +32,10 @@ interface AppointmentActionsProps {
   onView: (appointment: Appointment) => void;
   onEdit: (appointment: Appointment) => void;
   onStatusChange: (appointment: Appointment, status: AppointmentStatus) => void;
+  onDelete?: (appointment: Appointment) => void;
   variant?: "table" | "card";
   canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 function runAfterDropdownClose(action: () => void) {
@@ -40,12 +47,15 @@ export function AppointmentActions({
   onView,
   onEdit,
   onStatusChange,
+  onDelete,
   variant = "table",
   canEdit = true,
+  canDelete = false,
 }: AppointmentActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [absentOpen, setAbsentOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const closeMenuThen = (action: () => void) => {
     setMenuOpen(false);
@@ -56,6 +66,11 @@ export function AppointmentActions({
     appointment.date,
     appointment.time
   );
+
+  const isActive = isActiveAppointmentStatus(appointment.status);
+  const isFinal = isFinalAppointmentStatus(appointment.status);
+  const showCancel = isActive;
+  const showDelete = canDelete && Boolean(onDelete) && isFinal;
 
   return (
     <>
@@ -119,17 +134,33 @@ export function AppointmentActions({
             <UserX className="text-slate-500" />
             Marcar como ausente
           </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={appointment.status === "cancelado"}
-            onSelect={(event) => {
-              event.preventDefault();
-              closeMenuThen(() => setCancelOpen(true));
-            }}
-            className="text-red-600 focus:text-red-600"
-          >
-            <Ban className="text-red-600" />
-            Cancelar turno
-          </DropdownMenuItem>
+          {showCancel && (
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                closeMenuThen(() => setCancelOpen(true));
+              }}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Ban className="text-red-600" />
+              Cancelar turno
+            </DropdownMenuItem>
+          )}
+          {showDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  closeMenuThen(() => setDeleteOpen(true));
+                }}
+                className="text-red-700 focus:bg-red-50 focus:text-red-700"
+              >
+                <Trash2 className="text-red-700" />
+                Eliminar turno
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -150,6 +181,16 @@ export function AppointmentActions({
         description={`Se marcara como ausente el turno de ${appointment.patientName} el ${appointmentSlotLabel}.`}
         confirmLabel="Sí, marcar ausente"
         onConfirm={() => onStatusChange(appointment, "ausente")}
+      />
+
+      <ConfirmAlertDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar turno permanentemente"
+        description={`Se eliminara de forma permanente el turno de ${appointment.patientName} el ${appointmentSlotLabel}. Esta accion no se puede deshacer.`}
+        confirmLabel="Sí, eliminar turno"
+        destructive
+        onConfirm={() => onDelete?.(appointment)}
       />
     </>
   );
