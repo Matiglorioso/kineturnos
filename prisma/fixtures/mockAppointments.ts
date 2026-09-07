@@ -1,5 +1,5 @@
-import { getTodayAppDate, toAppDate } from "@/lib/date-utils";
-import { Appointment } from "@/types";
+import { getTodayAppDate, toAppDate } from "../../src/lib/date-utils";
+import { Appointment } from "../../src/types";
 import { addDays } from "date-fns";
 
 const today = getTodayAppDate();

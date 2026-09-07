@@ -21,6 +21,7 @@ build/
 # misc
 .DS_Store
 *.pem
+_backup-pre-limpieza/
 
 # debug
 npm-debug.log*

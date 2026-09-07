@@ -91,6 +91,3 @@ export function validatePatientForm(
 
   return errors;
 }
-
-/** @deprecated Usar PatientFormValues */
-export type NewPatientFormValues = PatientFormValues;
