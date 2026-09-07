@@ -150,6 +150,3 @@ export function useAppointments() {
     deleteAppointment,
   };
 }
-
-/** @deprecated Usar useAppointments */
-export { useAppointments as useAppointmentsQuery };

@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { mockAppointments } from "../src/data/mockAppointments";
-import { mockPatients } from "../src/data/mockPatients";
-import { mockProfessionals } from "../src/data/mockProfessionals";
+import { mockAppointments } from "./fixtures/mockAppointments";
+import { mockPatients } from "./fixtures/mockPatients";
+import { mockProfessionals } from "./fixtures/mockProfessionals";
 import { resolveNameParts } from "../src/lib/person-name";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
 import type { Patient } from "../src/types";

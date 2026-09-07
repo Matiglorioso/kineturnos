@@ -1,4 +1,4 @@
-import { Professional } from "@/types";
+import { Professional } from "../../src/types";
 
 export const mockProfessionals: Professional[] = [
   {

@@ -12,7 +12,10 @@ export function isPublicPath(pathname: string): boolean {
   );
 }
 
+/** Bypass de auth para scripts de verificación local (x-verify-secret). Nunca en producción: expondría /api/* sin sesión. */
 export function hasVerifyBypass(request: Request, pathname: string): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+
   const verifySecret = process.env.VERIFY_SECRET;
 
   return !!(
