@@ -4,6 +4,7 @@ import { WeekAppointmentBlock } from "@/components/agenda/WeekAppointmentBlock";
 import { WeekNavigation } from "@/components/agenda/WeekNavigation";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { emptyStateActions, emptyStates, type EmptyStatePreset } from "@/lib/empty-states";
+import { pluralize } from "@/lib/pluralize";
 import {
   formatDayColumnHeader,
   getAppointmentHeight,
@@ -230,8 +231,7 @@ export function AgendaWeekView({
                   )}
                 </div>
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                  {dayAppointments.length} turno
-                  {dayAppointments.length !== 1 && "s"}
+                  {pluralize(dayAppointments.length, "turno")}
                 </span>
               </div>
 

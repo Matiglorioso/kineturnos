@@ -83,7 +83,7 @@ export function validatePatientForm(
     errors.dni = DUPLICATE_DNI_MESSAGE;
   }
 
-  const phoneError = requiredFieldError(values.phone, "El telefono es obligatorio");
+  const phoneError = requiredFieldError(values.phone, "El teléfono es obligatorio");
   if (phoneError) errors.phone = phoneError;
 
   const emailError = emailValidationError(values.email);

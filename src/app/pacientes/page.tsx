@@ -18,6 +18,7 @@ import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
 import { countPatientAppointments } from "@/lib/patient-appointments";
+import { pluralize } from "@/lib/pluralize";
 import { showSuccessToast } from "@/lib/toast";
 import { Patient } from "@/types";
 import { Search, UserPlus } from "lucide-react";
@@ -225,7 +226,7 @@ function PacientesPageContent() {
     <div className="space-y-6">
       <PageHeader
         title="Pacientes"
-        description={`${patients.length} registrados · ${activeCount} activos`}
+        description={`${pluralize(patients.length, "registrado")} · ${pluralize(activeCount, "activo")}`}
         actionLabel={
           canManagePatients ? emptyStateActions.registerPatient : undefined
         }
@@ -245,7 +246,7 @@ function PacientesPageContent() {
           />
         </div>
         <p className="text-sm text-muted-foreground">
-          {filtered.length} resultado{filtered.length !== 1 && "s"}
+          {pluralize(filtered.length, "resultado")}
         </p>
       </div>
 

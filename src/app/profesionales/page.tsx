@@ -20,6 +20,7 @@ import {
   countProfessionalAppointments,
   getProfessionalTodayCount,
 } from "@/lib/professional-utils";
+import { pluralize } from "@/lib/pluralize";
 import { showSuccessToast } from "@/lib/toast";
 import { Professional } from "@/types";
 import { UserPlus } from "lucide-react";
@@ -175,7 +176,7 @@ export default function ProfesionalesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Profesionales"
-        description={`${professionals.length} kinesiólogos · ${activeCount} activos · ${totalToday} turnos hoy`}
+        description={`${pluralize(professionals.length, "kinesiólogo")} · ${pluralize(activeCount, "activo")} · ${pluralize(totalToday, "turno")} hoy`}
         actionLabel={
           canManageProfessionals
             ? emptyStateActions.registerProfessional

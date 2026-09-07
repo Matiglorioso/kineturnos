@@ -20,7 +20,7 @@ export function dniFormatValidationError(value: string): string | undefined {
   }
 
   if (normalized.length < DNI_MIN_LENGTH || normalized.length > DNI_MAX_LENGTH) {
-    return "El DNI debe tener 7 u 8 digitos";
+    return "El DNI debe tener 7 u 8 dígitos";
   }
 
   return undefined;
@@ -30,13 +30,13 @@ export function licenseFormatValidationError(value: string): string | undefined 
   const trimmed = value.trim();
 
   if (!trimmed) {
-    return "La matricula es obligatoria";
+    return "La matrícula es obligatoria";
   }
 
   const normalized = normalizeLicense(trimmed);
 
   if (normalized.length < LICENSE_MIN_LENGTH) {
-    return "Ingresa una matricula valida";
+    return "Ingresá una matrícula válida";
   }
 
   return undefined;
@@ -76,4 +76,4 @@ export const DUPLICATE_DNI_MESSAGE =
   "Ya existe un paciente registrado con ese DNI";
 
 export const DUPLICATE_LICENSE_MESSAGE =
-  "Ya existe un profesional registrado con esa matricula";
+  "Ya existe un profesional registrado con esa matrícula";

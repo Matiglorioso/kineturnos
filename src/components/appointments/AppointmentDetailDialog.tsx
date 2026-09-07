@@ -98,7 +98,7 @@ export function AppointmentDetailDialog({
           />
           <DetailRow
             icon={FileText}
-            label="Tipo de sesion"
+            label="Tipo de sesión"
             value={appointment.sessionType}
           />
           <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-3">

@@ -42,7 +42,7 @@ export function PatientCard({
         <p className="truncate">{patient.phone}</p>
         <p className="truncate">{patient.insurance}</p>
         <p className="col-span-2 text-xs text-muted-foreground">
-          Ultimo turno:{" "}
+          Último turno:{" "}
           {patient.lastAppointment
             ? formatAppDate(patient.lastAppointment)
             : "Sin turnos"}

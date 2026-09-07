@@ -63,7 +63,7 @@ export function AgendaListView({
               <TableHead>Horario</TableHead>
               <TableHead>Paciente</TableHead>
               <TableHead>Profesional</TableHead>
-              <TableHead>Sesion</TableHead>
+              <TableHead>Sesión</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>

@@ -182,7 +182,7 @@ export function NewProfessionalDialog({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="license" label="Matricula" required error={errors.license}>
+            <FormField id="license" label="Matrícula" required error={errors.license}>
               <Input
                 id="license"
                 value={form.license}
@@ -289,7 +289,7 @@ export function NewProfessionalDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               id="defaultDuration"
-              label="Duracion estandar del turno"
+              label="Duración estándar del turno"
               required
               error={errors.defaultDuration}
             >
@@ -298,7 +298,7 @@ export function NewProfessionalDialog({
                 onValueChange={(value) => updateField("defaultDuration", value)}
               >
                 <SelectTrigger id="defaultDuration">
-                  <SelectValue placeholder="Seleccionar duracion" />
+                  <SelectValue placeholder="Seleccionar duración" />
                 </SelectTrigger>
                 <SelectContent>
                   {PROFESSIONAL_DURATION_OPTIONS.map((minutes) => (

@@ -5,6 +5,7 @@ import { InfoRow } from "@/components/shared/InfoRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { emptyStates } from "@/lib/empty-states";
+import { pluralize } from "@/lib/pluralize";
 import { useDisplayEntity } from "@/hooks/use-display-entity";
 import {
   Dialog,
@@ -106,7 +107,7 @@ export function ProfessionalDetailDialog({
             {activeProfessional.license && (
               <InfoRow
                 icon={User}
-                label="Matricula"
+                label="Matrícula"
                 value={activeProfessional.license}
               />
             )}
@@ -126,14 +127,14 @@ export function ProfessionalDetailDialog({
             )}
             <InfoRow
               icon={Timer}
-              label="Duracion estandar"
+              label="Duración estándar"
               value={`${activeProfessional.defaultDuration} minutos`}
             />
           </div>
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">
-              Dias y horarios de atencion
+              Días y horarios de atención
             </h3>
             <div className="rounded-xl border border-slate-200/80 bg-muted/20 p-4">
               <div className="flex flex-wrap gap-1.5">
@@ -191,7 +192,7 @@ export function ProfessionalDetailDialog({
           <DialogFooter className="flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between">
             <p className="w-full text-xs text-muted-foreground sm:max-w-[50%]">
               {stats.total > 0
-                ? `Este profesional tiene ${stats.total} turno${stats.total !== 1 ? "s" : ""} asignado${stats.total !== 1 ? "s" : ""}.`
+                ? `Este profesional tiene ${pluralize(stats.total, "turno")} ${stats.total === 1 ? "asignado" : "asignados"}.`
                 : "Este profesional no tiene turnos asignados."}
             </p>
             <Button
