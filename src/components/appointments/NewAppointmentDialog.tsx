@@ -319,7 +319,7 @@ export function NewAppointmentDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               id="duration"
-              label="Duracion (minutos)"
+              label="Duración (minutos)"
               required
               error={errors.duration}
             >
@@ -328,7 +328,7 @@ export function NewAppointmentDialog({
                 onValueChange={(value) => updateField("duration", value)}
               >
                 <SelectTrigger id="duration">
-                  <SelectValue placeholder="Seleccionar duracion" />
+                  <SelectValue placeholder="Seleccionar duración" />
                 </SelectTrigger>
                 <SelectContent>
                   {APPOINTMENT_DURATION_OPTIONS.map((minutes) => (
@@ -353,7 +353,7 @@ export function NewAppointmentDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               id="sessionType"
-              label="Tipo de sesion"
+              label="Tipo de sesión"
               required
               error={errors.sessionType}
             >
@@ -402,7 +402,7 @@ export function NewAppointmentDialog({
               id="notes"
               value={form.notes}
               onChange={(e) => updateField("notes", e.target.value)}
-              placeholder="Indicaciones, molestias, objetivos de la sesion..."
+              placeholder="Indicaciones, molestias, objetivos de la sesión…"
             />
           </FormField>
 

@@ -1,4 +1,4 @@
-/** Validacion de campos de formulario (email, obligatorios). */
+/** Validación de campos de formulario (email, obligatorios). */
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -9,7 +9,7 @@ export function isValidEmail(value: string): boolean {
 }
 
 export function emailValidationError(value: string): string | undefined {
-  return isValidEmail(value) ? undefined : "Ingresa un email valido";
+  return isValidEmail(value) ? undefined : "Ingresá un email válido";
 }
 
 export function requiredFieldError(

@@ -66,7 +66,7 @@ export function validateProfessionalAppointmentSlot(
   if (!professionalWorksOnDay(professional, date)) {
     const weekday = getWeekdayLabelFromAppDate(date);
     return {
-      day: `${professional.name} no atiende los ${weekday ?? "ese dia"}. Dias: ${professional.days.join(", ")}.`,
+      day: `${professional.name} no atiende los ${weekday ?? "ese día"}. Días: ${professional.days.join(", ")}.`,
     };
   }
 

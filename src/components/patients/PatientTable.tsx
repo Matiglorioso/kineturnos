@@ -32,9 +32,9 @@ export function PatientTable({
       headers={[
         "Paciente",
         "DNI",
-        "Telefono",
+        "Teléfono",
         "Obra social",
-        "Ultimo turno",
+        "Último turno",
         "Estado",
         "Acciones",
       ]}

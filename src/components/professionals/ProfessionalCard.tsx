@@ -68,7 +68,7 @@ export function ProfessionalCard({
             <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Dias de atencion
+                Días de atención
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {professional.days.map((day) => (

@@ -6,6 +6,7 @@ import {
   getAppointmentStatusCounts,
 } from "@/lib/dashboard-stats";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
+import { pluralize } from "@/lib/pluralize";
 import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { PieChart } from "lucide-react";
@@ -37,8 +38,8 @@ export function StatusSummary({ appointments, className }: StatusSummaryProps) {
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           {total > 0
-            ? `${total} turno${total !== 1 ? "s" : ""} en total`
-            : "Distribucion de estados en la agenda"}
+            ? `${pluralize(total, "turno")} en total`
+            : "Distribución de estados en la agenda"}
         </p>
       </CardHeader>
       <CardContent>

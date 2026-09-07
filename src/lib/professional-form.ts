@@ -102,7 +102,7 @@ export function validateProfessionalForm(
   }
 
   if (values.days.length === 0) {
-    errors.days = "Selecciona al menos un dia de atencion";
+    errors.days = "Seleccioná al menos un día de atención";
   }
 
   if (!values.scheduleStart) {
@@ -122,7 +122,7 @@ export function validateProfessionalForm(
   }
 
   if (!values.defaultDuration) {
-    errors.defaultDuration = "La duracion es obligatoria";
+    errors.defaultDuration = "La duración es obligatoria";
   }
 
   const emailError = emailValidationError(values.email);

@@ -50,7 +50,7 @@ export function hasProfessionalOverlap(
 }
 
 export const APPOINTMENT_OVERLAP_ERROR =
-  "El profesional ya tiene un turno en ese horario. Elegi otro horario o profesional.";
+  "El profesional ya tiene un turno en ese horario. Elegí otro horario o profesional.";
 
 export type AppointmentFormInput = {
   patientId: string;
@@ -84,17 +84,17 @@ export function validateAppointmentForm(
   );
 
   if (!values.patientId) {
-    errors.patientId = "Selecciona un paciente";
+    errors.patientId = "Seleccioná un paciente";
   }
 
   if (!values.professionalId) {
-    errors.professionalId = "Selecciona un profesional";
+    errors.professionalId = "Seleccioná un profesional";
   }
 
   if (!values.date) {
     errors.date = "La fecha es obligatoria";
   } else if (!isValidAppDate(values.date)) {
-    errors.date = `Usa el formato ${APP_DATE_FORMAT} (ej: ${getTodayAppDate()})`;
+    errors.date = `Usá el formato ${APP_DATE_FORMAT} (ej: ${getTodayAppDate()})`;
   } else if (isPastAppDate(values.date)) {
     errors.date = "No se pueden crear turnos en fechas pasadas";
   }
@@ -104,15 +104,15 @@ export function validateAppointmentForm(
   }
 
   if (!values.duration) {
-    errors.duration = "La duracion es obligatoria";
+    errors.duration = "La duración es obligatoria";
   }
 
   if (!values.sessionType) {
-    errors.sessionType = "Selecciona un tipo de sesion";
+    errors.sessionType = "Seleccioná un tipo de sesión";
   }
 
   if (!values.status) {
-    errors.status = "Selecciona un estado";
+    errors.status = "Seleccioná un estado";
   }
 
   if (

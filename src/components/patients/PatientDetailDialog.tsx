@@ -4,6 +4,7 @@ import { PatientStatusBadge } from "@/components/appointments/StatusBadge";
 import { AppointmentListSection } from "@/components/shared/AppointmentListSection";
 import { InfoRow } from "@/components/shared/InfoRow";
 import { emptyStates } from "@/lib/empty-states";
+import { pluralize } from "@/lib/pluralize";
 import { useDisplayEntity } from "@/hooks/use-display-entity";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,7 +152,7 @@ export function PatientDetailDialog({
           <DialogFooter className="flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="w-full text-xs text-muted-foreground sm:max-w-[45%]">
               {totalAppointments > 0
-                ? `Este paciente tiene ${totalAppointments} turno${totalAppointments !== 1 ? "s" : ""} registrado${totalAppointments !== 1 ? "s" : ""}.`
+                ? `Este paciente tiene ${pluralize(totalAppointments, "turno")} ${totalAppointments === 1 ? "registrado" : "registrados"}.`
                 : "Este paciente no tiene turnos registrados."}
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
