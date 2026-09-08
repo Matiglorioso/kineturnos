@@ -1,7 +1,11 @@
 import {
+  APPOINTMENT_DURATION_OPTIONS,
+} from "@/lib/appointment-constants";
+import {
   APP_DATE_FORMAT,
   areSameAppDay,
   getTodayAppDate,
+  isFutureAppDate,
   isPastAppDate,
   isValidAppDate,
 } from "@/lib/date-utils";
@@ -14,6 +18,8 @@ const BLOCKING_STATUSES = new Set<AppointmentStatus>([
   "confirmado",
   "atendido",
 ]);
+
+const VALID_DURATIONS = new Set<number>(APPOINTMENT_DURATION_OPTIONS);
 
 function intervalsOverlap(
   startA: number,
@@ -52,6 +58,12 @@ export function hasProfessionalOverlap(
 export const APPOINTMENT_OVERLAP_ERROR =
   "El profesional ya tiene un turno en ese horario. Elegí otro horario o profesional.";
 
+export const APPOINTMENT_DURATION_INVALID_ERROR =
+  "Elegí una duración válida: 30, 45, 60 o 90 minutos.";
+
+export const APPOINTMENT_FUTURE_STATUS_ERROR =
+  "Un turno futuro no puede marcarse como atendido o ausente.";
+
 export type AppointmentFormInput = {
   patientId: string;
   professionalId: string;
@@ -66,6 +78,29 @@ export type AppointmentFormErrors = Partial<
   Record<keyof AppointmentFormInput | "overlap" | "schedule", string>
 >;
 
+export type ValidateAppointmentFormOptions = {
+  previousDate?: string;
+};
+
+export function isAllowedAppointmentDuration(duration: number): boolean {
+  return (
+    Number.isInteger(duration) &&
+    duration > 0 &&
+    VALID_DURATIONS.has(duration)
+  );
+}
+
+/** Estados permitidos según si la fecha es futura, hoy o pasada. */
+export function getStatusOptionsForAppointmentDate(
+  dateStr: string
+): AppointmentStatus[] {
+  if (!isValidAppDate(dateStr) || isFutureAppDate(dateStr)) {
+    return ["pendiente", "confirmado", "cancelado"];
+  }
+
+  return ["pendiente", "confirmado", "atendido", "cancelado", "ausente"];
+}
+
 /**
  * Validación compartida de alta/edición de turnos (UI + `assertAppointmentInputValid`).
  * Invariantes críticos (cubiertos por `appointment-validation.test.ts`):
@@ -76,12 +111,20 @@ export function validateAppointmentForm(
   values: AppointmentFormInput,
   existingAppointments: Appointment[],
   professionals: Professional[],
-  excludeId?: string
+  excludeId?: string,
+  options?: ValidateAppointmentFormOptions
 ): AppointmentFormErrors {
   const errors: AppointmentFormErrors = {};
   const professional = professionals.find(
     (item) => item.id === values.professionalId
   );
+  const isEditing = Boolean(excludeId);
+  const previousDate = options?.previousDate;
+  const dateChanged =
+    isEditing &&
+    previousDate !== undefined &&
+    values.date &&
+    !areSameAppDay(values.date, previousDate);
 
   if (!values.patientId) {
     errors.patientId = "Seleccioná un paciente";
@@ -96,15 +139,22 @@ export function validateAppointmentForm(
   } else if (!isValidAppDate(values.date)) {
     errors.date = `Usá el formato ${APP_DATE_FORMAT} (ej: ${getTodayAppDate()})`;
   } else if (isPastAppDate(values.date)) {
-    errors.date = "No se pueden crear turnos en fechas pasadas";
+    if (!isEditing) {
+      errors.date = "No se pueden crear turnos en fechas pasadas";
+    } else if (dateChanged) {
+      errors.date = "No se puede mover un turno a una fecha pasada";
+    }
   }
 
   if (!values.time) {
     errors.time = "La hora de inicio es obligatoria";
   }
 
+  const durationNum = Number(values.duration);
   if (!values.duration) {
     errors.duration = "La duración es obligatoria";
+  } else if (!isAllowedAppointmentDuration(durationNum)) {
+    errors.duration = APPOINTMENT_DURATION_INVALID_ERROR;
   }
 
   if (!values.sessionType) {
@@ -113,6 +163,14 @@ export function validateAppointmentForm(
 
   if (!values.status) {
     errors.status = "Seleccioná un estado";
+  } else if (
+    values.date &&
+    isValidAppDate(values.date) &&
+    !errors.date &&
+    isFutureAppDate(values.date) &&
+    (values.status === "atendido" || values.status === "ausente")
+  ) {
+    errors.status = APPOINTMENT_FUTURE_STATUS_ERROR;
   }
 
   if (
@@ -129,7 +187,7 @@ export function validateAppointmentForm(
       values.professionalId,
       values.date,
       values.time,
-      Number(values.duration),
+      durationNum,
       excludeId
     );
 
@@ -141,7 +199,7 @@ export function validateAppointmentForm(
       professional,
       values.date,
       values.time,
-      Number(values.duration)
+      durationNum
     );
 
     if (scheduleErrors.day) {

@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { nextDay } from "date-fns";
+import { nextDay, subDays } from "date-fns";
 import {
+  APPOINTMENT_DURATION_INVALID_ERROR,
+  APPOINTMENT_FUTURE_STATUS_ERROR,
   APPOINTMENT_OVERLAP_ERROR,
   hasProfessionalOverlap,
   validateAppointmentForm,
   type AppointmentFormInput,
 } from "@/lib/appointment-validation";
-import { toAppDate } from "@/lib/date-utils";
+import { parseAppDate, toAppDate } from "@/lib/date-utils";
 import type { Appointment, Professional } from "@/types";
 
 /** Próximo lunes (siempre futuro), en formato de la app. */
@@ -17,6 +19,14 @@ function nextMondayAppDate(from = new Date()): string {
 
 function nextSundayAppDate(from = new Date()): string {
   return toAppDate(nextDay(from, 0)); // 0 = Sunday
+}
+
+function pastMondayAppDate(from = new Date()): string {
+  let cursor = subDays(from, 7);
+  while (cursor.getDay() !== 1) {
+    cursor = subDays(cursor, 1);
+  }
+  return toAppDate(cursor);
 }
 
 const professional: Professional = {
@@ -136,5 +146,84 @@ describe("validación de agendado: conflicto de horario", () => {
     );
 
     assert.equal(errors.overlap, undefined);
+  });
+});
+
+describe("validación de agendado: duración", () => {
+  for (const duration of ["0", "-30", "7"] as const) {
+    it(`rechaza duración inválida (${duration})`, () => {
+      const errors = validateAppointmentForm(
+        { ...baseValues(), duration },
+        [],
+        [professional]
+      );
+
+      assert.equal(errors.duration, APPOINTMENT_DURATION_INVALID_ERROR);
+    });
+  }
+});
+
+describe("validación de agendado: estado vs fecha", () => {
+  it("rechaza atendido en fecha futura", () => {
+    const errors = validateAppointmentForm(
+      { ...baseValues(), status: "atendido" },
+      [],
+      [professional]
+    );
+
+    assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+
+  it("rechaza ausente en fecha futura", () => {
+    const errors = validateAppointmentForm(
+      { ...baseValues(), status: "ausente" },
+      [],
+      [professional]
+    );
+
+    assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+});
+
+describe("validación de agendado: fechas pasadas al editar", () => {
+  it("permite editar un turno pasado sin cambiar la fecha", () => {
+    const pastDate = pastMondayAppDate();
+    const existing = existingSlot({ date: pastDate, id: "a-past" });
+    const values = {
+      ...baseValues(),
+      date: pastDate,
+      time: existing.time,
+    };
+
+    const errors = validateAppointmentForm(
+      values,
+      [existing],
+      [professional],
+      "a-past",
+      { previousDate: pastDate }
+    );
+
+    assert.equal(errors.date, undefined);
+  });
+
+  it("rechaza mover un turno a otra fecha pasada", () => {
+    const pastDate = pastMondayAppDate();
+    const earlierPastDate = toAppDate(subDays(parseAppDate(pastDate)!, 7));
+    const existing = existingSlot({ date: pastDate, id: "a-past" });
+    const values = {
+      ...baseValues(),
+      date: earlierPastDate,
+      time: existing.time,
+    };
+
+    const errors = validateAppointmentForm(
+      values,
+      [existing],
+      [professional],
+      "a-past",
+      { previousDate: pastDate }
+    );
+
+    assert.match(errors.date!, /fecha pasada/i);
   });
 });

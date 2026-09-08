@@ -1,5 +1,5 @@
 import { normalizeTime } from "@/lib/time-utils";
-import { format, isValid, parse, parseISO, startOfDay, isBefore } from "date-fns";
+import { isAfter, isBefore, isValid, parse, parseISO, startOfDay, format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export const APP_DATE_FORMAT = "dd-MM-yyyy";
@@ -67,6 +67,12 @@ export function isPastAppDate(dateStr: string): boolean {
   const selected = parseAppDate(dateStr);
   if (!selected) return false;
   return isBefore(startOfDay(selected), startOfDay(new Date()));
+}
+
+export function isFutureAppDate(dateStr: string): boolean {
+  const selected = parseAppDate(dateStr);
+  if (!selected) return false;
+  return isAfter(startOfDay(selected), startOfDay(new Date()));
 }
 
 export function getAppointmentDateTime(dateStr: string, time: string): Date {
