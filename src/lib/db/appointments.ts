@@ -13,9 +13,13 @@ import {
 import { getProfessionalsFromDb } from "@/lib/db/professionals";
 import { recomputePatientLastAppointment } from "@/lib/db/sync";
 import { isFinalAppointmentStatus } from "@/lib/appointment-status";
-import { validateAppointmentForm } from "@/lib/appointment-validation";
+import {
+  APPOINTMENT_OVERLAP_ERROR,
+  validateAppointmentForm,
+} from "@/lib/appointment-validation";
 import { prisma } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
+import { Prisma } from "@prisma/client";
 
 export type { AppointmentWriteInput } from "@/lib/db/appointment-write";
 export { appointmentToWriteInput } from "@/lib/db/appointment-write";
@@ -60,21 +64,52 @@ async function resolveAppointmentNames(patientId: string, professionalId: string
   };
 }
 
+function isTurnoProfessionalSlotViolation(
+  error: Prisma.PrismaClientKnownRequestError
+): boolean {
+  const target = error.meta?.target;
+  if (Array.isArray(target)) {
+    return (
+      target.includes("turno_profesional_slot") ||
+      (target.includes("profesional_id") &&
+        target.includes("fecha") &&
+        target.includes("hora"))
+    );
+  }
+  if (typeof target === "string") {
+    return target.includes("turno_profesional_slot");
+  }
+  return false;
+}
+
+function rethrowTurnoSlotUniqueViolation(error: unknown): never {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002" &&
+    isTurnoProfessionalSlotViolation(error)
+  ) {
+    throw new ValidationError(APPOINTMENT_OVERLAP_ERROR, "overlap");
+  }
+  throw error;
+}
+
 export async function assertAppointmentInputValid(
   input: AppointmentWriteInput,
   excludeId?: string
 ): Promise<void> {
   // create/update pasan por validateAppointmentForm (días de atención + overlap).
-  const [appointments, professionals] = await Promise.all([
+  const [appointments, professionals, existing] = await Promise.all([
     getAppointmentsFromDb(),
     getProfessionalsFromDb(),
+    excludeId ? getAppointmentByIdFromDb(excludeId) : Promise.resolve(null),
   ]);
 
   const errors = validateAppointmentForm(
     toAppointmentFormInput(input),
     appointments,
     professionals,
-    excludeId
+    excludeId,
+    existing ? { previousDate: existing.date } : undefined
   );
 
   const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
@@ -94,12 +129,17 @@ export async function createAppointmentInDb(
     input.professionalId
   );
 
-  const record = await prisma.turno.create({
-    data: {
-      id: resolveAppointmentId(input),
-      ...toTurnoWriteData(input, names),
-    },
-  });
+  let record;
+  try {
+    record = await prisma.turno.create({
+      data: {
+        id: resolveAppointmentId(input),
+        ...toTurnoWriteData(input, names),
+      },
+    });
+  } catch (error) {
+    rethrowTurnoSlotUniqueViolation(error);
+  }
 
   if (input.status === "atendido") {
     await recomputePatientLastAppointment(input.patientId);
@@ -124,10 +164,15 @@ export async function updateAppointmentInDb(
     input.professionalId
   );
 
-  const record = await prisma.turno.update({
-    where: { id },
-    data: toTurnoWriteData(input, names),
-  });
+  let record;
+  try {
+    record = await prisma.turno.update({
+      where: { id },
+      data: toTurnoWriteData(input, names),
+    });
+  } catch (error) {
+    rethrowTurnoSlotUniqueViolation(error);
+  }
 
   const statusChanged = existing.status !== input.status;
   const patientChanged = existing.patientId !== input.patientId;

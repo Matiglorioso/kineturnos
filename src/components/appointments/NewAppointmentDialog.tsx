@@ -23,8 +23,9 @@ import {
   APPOINTMENT_DURATION_OPTIONS,
   SESSION_TYPES,
 } from "@/lib/appointment-constants";
-import { APPOINTMENT_STATUS_FORM_OPTIONS } from "@/lib/appointment-status";
+import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
 import {
+  getStatusOptionsForAppointmentDate,
   validateAppointmentForm,
   type AppointmentFormErrors,
 } from "@/lib/appointment-validation";
@@ -146,6 +147,24 @@ export function NewAppointmentDialog({
     }
   }, [open, defaultDate, editingAppointment]);
 
+  const statusOptions = useMemo(() => {
+    const allowed = getStatusOptionsForAppointmentDate(
+      form.date || getTodayAppDate()
+    );
+    return allowed.map((value) => ({
+      value,
+      label: APPOINTMENT_STATUS_LABELS[value],
+    }));
+  }, [form.date]);
+
+  useEffect(() => {
+    if (!form.status || !form.date) return;
+    const allowed = getStatusOptionsForAppointmentDate(form.date);
+    if (!allowed.includes(form.status as AppointmentStatus)) {
+      setForm((prev) => ({ ...prev, status: "pendiente" }));
+    }
+  }, [form.date, form.status]);
+
   const endTime = useMemo(() => {
     if (!form.time || !form.duration) return "";
     return getEndTime(form.time, Number(form.duration));
@@ -174,7 +193,8 @@ export function NewAppointmentDialog({
       form,
       existingAppointments,
       professionals,
-      editingAppointment?.id
+      editingAppointment?.id,
+      editingAppointment ? { previousDate: editingAppointment.date } : undefined
     );
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -387,7 +407,7 @@ export function NewAppointmentDialog({
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  {APPOINTMENT_STATUS_FORM_OPTIONS.map((option) => (
+                  {statusOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
