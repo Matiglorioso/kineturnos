@@ -3,6 +3,7 @@ import {
   normalizeDni,
   normalizeLicense,
 } from "../src/lib/document-validation";
+import { appDateToDb } from "../src/lib/db/date-codec";
 
 const prisma = new PrismaClient();
 const BASE = process.env.VERIFY_BASE_URL ?? "http://localhost:3000";
@@ -560,7 +561,7 @@ async function verifySyncBehavior() {
 
   await prisma.turno.update({
     where: { id: appointmentId },
-    data: { fecha: attendedDate, estado: "atendido" },
+    data: { fecha: appDateToDb(attendedDate), estado: "atendido" },
   });
 
   const patientAfterAttended = await fetchApi<{
