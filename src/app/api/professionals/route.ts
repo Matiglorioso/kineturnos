@@ -28,10 +28,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("GET /api/professionals", error);
     return NextResponse.json(
-      {
-        error:
-          "No se pudieron leer los profesionales. Revisá DATABASE_URL y ejecutá npm run db:push && npm run db:seed",
-      },
+      { error: "No se pudieron leer los profesionales. Intentá de nuevo en unos minutos." },
       { status: 503 }
     );
   }

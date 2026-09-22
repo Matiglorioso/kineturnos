@@ -4,7 +4,10 @@ import {
 } from "@/lib/db/patients";
 import { parsePatientWriteInput } from "@/lib/api/parse-patient-body";
 import { handleWriteError } from "@/lib/api/handle-write-error";
-import { requireApiPermission } from "@/lib/auth/require-session";
+import {
+  getOwnProfessionalId,
+  requireApiPermission,
+} from "@/lib/auth/require-session";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -14,15 +17,19 @@ export async function GET(request: Request) {
   if (access.unauthorized) return access.unauthorized;
 
   try {
-    const patients = await getPatientsFromDb();
+    const ownProfessionalId = getOwnProfessionalId(access.session.user);
+    if (access.session.user.role === "profesional" && !ownProfessionalId) {
+      return NextResponse.json({ data: [] });
+    }
+
+    const patients = await getPatientsFromDb(
+      ownProfessionalId ? { professionalId: ownProfessionalId } : undefined
+    );
     return NextResponse.json({ data: patients });
   } catch (error) {
     console.error("GET /api/patients", error);
     return NextResponse.json(
-      {
-        error:
-          "No se pudieron leer los pacientes. Revisá DATABASE_URL y ejecutá npm run db:push && npm run db:seed",
-      },
+      { error: "No se pudieron leer los pacientes. Intentá de nuevo en unos minutos." },
       { status: 503 }
     );
   }

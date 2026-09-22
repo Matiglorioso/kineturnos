@@ -1,9 +1,22 @@
-export type LoginErrorKind = "credentials" | "network" | "unknown";
+export type LoginErrorKind =
+  | "credentials"
+  | "rate_limited"
+  | "network"
+  | "unknown";
 
 export function getLoginErrorMessage(
   error: unknown,
-  signInError?: string | null
+  signInError?: string | null,
+  signInCode?: string | null
 ): { kind: LoginErrorKind; message: string } {
+  if (signInCode === "rate_limited") {
+    return {
+      kind: "rate_limited",
+      message:
+        "Demasiados intentos fallidos. Esperá 15 minutos e intentá de nuevo.",
+    };
+  }
+
   if (signInError) {
     return {
       kind: "credentials",
