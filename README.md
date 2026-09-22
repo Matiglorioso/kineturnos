@@ -189,8 +189,10 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run clean` | Elimina caché de `.next` |
 | `npm run db:push` | Sincroniza schema → DB (solo desarrollo puntual) |
 | `npm run db:migrate:deploy` | Aplica migraciones en producción / CI |
-| `npm run db:seed` | Datos completos de desarrollo (mocks + usuarios) |
+| `npm run db:seed` | Datos de desarrollo (mocks + usuarios; sin turnos; bloqueado en producción) |
 | `npm run db:seed:minimal` | Solo usuarios iniciales (go-live; requiere `SEED_INITIAL_PASSWORD`) |
+| `npm run db:purge-demo` | Borra pacientes/profesionales/turnos mock; no toca usuarios |
+| `npm run db:clear-turnos` | Borra todos los turnos y limpia `ultimoTurno` |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |

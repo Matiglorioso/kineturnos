@@ -81,6 +81,8 @@ jobs:
       - run: npm ci
       - run: npm run db:migrate:deploy
       - run: npm run db:seed
+        env:
+          ALLOW_DEV_SEED: "1"
       - name: Start dev server
         run: |
           npm run dev &

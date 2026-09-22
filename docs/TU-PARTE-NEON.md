@@ -28,13 +28,17 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 ```powershell
 cd C:\Users\matias.aliaga\kineturnos
 npm.cmd run db:push
-npm.cmd run db:seed
+npm.cmd run db:seed:minimal
 npm.cmd run dev
 ```
 
+> **Go-live / Neon real:** usá **`db:seed:minimal`** (solo usuarios). Para jugar con datos de prueba en local: `ALLOW_DEV_SEED=1` no hace falta; `npm run db:seed` carga mocks **solo fuera de producción**.
+
+> **Quitar mocks de una DB ya cargada:** `npm run db:purge-demo` (borra pacientes/profesionales/turnos del seed, no toca usuarios).
+
 > **Windows / PowerShell:** si `npm run ...` falla, usá **`npm.cmd`**.
 
-**Orden importante:** primero `db:push` (crea tablas), después `db:seed` (carga datos).
+**Orden importante:** primero `db:push` o `db:migrate:deploy` (tablas), después el seed que corresponda.
 
 ## 5. Probar en el navegador
 

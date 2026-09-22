@@ -43,6 +43,25 @@ export async function clearAllTables(prisma: PrismaClient) {
   await prisma.profesional.deleteMany();
 }
 
+/** Evita `db:seed` con mocks en producción (Neon/Vercel). CI y local usan ALLOW_DEV_SEED o NODE_ENV≠production. */
+export function ensureDevSeedAllowed() {
+  if (process.env.ALLOW_DEV_SEED === "1") {
+    return;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "El seed con mocks está deshabilitado en producción. Usá npm run db:seed:minimal con SEED_INITIAL_PASSWORD."
+    );
+  }
+
+  if (process.env.VERCEL_ENV === "production") {
+    throw new Error(
+      "No ejecutes db:seed en el entorno de producción de Vercel. Usá db:seed:minimal una sola vez desde tu PC contra Neon."
+    );
+  }
+}
+
 export async function seedUsers(
   prisma: PrismaClient,
   users: SeedUserInput[],

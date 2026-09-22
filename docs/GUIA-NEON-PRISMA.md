@@ -99,17 +99,23 @@ Si ves **"Your database is now in sync"**, ¡listo!
 
 ---
 
-## Paso 5 — Cargar datos de demo (seed)
+## Paso 5 — Seed inicial
+
+**Producción / consultorio real** (solo usuarios de login):
+
+```bash
+SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
+```
+
+**Desarrollo local** (mocks de pacientes y profesionales, sin turnos):
 
 ```bash
 npm run db:seed
 ```
 
-Deberías ver algo como:
+Para vaciar mocks en una base ya cargada: `npm run db:purge-demo`.
 
-```
-Seed completado: { professionals: 3, patients: 8, appointments: 12 }
-```
+El seed con mocks **no corre** si `NODE_ENV=production` o en Vercel production.
 
 ---
 
