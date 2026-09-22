@@ -33,7 +33,7 @@ export function handleWriteError(
     error.code === "P2002"
   ) {
     return NextResponse.json(
-      { error: "El registro ya existe con esos datos unicos." },
+      { error: "Ya existe un registro con esos datos." },
       { status: 409 }
     );
   }
