@@ -8,7 +8,7 @@ import {
 } from "@/lib/db/patient-write";
 import { DuplicateFieldError } from "@/lib/db/errors";
 import { syncTurnoPatientName } from "@/lib/db/sync";
-import { maxAppDate } from "@/lib/date-utils";
+import { maxDbDate, optionalAppDateToDb } from "@/lib/db/date-codec";
 import {
   DUPLICATE_DNI_MESSAGE,
   normalizeDni,
@@ -35,7 +35,7 @@ export async function getPatientsFromDb(options?: {
   });
 
   return records.map((record) => {
-    const latestFromTurnos = maxAppDate(record.turnos.map((t) => t.fecha));
+    const latestFromTurnos = maxDbDate(record.turnos.map((t) => t.fecha));
     return mapPatient({
       ...record,
       ultimoTurno: latestFromTurnos ?? record.ultimoTurno,
@@ -55,7 +55,7 @@ export async function getPatientByIdFromDb(id: string): Promise<Patient | null> 
 
   if (!record) return null;
 
-  const latestFromTurnos = maxAppDate(record.turnos.map((t) => t.fecha));
+  const latestFromTurnos = maxDbDate(record.turnos.map((t) => t.fecha));
   return mapPatient({
     ...record,
     ultimoTurno: latestFromTurnos ?? record.ultimoTurno,
@@ -83,7 +83,7 @@ export async function createPatientInDb(input: PatientWriteInput): Promise<Patie
     data: {
       id: resolvePatientId(input),
       ...toPacienteWriteData(input),
-      fechaAlta: resolveCreatedAt(input),
+      fechaAlta: optionalAppDateToDb(resolveCreatedAt(input), "createdAt"),
     },
   });
 

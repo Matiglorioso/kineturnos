@@ -1,4 +1,5 @@
 import { toAppDate } from "@/lib/date-utils";
+import { optionalAppDateToDb } from "@/lib/db/date-codec";
 import { normalizeDni } from "@/lib/document-validation";
 import { resolveNameParts, toTitleCaseName } from "@/lib/person-name";
 import type { Patient, PatientStatus } from "@/types";
@@ -55,8 +56,8 @@ export function toPacienteWriteData(input: PatientWriteInput) {
     email: input.email?.trim() || null,
     observaciones: input.notes?.trim() || null,
     estado: input.status ?? "activo",
-    ultimoTurno: input.lastAppointment ?? null,
-    fechaAlta: input.createdAt ?? null,
+    ultimoTurno: optionalAppDateToDb(input.lastAppointment, "lastAppointment"),
+    fechaAlta: optionalAppDateToDb(input.createdAt, "createdAt"),
   };
 }
 

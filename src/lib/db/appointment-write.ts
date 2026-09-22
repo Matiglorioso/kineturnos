@@ -1,6 +1,5 @@
 import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
-import { normalizeAppDate } from "@/lib/date-utils";
-import { normalizeTime } from "@/lib/time-utils";
+import { appDateToDb, appTimeToDb } from "@/lib/db/date-codec";
 import type { Appointment, AppointmentStatus, SessionType } from "@/types";
 
 export interface AppointmentWriteInput {
@@ -40,8 +39,8 @@ export function toTurnoWriteData(
     profesionalId: input.professionalId,
     pacienteNombre: names.pacienteNombre,
     profesionalNombre: names.profesionalNombre,
-    fecha: normalizeAppDate(input.date),
-    hora: normalizeTime(input.time),
+    fecha: appDateToDb(input.date, "date"),
+    hora: appTimeToDb(input.time, "time"),
     duracion: APPOINTMENT_SLOT_DURATION_MINUTES,
     estado: input.status,
     tipoSesion: input.sessionType,
