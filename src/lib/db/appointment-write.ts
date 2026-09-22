@@ -1,3 +1,4 @@
+import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
 import { normalizeAppDate } from "@/lib/date-utils";
 import { normalizeTime } from "@/lib/time-utils";
 import type { Appointment, AppointmentStatus, SessionType } from "@/types";
@@ -41,7 +42,7 @@ export function toTurnoWriteData(
     profesionalNombre: names.profesionalNombre,
     fecha: normalizeAppDate(input.date),
     hora: normalizeTime(input.time),
-    duracion: input.duration,
+    duracion: APPOINTMENT_SLOT_DURATION_MINUTES,
     estado: input.status,
     tipoSesion: input.sessionType,
     observaciones: input.notes?.trim() || null,
@@ -58,7 +59,7 @@ export function toAppointmentFormInput(input: AppointmentWriteInput) {
     professionalId: input.professionalId,
     date: input.date,
     time: input.time,
-    duration: String(input.duration),
+    duration: String(input.duration || APPOINTMENT_SLOT_DURATION_MINUTES),
     sessionType: input.sessionType,
     status: input.status,
   };

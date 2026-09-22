@@ -19,11 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  APPOINTMENT_DURATION_OPTIONS,
-  SESSION_TYPES,
-} from "@/lib/appointment-constants";
+import { SESSION_TYPES } from "@/lib/appointment-constants";
 import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
+import {
+  APPOINTMENT_SLOT_DURATION_MINUTES,
+  listHourlySlotOptionsForForm,
+} from "@/lib/appointment-slots";
 import {
   getStatusOptionsForAppointmentDate,
   validateAppointmentForm,
@@ -35,7 +36,7 @@ import {
   isValidAppDate,
   normalizeAppDate,
 } from "@/lib/date-utils";
-import { getEndTime, normalizeTime } from "@/lib/time-utils";
+import { normalizeTime } from "@/lib/time-utils";
 import { appToasts } from "@/lib/toast";
 import {
   Appointment,
@@ -52,7 +53,6 @@ export interface NewAppointmentFormValues {
   professionalId: string;
   date: string;
   time: string;
-  duration: string;
   sessionType: SessionType | "";
   status: AppointmentStatus | "";
   notes: string;
@@ -77,7 +77,6 @@ function buildInitialForm(defaultDate: string): NewAppointmentFormValues {
     professionalId: "",
     date: defaultDate,
     time: "",
-    duration: "45",
     sessionType: "",
     status: "pendiente",
     notes: "",
@@ -92,7 +91,6 @@ function buildFormFromAppointment(
     professionalId: appointment.professionalId,
     date: appointment.date,
     time: normalizeTime(appointment.time),
-    duration: String(appointment.duration),
     sessionType: appointment.sessionType,
     status: appointment.status,
     notes: appointment.notes ?? "",
@@ -165,10 +163,46 @@ export function NewAppointmentDialog({
     }
   }, [form.date, form.status]);
 
-  const endTime = useMemo(() => {
-    if (!form.time || !form.duration) return "";
-    return getEndTime(form.time, Number(form.duration));
-  }, [form.time, form.duration]);
+  const selectedProfessional = useMemo(
+    () => professionals.find((item) => item.id === form.professionalId),
+    [professionals, form.professionalId]
+  );
+
+  const hourlySlotOptions = useMemo(
+    () =>
+      listHourlySlotOptionsForForm(
+        selectedProfessional,
+        form.date,
+        existingAppointments,
+        {
+          excludeId: editingAppointment?.id,
+          currentTime: editingAppointment?.time,
+          currentDuration: editingAppointment?.duration,
+        }
+      ),
+    [
+      selectedProfessional,
+      form.date,
+      existingAppointments,
+      editingAppointment?.id,
+      editingAppointment?.time,
+      editingAppointment?.duration,
+    ]
+  );
+
+  const availableSlotOptions = hourlySlotOptions.filter(
+    (slot) => slot.available
+  );
+
+  useEffect(() => {
+    if (!form.time) return;
+    const stillValid = hourlySlotOptions.some(
+      (slot) => slot.startTime === form.time && slot.available
+    );
+    if (!stillValid) {
+      setForm((prev) => ({ ...prev, time: "" }));
+    }
+  }, [hourlySlotOptions, form.time]);
 
   const updateField = <K extends keyof NewAppointmentFormValues>(
     key: K,
@@ -190,7 +224,7 @@ export function NewAppointmentDialog({
     event.preventDefault();
 
     const validationErrors = validateAppointmentForm(
-      form,
+      { ...form, duration: String(APPOINTMENT_SLOT_DURATION_MINUTES) },
       existingAppointments,
       professionals,
       editingAppointment?.id,
@@ -218,7 +252,7 @@ export function NewAppointmentDialog({
       professionalName: professional.name,
       date: normalizeAppDate(form.date.trim()),
       time: normalizeTime(form.time),
-      duration: Number(form.duration),
+      duration: APPOINTMENT_SLOT_DURATION_MINUTES,
       status: form.status as AppointmentStatus,
       sessionType: form.sessionType as SessionType,
       notes: form.notes.trim() || undefined,
@@ -250,7 +284,7 @@ export function NewAppointmentDialog({
           <DialogDescription>
             {isEditing
               ? "Modificá los datos del turno seleccionado."
-              : "Programá una sesión indicando paciente, profesional, fecha y horario."}
+              : "Programá una sesión indicando paciente, profesional, fecha y bloque horario (turnos de 1 hora)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -323,50 +357,44 @@ export function NewAppointmentDialog({
 
             <FormField
               id="time"
-              label="Hora de inicio"
+              label="Horario"
               required
-              error={errors.time}
-            >
-              <Input
-                id="time"
-                type="time"
-                value={form.time}
-                onChange={(e) => updateField("time", e.target.value)}
-              />
-            </FormField>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormField
-              id="duration"
-              label="Duración (minutos)"
-              required
-              error={errors.duration}
+              error={errors.time ?? errors.overlap}
             >
               <Select
-                value={form.duration}
-                onValueChange={(value) => updateField("duration", value)}
+                value={form.time}
+                onValueChange={(value) => updateField("time", value)}
+                disabled={
+                  !form.professionalId ||
+                  !form.date ||
+                  !isValidAppDate(form.date) ||
+                  availableSlotOptions.length === 0
+                }
               >
-                <SelectTrigger id="duration">
-                  <SelectValue placeholder="Seleccionar duración" />
+                <SelectTrigger id="time">
+                  <SelectValue
+                    placeholder={
+                      !form.professionalId || !form.date
+                        ? "Elegí profesional y fecha"
+                        : availableSlotOptions.length === 0
+                          ? "Sin bloques disponibles"
+                          : "Seleccionar horario"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {APPOINTMENT_DURATION_OPTIONS.map((minutes) => (
-                    <SelectItem key={minutes} value={String(minutes)}>
-                      {minutes} min
+                  {hourlySlotOptions.map((slot) => (
+                    <SelectItem
+                      key={slot.startTime}
+                      value={slot.startTime}
+                      disabled={!slot.available}
+                    >
+                      {slot.label}
+                      {!slot.available ? " · Ocupado" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </FormField>
-
-            <FormField id="endTime" label="Hora de fin">
-              <Input
-                id="endTime"
-                value={endTime ? `${endTime} hs` : "—"}
-                readOnly
-                className="bg-muted/50"
-              />
             </FormField>
           </div>
 

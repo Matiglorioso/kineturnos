@@ -1,6 +1,10 @@
 import {
   APPOINTMENT_DURATION_OPTIONS,
+  APPOINTMENT_SLOT_DURATION_MINUTES,
 } from "@/lib/appointment-constants";
+import {
+  isValidHourlySlotStart,
+} from "@/lib/appointment-slots";
 import {
   APP_DATE_FORMAT,
   areSameAppDay,
@@ -10,6 +14,7 @@ import {
   isValidAppDate,
 } from "@/lib/date-utils";
 import { validateProfessionalAppointmentSlot } from "@/lib/professional-schedule";
+import { normalizeTime } from "@/lib/time-utils";
 import { timeToMinutes } from "@/lib/time-utils";
 import { Appointment, AppointmentStatus, Professional } from "@/types";
 
@@ -59,7 +64,7 @@ export const APPOINTMENT_OVERLAP_ERROR =
   "El profesional ya tiene un turno en ese horario. Elegí otro horario o profesional.";
 
 export const APPOINTMENT_DURATION_INVALID_ERROR =
-  "Elegí una duración válida: 30, 45, 60 o 90 minutos.";
+  "Los turnos son de 1 hora; la duración debe ser 60 minutos.";
 
 export const APPOINTMENT_FUTURE_STATUS_ERROR =
   "Un turno futuro no puede marcarse como atendido o ausente.";
@@ -147,13 +152,23 @@ export function validateAppointmentForm(
   }
 
   if (!values.time) {
-    errors.time = "La hora de inicio es obligatoria";
+    errors.time = "Elegí un horario";
+  } else if (
+    professional &&
+    values.date &&
+    isValidAppDate(values.date) &&
+    !errors.date &&
+    !isValidHourlySlotStart(professional, values.time)
+  ) {
+    errors.time =
+      "Elegí un bloque horario válido (cada turno dura 1 hora).";
   }
 
-  const durationNum = Number(values.duration);
-  if (!values.duration) {
-    errors.duration = "La duración es obligatoria";
-  } else if (!isAllowedAppointmentDuration(durationNum)) {
+  const durationNum = values.duration
+    ? Number(values.duration)
+    : APPOINTMENT_SLOT_DURATION_MINUTES;
+
+  if (values.duration && !isAllowedAppointmentDuration(durationNum)) {
     errors.duration = APPOINTMENT_DURATION_INVALID_ERROR;
   }
 
@@ -177,17 +192,17 @@ export function validateAppointmentForm(
     values.professionalId &&
     values.date &&
     values.time &&
-    values.duration &&
     !errors.date &&
     !errors.time &&
     !errors.duration
   ) {
+    const slotDuration = APPOINTMENT_SLOT_DURATION_MINUTES;
     const overlaps = hasProfessionalOverlap(
       existingAppointments,
       values.professionalId,
       values.date,
-      values.time,
-      durationNum,
+      normalizeTime(values.time),
+      slotDuration,
       excludeId
     );
 
@@ -198,8 +213,8 @@ export function validateAppointmentForm(
     const scheduleErrors = validateProfessionalAppointmentSlot(
       professional,
       values.date,
-      values.time,
-      durationNum
+      normalizeTime(values.time),
+      slotDuration
     );
 
     if (scheduleErrors.day) {

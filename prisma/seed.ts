@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { mockAppointments } from "./fixtures/mockAppointments";
 import { mockPatients } from "./fixtures/mockPatients";
 import { mockProfessionals } from "./fixtures/mockProfessionals";
 import { resolveNameParts } from "../src/lib/person-name";
@@ -75,25 +74,6 @@ async function main() {
   for (const patient of mockPatients) {
     await prisma.paciente.create({
       data: buildPacienteSeedData(patient),
-    });
-  }
-
-  console.log("Insertando turnos...");
-  for (const appointment of mockAppointments) {
-    await prisma.turno.create({
-      data: {
-        id: appointment.id,
-        pacienteId: appointment.patientId,
-        profesionalId: appointment.professionalId,
-        pacienteNombre: appointment.patientName,
-        profesionalNombre: appointment.professionalName,
-        fecha: appointment.date,
-        hora: appointment.time,
-        duracion: appointment.duration,
-        estado: appointment.status,
-        tipoSesion: appointment.sessionType,
-        observaciones: appointment.notes ?? null,
-      },
     });
   }
 
