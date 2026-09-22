@@ -125,7 +125,7 @@ Documentación: [neon.tech/docs/guides/vercel](https://neon.tech/docs/guides/ver
 | Síntoma | Causa probable | Solución |
 |---------|----------------|----------|
 | 503 en `/api/*` | Falta `DATABASE_URL` en Vercel | Agregar variable y redeploy |
-| Tablas vacías | Seed no corrido en Neon | `npm run db:migrate:deploy` + `db:seed` local con la misma URL |
+| Tablas vacías | Seed no corrido en Neon | `npm run db:migrate:deploy` + `db:seed:minimal` (go-live) o `db:seed` solo en local |
 | Login no funciona | Falta `AUTH_SECRET` en Vercel | Agregar variable y redeploy |
 | Build falla en migrate | DB sin baseline | `npx prisma migrate resolve --applied 20260328120000_init` en Neon existente |
 | Datos viejos / distintos | Otra DB o branch de Neon | Confirmar que local y Vercel usan el mismo proyecto Neon |

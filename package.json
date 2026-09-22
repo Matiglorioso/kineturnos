@@ -23,6 +23,7 @@
     "db:seed": "prisma db seed",
     "db:seed:minimal": "tsx prisma/seed-minimal.ts",
     "db:clear-turnos": "tsx prisma/clear-turnos.ts",
+    "db:purge-demo": "tsx prisma/purge-demo-data.ts",
     "db:studio": "prisma studio"
   },
   "prisma": {

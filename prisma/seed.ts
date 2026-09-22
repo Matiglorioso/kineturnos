@@ -6,6 +6,7 @@ import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
 import type { Patient } from "../src/types";
 import {
   clearAllTables,
+  ensureDevSeedAllowed,
   getDefaultUsers,
   resolveSeedPassword,
   seedUsers,
@@ -38,6 +39,7 @@ function buildPacienteSeedData(patient: Patient) {
 }
 
 async function main() {
+  ensureDevSeedAllowed();
   console.log("Seed completo — datos de desarrollo (mocks + usuarios)");
   const password = resolveSeedPassword({ mode: "dev" });
 
