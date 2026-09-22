@@ -104,10 +104,21 @@ model Turno {
   paciente           Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   profesional        Profesional @relation(fields: [profesionalId], references: [id], onDelete: Cascade)
 
-  @@unique([profesionalId, fecha, hora], name: "turno_profesional_slot")
+  // Unique parcial "turno_profesional_slot_activo" (excluye cancelado/ausente):
+  // Prisma no soporta índices parciales; se define en migración SQL.
   @@index([fecha])
   @@index([estado])
   @@index([profesionalId, fecha])
   @@index([pacienteId])
   @@map("turnos")
+}
+
+/// Rate limiting de login (fallos por email / IP). Ver src/lib/auth/login-rate-limit.ts
+model LoginIntento {
+  clave          String    @id
+  fallos         Int       @default(0)
+  ventanaInicio  DateTime  @default(now()) @map("ventana_inicio") @db.Timestamptz(6)
+  bloqueadoHasta DateTime? @map("bloqueado_hasta") @db.Timestamptz(6)
+
+  @@map("login_intentos")
 }

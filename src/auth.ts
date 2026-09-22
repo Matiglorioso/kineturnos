@@ -3,6 +3,14 @@ import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "@/auth.config";
 import { findAuthUserByEmail } from "@/lib/auth/users";
 import { verifyPassword } from "@/lib/auth/password";
+import {
+  buildLimitKeys,
+  clearLoginFailures,
+  getClientIp,
+  isLoginLocked,
+  LoginRateLimitedError,
+  registerLoginFailure,
+} from "@/lib/auth/login-rate-limit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -13,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Contraseña", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email =
           typeof credentials?.email === "string" ? credentials.email : "";
         const password =
@@ -21,11 +29,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!email || !password) return null;
 
-        const user = await findAuthUserByEmail(email);
-        if (!user || !user.active) return null;
+        const limitKeys = buildLimitKeys(email, getClientIp(request));
+        if (await isLoginLocked(limitKeys)) {
+          throw new LoginRateLimitedError();
+        }
 
-        const valid = await verifyPassword(password, user.passwordHash);
-        if (!valid) return null;
+        const user = await findAuthUserByEmail(email);
+        const valid =
+          !!user && user.active && (await verifyPassword(password, user.passwordHash));
+
+        if (!user || !valid) {
+          await registerLoginFailure(limitKeys);
+          return null;
+        }
+
+        await clearLoginFailures(email);
 
         return {
           id: user.id,
