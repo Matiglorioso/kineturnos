@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { optionalAppDateToDb } from "../src/lib/db/date-codec";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
 import { resolveNameParts } from "../src/lib/person-name";
 import type { Patient } from "../src/types";
@@ -26,8 +27,8 @@ function buildPacienteSeedData(patient: Patient) {
     email: patient.email ?? null,
     observaciones: patient.notes ?? null,
     estado: patient.status,
-    ultimoTurno: patient.lastAppointment ?? null,
-    fechaAlta: patient.createdAt ?? null,
+    ultimoTurno: optionalAppDateToDb(patient.lastAppointment),
+    fechaAlta: optionalAppDateToDb(patient.createdAt),
   };
 }
 

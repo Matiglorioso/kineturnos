@@ -4,6 +4,11 @@ import type {
   Turno,
 } from "@prisma/client";
 import type { Appointment, Patient, Professional, WeekDay } from "@/types";
+import {
+  dbDateToApp,
+  dbTimeToApp,
+  optionalDbDateToApp,
+} from "@/lib/db/date-codec";
 
 export function mapPatient(record: Paciente): Patient {
   return {
@@ -17,8 +22,8 @@ export function mapPatient(record: Paciente): Patient {
     email: record.email ?? undefined,
     notes: record.observaciones ?? undefined,
     status: record.estado,
-    lastAppointment: record.ultimoTurno ?? undefined,
-    createdAt: record.fechaAlta ?? undefined,
+    lastAppointment: optionalDbDateToApp(record.ultimoTurno),
+    createdAt: optionalDbDateToApp(record.fechaAlta),
   };
 }
 
@@ -49,8 +54,8 @@ export function mapAppointment(record: Turno): Appointment {
     patientName: record.pacienteNombre,
     professionalId: record.profesionalId,
     professionalName: record.profesionalNombre,
-    date: record.fecha,
-    time: record.hora,
+    date: dbDateToApp(record.fecha),
+    time: dbTimeToApp(record.hora),
     duration: record.duracion,
     status: record.estado,
     sessionType: record.tipoSesion as Appointment["sessionType"],

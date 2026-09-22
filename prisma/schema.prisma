@@ -44,8 +44,8 @@ model Paciente {
   email            String?
   observaciones    String?
   estado           EstadoPaciente @default(activo)
-  ultimoTurno      String?        @map("ultimo_turno")
-  fechaAlta        String?        @map("fecha_alta")
+  ultimoTurno      DateTime?      @map("ultimo_turno") @db.Date
+  fechaAlta        DateTime?      @map("fecha_alta") @db.Date
   turnos           Turno[]
 
   @@index([estado])
@@ -95,8 +95,8 @@ model Turno {
   profesionalId      String      @map("profesional_id")
   pacienteNombre     String      @map("paciente_nombre")
   profesionalNombre  String      @map("profesional_nombre")
-  fecha              String
-  hora               String
+  fecha              DateTime    @db.Date
+  hora               DateTime    @db.Time(0)
   duracion           Int
   estado             EstadoTurno @default(pendiente)
   tipoSesion         String      @map("tipo_sesion")
