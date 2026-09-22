@@ -113,7 +113,7 @@ SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
 npm run db:seed
 ```
 
-Para vaciar mocks en una base ya cargada: `npm run db:purge-demo`.
+Para vaciar **solo turnos**: `npm run db:clear-turnos`.
 
 El seed con mocks **no corre** si `NODE_ENV=production` o en Vercel production.
 
