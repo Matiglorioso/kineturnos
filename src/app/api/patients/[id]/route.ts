@@ -1,10 +1,15 @@
 import { parsePatientWriteInput } from "@/lib/api/parse-patient-body";
 import { handleWriteError } from "@/lib/api/handle-write-error";
-import { requireApiPermission } from "@/lib/auth/require-session";
+import {
+  forbiddenResponse,
+  getOwnProfessionalId,
+  requireApiPermission,
+} from "@/lib/auth/require-session";
 import {
   countPatientAppointmentsInDb,
   deletePatientFromDb,
   getPatientByIdFromDb,
+  patientBelongsToProfessionalInDb,
   updatePatientInDb,
 } from "@/lib/db/patients";
 import { NextResponse } from "next/server";
@@ -28,6 +33,15 @@ export async function GET(request: Request, context: RouteContext) {
         { error: "Paciente no encontrado." },
         { status: 404 }
       );
+    }
+
+    const ownProfessionalId = getOwnProfessionalId(access.session.user);
+    if (
+      access.session.user.role === "profesional" &&
+      (!ownProfessionalId ||
+        !(await patientBelongsToProfessionalInDb(id, ownProfessionalId)))
+    ) {
+      return forbiddenResponse("No tenés acceso a este paciente.");
     }
 
     return NextResponse.json({ data: patient });

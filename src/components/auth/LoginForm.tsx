@@ -65,7 +65,11 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        const { message } = getLoginErrorMessage(null, result.error);
+        const { message } = getLoginErrorMessage(
+          null,
+          result.error,
+          result.code
+        );
         setFormError(message);
         showErrorToast("No se pudo ingresar", message);
         return;

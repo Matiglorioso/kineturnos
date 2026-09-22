@@ -53,6 +53,53 @@ async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+type ProfessionalSchedule = {
+  id: string;
+  days: string[];
+  scheduleStart: string;
+  scheduleEnd: string;
+};
+
+const WEEKDAY_NAMES = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+];
+
+/**
+ * Devuelve un bloque válido de 1 h para el profesional: primer día que atiende
+ * a partir de `fromIso` (YYYY-MM-DD) y la hora del bloque `slotIndex` dentro de su horario.
+ */
+function findValidSlot(
+  professional: ProfessionalSchedule,
+  fromIso: string,
+  slotIndex = 0
+): { date: string; time: string } {
+  const [startH] = professional.scheduleStart.split(":").map(Number);
+  const [endH] = professional.scheduleEnd.split(":").map(Number);
+  const slots = Math.max(1, endH - startH);
+  const hour = startH + (slotIndex % slots);
+  const base = new Date(`${fromIso}T12:00:00Z`);
+
+  for (let offset = 0; offset < 14; offset++) {
+    const day = new Date(base.getTime() + offset * 86_400_000);
+    if (professional.days.includes(WEEKDAY_NAMES[day.getUTCDay()])) {
+      const dd = String(day.getUTCDate()).padStart(2, "0");
+      const mm = String(day.getUTCMonth() + 1).padStart(2, "0");
+      return {
+        date: `${dd}-${mm}-${day.getUTCFullYear()}`,
+        time: `${String(hour).padStart(2, "0")}:00`,
+      };
+    }
+  }
+
+  throw new Error(`El profesional ${professional.id} no tiene días de atención.`);
+}
+
 async function verifyDbIntegrity() {
   const pacientes = await prisma.paciente.findMany();
   const profesionales = await prisma.profesional.findMany();
@@ -317,8 +364,26 @@ async function verifyProfessionalsApi() {
   await fetchApi(`/api/professionals/${testId}`, { method: "DELETE" });
   pass("DELETE /api/professionals/[id]", "Eliminacion OK (sin turnos)");
 
-  const withTurnos = list[0];
-  if (withTurnos) {
+  const withTurnos = list[0] as unknown as ProfessionalSchedule | undefined;
+  const patientsForBlock = await fetchApi<Array<{ id: string }>>("/api/patients");
+  if (withTurnos && patientsForBlock[0]) {
+    const blockSlot = findValidSlot(withTurnos, "2027-03-01");
+    const blockId = `a-block-${Date.now()}`;
+    await fetchApi("/api/appointments", {
+      method: "POST",
+      body: JSON.stringify({
+        id: blockId,
+        patientId: patientsForBlock[0].id,
+        professionalId: withTurnos.id,
+        date: blockSlot.date,
+        time: blockSlot.time,
+        duration: "60",
+        sessionType: "Control",
+        status: "pendiente",
+        notes: "",
+      }),
+    });
+
     try {
       await fetchApi(`/api/professionals/${withTurnos.id}`, { method: "DELETE" });
       fail(
@@ -336,6 +401,11 @@ async function verifyProfessionalsApi() {
         fail("DELETE profesional con turnos activos", msg);
       }
     }
+
+    await fetchApi(`/api/appointments/${blockId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "cancelado" }),
+    });
   }
 }
 
@@ -349,7 +419,7 @@ async function verifyAppointmentsApi() {
   const patients = await fetchApi<Array<{ id: string; name: string }>>(
     "/api/patients"
   );
-  const professionals = await fetchApi<Array<{ id: string; name: string }>>(
+  const professionals = await fetchApi<Array<ProfessionalSchedule & { name: string }>>(
     "/api/professionals"
   );
 
@@ -361,11 +431,7 @@ async function verifyAppointmentsApi() {
   const testId = `a-verify-${Date.now()}`;
   const patient = patients[0];
   const professional = professionals[0];
-  const slotMinutes = 9 * 60 + (Date.now() % 240);
-  const hours = String(Math.floor(slotMinutes / 60)).padStart(2, "0");
-  const mins = String(slotMinutes % 60).padStart(2, "0");
-  const time = `${hours}:${mins}`;
-  const testDate = "30-12-2026";
+  const { date: testDate, time } = findValidSlot(professional, "2027-04-05", 1);
 
   const created = await fetchApi<{ id: string; patientName: string }>(
     "/api/appointments",
@@ -378,7 +444,7 @@ async function verifyAppointmentsApi() {
         professionalId: professional.id,
         date: testDate,
         time,
-        duration: "45",
+        duration: "60",
         sessionType: "Control",
         status: "pendiente",
         notes: "",
@@ -397,7 +463,7 @@ async function verifyAppointmentsApi() {
         professionalId: professional.id,
         date: testDate,
         time,
-        duration: "45",
+        duration: "60",
         sessionType: "Control",
         status: "pendiente",
         notes: "",
@@ -428,7 +494,7 @@ async function verifyAppointmentsApi() {
       professionalId: professional.id,
       date: testDate,
       time,
-      duration: "45",
+      duration: "60",
       sessionType: "Rehabilitación",
       status: "confirmado",
       notes: "Actualizado",
@@ -444,7 +510,7 @@ async function verifySyncBehavior() {
   const patients = await fetchApi<Array<{ id: string; name: string; lastAppointment?: string }>>(
     "/api/patients"
   );
-  const professionals = await fetchApi<Array<{ id: string; name: string }>>(
+  const professionals = await fetchApi<Array<ProfessionalSchedule & { name: string }>>(
     "/api/professionals"
   );
 
@@ -456,12 +522,11 @@ async function verifySyncBehavior() {
   const patientId = `p-sync-${Date.now()}`;
   const professionalId = professionals[0].id;
   const appointmentId = `a-sync-${Date.now()}`;
-  const attendedDate = "15-01-2027";
+  const { date: futureDate, time } = findValidSlot(professionals[0], "2027-05-03", 2);
+  // La API no permite turnos en fechas pasadas ni "atendido" en fechas futuras:
+  // se crea pendiente a futuro y se lleva a pasado/atendido directo en DB.
+  const attendedDate = "05-01-2026";
   const testDni = `${Date.now()}`.slice(-8);
-  const slotMinutes = 10 * 60 + (Date.now() % 120);
-  const hours = String(Math.floor(slotMinutes / 60)).padStart(2, "0");
-  const mins = String(slotMinutes % 60).padStart(2, "0");
-  const time = `${hours}:${mins}`;
 
   await fetchApi("/api/patients", {
     method: "POST",
@@ -484,18 +549,18 @@ async function verifySyncBehavior() {
       id: appointmentId,
       patientId,
       professionalId,
-      date: attendedDate,
+      date: futureDate,
       time,
-      duration: "45",
+      duration: "60",
       sessionType: "Control",
       status: "pendiente",
       notes: "",
     }),
   });
 
-  await fetchApi(`/api/appointments/${appointmentId}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status: "atendido" }),
+  await prisma.turno.update({
+    where: { id: appointmentId },
+    data: { fecha: attendedDate, estado: "atendido" },
   });
 
   const patientAfterAttended = await fetchApi<{

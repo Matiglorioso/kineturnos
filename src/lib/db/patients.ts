@@ -19,8 +19,13 @@ import type { Patient } from "@/types";
 export type { PatientWriteInput } from "@/lib/db/patient-write";
 export { patientToWriteInput } from "@/lib/db/patient-write";
 
-export async function getPatientsFromDb(): Promise<Patient[]> {
+export async function getPatientsFromDb(options?: {
+  professionalId?: string;
+}): Promise<Patient[]> {
   const records = await prisma.paciente.findMany({
+    where: options?.professionalId
+      ? { turnos: { some: { profesionalId: options.professionalId } } }
+      : undefined,
     orderBy: { nombre: "asc" },
     include: {
       turnos: {
@@ -112,4 +117,15 @@ export async function deletePatientFromDb(id: string): Promise<void> {
 
 export async function countPatientAppointmentsInDb(patientId: string): Promise<number> {
   return prisma.turno.count({ where: { pacienteId: patientId } });
+}
+
+/** True si el paciente tiene al menos un turno con el profesional. */
+export async function patientBelongsToProfessionalInDb(
+  patientId: string,
+  professionalId: string
+): Promise<boolean> {
+  const count = await prisma.turno.count({
+    where: { pacienteId: patientId, profesionalId: professionalId },
+  });
+  return count > 0;
 }
