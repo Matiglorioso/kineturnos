@@ -10,4 +10,8 @@ export const SESSION_TYPES: SessionType[] = [
   "Control",
 ];
 
-export const APPOINTMENT_DURATION_OPTIONS = [30, 45, 60, 90] as const;
+export const APPOINTMENT_SLOT_DURATION_MINUTES = 60;
+
+export const APPOINTMENT_DURATION_OPTIONS = [
+  APPOINTMENT_SLOT_DURATION_MINUTES,
+] as const;

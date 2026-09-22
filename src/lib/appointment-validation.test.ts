@@ -48,7 +48,7 @@ const baseValues = (): AppointmentFormInput => ({
   professionalId: professional.id,
   date: nextMondayAppDate(),
   time: "10:00",
-  duration: "45",
+  duration: "60",
   sessionType: "Rehabilitación",
   status: "pendiente",
 });
@@ -147,10 +147,19 @@ describe("validación de agendado: conflicto de horario", () => {
 
     assert.equal(errors.overlap, undefined);
   });
+  it("rechaza un horario que no es inicio de bloque horario", () => {
+    const errors = validateAppointmentForm(
+      { ...baseValues(), time: "10:15" },
+      [],
+      [professional]
+    );
+
+    assert.match(errors.time!, /bloque horario/i);
+  });
 });
 
 describe("validación de agendado: duración", () => {
-  for (const duration of ["0", "-30", "7"] as const) {
+  for (const duration of ["0", "-30", "7", "45"] as const) {
     it(`rechaza duración inválida (${duration})`, () => {
       const errors = validateAppointmentForm(
         { ...baseValues(), duration },

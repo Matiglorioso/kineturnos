@@ -1,3 +1,4 @@
+import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
 import {
   validateAppointmentForm,
   type AppointmentFormInput,
@@ -20,7 +21,7 @@ export function parseAppointmentWriteInput(body: unknown): {
     professionalId: String(payload.professionalId ?? ""),
     date: String(payload.date ?? ""),
     time: String(payload.time ?? ""),
-    duration: String(payload.duration ?? ""),
+    duration: String(payload.duration ?? APPOINTMENT_SLOT_DURATION_MINUTES),
     sessionType: String(payload.sessionType ?? ""),
     status: String(payload.status ?? "pendiente"),
   };
@@ -43,7 +44,7 @@ export function parseAppointmentWriteInput(body: unknown): {
     professionalId: values.professionalId,
     date: values.date.trim(),
     time: values.time.trim(),
-    duration: Number(values.duration),
+    duration: APPOINTMENT_SLOT_DURATION_MINUTES,
     status: values.status as AppointmentStatus,
     sessionType: values.sessionType as SessionType,
     notes: typeof payload.notes === "string" ? payload.notes : undefined,
