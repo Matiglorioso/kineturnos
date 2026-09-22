@@ -1,3 +1,7 @@
+/**
+ * ATENCIÓN: borra pacientes y profesionales del seed (fixtures), no solo turnos.
+ * Para vaciar solo turnos usá npm run db:clear-turnos.
+ */
 import { PrismaClient } from "@prisma/client";
 import { mockPatients } from "./fixtures/mockPatients";
 import { mockProfessionals } from "./fixtures/mockProfessionals";

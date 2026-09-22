@@ -34,7 +34,9 @@ npm.cmd run dev
 
 > **Go-live / Neon real:** usá **`db:seed:minimal`** (solo usuarios). Para jugar con datos de prueba en local: `ALLOW_DEV_SEED=1` no hace falta; `npm run db:seed` carga mocks **solo fuera de producción**.
 
-> **Quitar mocks de una DB ya cargada:** `npm run db:purge-demo` (borra pacientes/profesionales/turnos del seed, no toca usuarios).
+> **Quitar solo turnos mock / todos los turnos:** `npm run db:clear-turnos`.
+
+> **No uses `db:purge-demo`** salvo que quieras borrar también pacientes y profesionales del seed.
 
 > **Windows / PowerShell:** si `npm run ...` falla, usá **`npm.cmd`**.
 

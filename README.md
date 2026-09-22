@@ -191,7 +191,8 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run db:migrate:deploy` | Aplica migraciones en producción / CI |
 | `npm run db:seed` | Datos de desarrollo (mocks + usuarios; sin turnos; bloqueado en producción) |
 | `npm run db:seed:minimal` | Solo usuarios iniciales (go-live; requiere `SEED_INITIAL_PASSWORD`) |
-| `npm run db:purge-demo` | Borra pacientes/profesionales/turnos mock; no toca usuarios |
+| `npm run db:purge-demo` | **Destructivo:** borra pacientes/profesionales mock (no solo turnos) |
+| `npm run db:restore-demo-people` | Vuelve a cargar pacientes/profesionales mock; no crea turnos |
 | `npm run db:clear-turnos` | Borra todos los turnos y limpia `ultimoTurno` |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
