@@ -17,6 +17,8 @@ El workflow usa `actions/checkout@v6` y `actions/setup-node@v6` con Node.js 24 (
 
 ---
 
+Resultados y trazabilidad de la estrategia de pruebas: [TESTING.md](TESTING.md).
+
 ## Tests E2E (Playwright)
 
 `e2e/` recorre la UI real en Chromium: login por rol (incluido `callbackUrl` externo y rate limit), agendar turnos (horarios ocupados deshabilitados, paciente con dos turnos a la vez), cambios de estado y eliminación, permisos del rol profesional y la vista mobile (390 px).
