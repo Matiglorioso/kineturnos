@@ -63,12 +63,13 @@ export function parseAppointmentWriteInput(
   const formatInvalid = formatError(values);
   if (formatInvalid) return formatInvalid;
 
+  const { excludeId, ...validationOptions } = options ?? {};
   const validationErrors = validateAppointmentForm(
     values,
     [],
     [],
-    options?.excludeId,
-    { previousDate: options?.previousDate }
+    excludeId,
+    validationOptions
   );
   // Solapamiento y agenda del profesional se validan en la capa de DB, con datos reales.
   const { overlap, schedule, ...basicErrors } = validationErrors;
