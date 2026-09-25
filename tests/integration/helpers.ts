@@ -122,7 +122,15 @@ export async function login(
 
   const cookie = cookieHeader(response);
   if (!cookie.includes("authjs.session-token")) {
-    throw new Error(`Login fallido para ${email} (HTTP ${response.status}).`);
+    const cookieNames = cookie
+      .split("; ")
+      .map((pair) => pair.split("=")[0])
+      .join(", ");
+    throw new Error(
+      `Login fallido para ${email} (HTTP ${response.status}, ` +
+        `location: ${response.headers.get("location") ?? "-"}, ` +
+        `cookies: ${cookieNames || "-"}).`
+    );
   }
 
   return { kind: "session", cookie };
