@@ -43,13 +43,24 @@ export const APPOINTMENT_STATUS_FORM_OPTIONS = (
   Object.entries(APPOINTMENT_STATUS_LABELS) as [AppointmentStatus, string][]
 ).map(([value, label]) => ({ value, label }));
 
+/**
+ * Máquina de estados del turno (diagrama de estados de la tesis): un turno
+ * activo se confirma, se cancela o registra asistencia; los estados finales
+ * (cancelado, atendido, ausente) no cambian más, solo se eliminan.
+ */
+const APPOINTMENT_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
+  pendiente: ["confirmado", "cancelado", "atendido", "ausente"],
+  confirmado: ["cancelado", "atendido", "ausente"],
+  atendido: [],
+  cancelado: [],
+  ausente: [],
+};
+
 /** Estados a los que puede pasar un turno. */
 export function getNextAppointmentStatuses(
   status: AppointmentStatus
 ): AppointmentStatus[] {
-  return (Object.keys(APPOINTMENT_STATUS_LABELS) as AppointmentStatus[]).filter(
-    (next) => next !== status
-  );
+  return [...APPOINTMENT_TRANSITIONS[status]];
 }
 
 export function canTransitionAppointmentStatus(
