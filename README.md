@@ -38,7 +38,7 @@ En muchos consultorios, la coordinación de pacientes, profesionales y horarios 
 
 Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para seguir la carga de cada kinesiólogo**.
 
-**KineTurnos** centraliza esa operación en una sola interfaz pensada para recepción y profesionales, reduciendo fricción en tareas repetitivas del día a día.
+**KineTurnos** centraliza esa operación en una sola interfaz pensada para administración y profesionales, reduciendo fricción en tareas repetitivas del día a día.
 
 ---
 
@@ -125,7 +125,13 @@ Bash / macOS / Linux:
 SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
 ```
 
-Crea admin, recepción y profesional (sin vincular) para **SANMAR SALUD**. Cambiá emails y contraseña antes de entregar al cliente.
+Crea los perfiles de la app para **SANMAR SALUD**: **Superadmin** (equipo de desarrollo), dos **Administradores** (dueño y recepción) y un **Profesional** (sin vincular). Cambiá emails y contraseña antes de entregar al cliente.
+
+| Perfil | Quiénes | Puede |
+|---|---|---|
+| Superadmin | Equipo de desarrollo | Todo (y a futuro, tareas técnicas de mantenimiento) |
+| Administrador | Dueños y recepción | Turnos, pacientes, profesionales y dashboard |
+| Profesional | Kinesiólogos | Su propia agenda y el registro de asistencia |
 
 > Si la base ya tiene datos, el seed **aborta** sin tocar nada. Para restablecer la contraseña de los usuarios iniciales sobre una base en uso: `npm run db:seed:minimal -- --force` (nunca borra pacientes, profesionales ni turnos).
 

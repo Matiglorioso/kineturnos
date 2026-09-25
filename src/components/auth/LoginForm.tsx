@@ -100,7 +100,7 @@ export function LoginForm() {
           Ingresá a {siteConfig.name}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Acceso para recepción, profesionales y administración.
+          Acceso para administración y profesionales.
         </p>
       </div>
 
