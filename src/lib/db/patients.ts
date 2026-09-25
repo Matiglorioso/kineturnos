@@ -8,16 +8,40 @@ import {
 } from "@/lib/db/patient-write";
 import { DuplicateFieldError } from "@/lib/db/errors";
 import { syncTurnoPatientName } from "@/lib/db/sync";
-import { maxDbDate, optionalAppDateToDb } from "@/lib/db/date-codec";
+import {
+  appDateToDb,
+  dbDateToApp,
+  optionalAppDateToDb,
+} from "@/lib/db/date-codec";
+import { getPatientLastAppointmentDate } from "@/lib/patient-appointments";
 import {
   DUPLICATE_DNI_MESSAGE,
   normalizeDni,
 } from "@/lib/document-validation";
 import { prisma } from "@/lib/prisma";
-import type { Patient } from "@/types";
+import type { AppointmentStatus, Patient } from "@/types";
 
 export type { PatientWriteInput } from "@/lib/db/patient-write";
 export { patientToWriteInput } from "@/lib/db/patient-write";
+
+/**
+ * Mismo criterio que el valor guardado (`recomputePatientLastAppointment`):
+ * último atendido con fecha ≤ hoy. Sin turnos se conserva el valor cargado.
+ */
+function resolveLastAppointment(
+  turnos: { fecha: Date; estado: AppointmentStatus }[],
+  stored: Date | null
+): Date | null {
+  if (turnos.length === 0) return stored;
+
+  const last = getPatientLastAppointmentDate(
+    turnos.map((turno) => ({
+      date: dbDateToApp(turno.fecha),
+      status: turno.estado,
+    }))
+  );
+  return last ? appDateToDb(last) : null;
+}
 
 export async function getPatientsFromDb(options?: {
   professionalId?: string;
@@ -29,18 +53,17 @@ export async function getPatientsFromDb(options?: {
     orderBy: { nombre: "asc" },
     include: {
       turnos: {
-        select: { fecha: true },
+        select: { fecha: true, estado: true },
       },
     },
   });
 
-  return records.map((record) => {
-    const latestFromTurnos = maxDbDate(record.turnos.map((t) => t.fecha));
-    return mapPatient({
+  return records.map((record) =>
+    mapPatient({
       ...record,
-      ultimoTurno: latestFromTurnos ?? record.ultimoTurno,
-    });
-  });
+      ultimoTurno: resolveLastAppointment(record.turnos, record.ultimoTurno),
+    })
+  );
 }
 
 export async function getPatientByIdFromDb(id: string): Promise<Patient | null> {
@@ -48,17 +71,16 @@ export async function getPatientByIdFromDb(id: string): Promise<Patient | null> 
     where: { id },
     include: {
       turnos: {
-        select: { fecha: true },
+        select: { fecha: true, estado: true },
       },
     },
   });
 
   if (!record) return null;
 
-  const latestFromTurnos = maxDbDate(record.turnos.map((t) => t.fecha));
   return mapPatient({
     ...record,
-    ultimoTurno: latestFromTurnos ?? record.ultimoTurno,
+    ultimoTurno: resolveLastAppointment(record.turnos, record.ultimoTurno),
   });
 }
 

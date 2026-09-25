@@ -1,14 +1,21 @@
+import { appDateToDb } from "@/lib/db/date-codec";
+import { getTodayAppDate } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Recalcula `ultimoTurno` como la fecha más reciente entre todos los turnos
- * del paciente (cualquier estado). `fecha` es DATE: MAX() ordena bien en SQL.
+ * Recalcula `ultimoTurno` como el último turno atendido con fecha ≤ hoy
+ * (mismo criterio que `getPatientLastAppointmentDate`). `fecha` es DATE:
+ * MAX() ordena bien en SQL.
  */
 export async function recomputePatientLastAppointment(
   patientId: string
 ): Promise<void> {
   const result = await prisma.turno.aggregate({
-    where: { pacienteId: patientId },
+    where: {
+      pacienteId: patientId,
+      estado: "atendido",
+      fecha: { lte: appDateToDb(getTodayAppDate()) },
+    },
     _max: { fecha: true },
   });
 
