@@ -94,8 +94,10 @@ describe("API de turnos", () => {
       method: "POST",
       body: appointmentBody({ ...slot, patientId: second.id }),
     });
-    assert.equal(overlap.status, 400);
+    // Choca con un recurso existente: 409, como DNI o matrícula duplicados.
+    assert.equal(overlap.status, 409);
     assert.equal(overlap.error, APPOINTMENT_OVERLAP_ERROR);
+    assert.equal(overlap.field, "overlap");
   });
 
   it("un slot cancelado se puede volver a agendar", async () => {
@@ -115,6 +117,54 @@ describe("API de turnos", () => {
       body: appointmentBody({ ...slot, patientId: patient.id }),
     });
     assert.equal(again.status, 201, again.error);
+  });
+});
+
+describe("concurrencia", () => {
+  /** Manda los POST en paralelo y devuelve los status ordenados. */
+  async function racePosts(bodies: unknown[]): Promise<number[]> {
+    const results = await Promise.all(
+      bodies.map((body) => api("/api/appointments", { method: "POST", body }))
+    );
+    return results.map((result) => result.status).sort();
+  }
+
+  it("dos altas simultáneas en el mismo slot del profesional: una 201, otra 409", async () => {
+    const professional = await createProfessional();
+    const patients = [await createPatient(), await createPatient()];
+
+    // Varias rondas para que una carrera real tenga chance de aparecer.
+    for (let round = 0; round < 3; round++) {
+      const slot = {
+        professionalId: professional.id,
+        date: futureWorkday(20 + round),
+        time: "10:00",
+      };
+      const statuses = await racePosts(
+        patients.map((patient) => appointmentBody({ ...slot, patientId: patient.id }))
+      );
+      assert.deepEqual(statuses, [201, 409], `ronda ${round}`);
+    }
+  });
+
+  it("dos altas simultáneas del mismo paciente con profesionales distintos: una 201, otra 409 (M2)", async () => {
+    const professionals = [await createProfessional(), await createProfessional()];
+    const patient = await createPatient();
+
+    for (let round = 0; round < 3; round++) {
+      const date = futureWorkday(25 + round);
+      const statuses = await racePosts(
+        professionals.map((professional) =>
+          appointmentBody({
+            patientId: patient.id,
+            professionalId: professional.id,
+            date,
+            time: "15:00",
+          })
+        )
+      );
+      assert.deepEqual(statuses, [201, 409], `ronda ${round}`);
+    }
   });
 });
 
