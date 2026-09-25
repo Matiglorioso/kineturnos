@@ -4,6 +4,7 @@ import { nextDay, subDays } from "date-fns";
 import {
   APPOINTMENT_DURATION_INVALID_ERROR,
   APPOINTMENT_FUTURE_STATUS_ERROR,
+  APPOINTMENT_PAST_TIME_ERROR,
 } from "@/lib/appointment-validation";
 import { toAppDate } from "@/lib/date-utils";
 import {
@@ -209,6 +210,22 @@ describe("parseAppointmentWriteInput: edición de turnos pasados", () => {
     );
 
     assert.equal(error, "No se puede mover un turno a una fecha pasada");
+  });
+
+  it("reenvía previousTime y now: mover un turno de hoy a una hora pasada falla", () => {
+    // Jueves 24-09-2026 a las 18:00 ART.
+    const { error, field } = parseAppointmentWriteInput(
+      validBody({ date: "24-09-2026", time: "08:00" }),
+      {
+        excludeId: "a-1",
+        previousDate: "24-09-2026",
+        previousTime: "19:00",
+        now: new Date("2026-09-24T21:00:00Z"),
+      }
+    );
+
+    assert.equal(error, APPOINTMENT_PAST_TIME_ERROR);
+    assert.equal(field, "time");
   });
 
   it("sin opciones de edición, una fecha pasada sigue siendo un alta inválida", () => {
