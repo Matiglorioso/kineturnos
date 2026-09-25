@@ -116,10 +116,6 @@ export async function DELETE(request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error("DELETE /api/patients/[id]", error);
-    return NextResponse.json(
-      { error: "No se pudo eliminar el paciente." },
-      { status: 503 }
-    );
+    return handleWriteError(error, "No se pudo eliminar el paciente.");
   }
 }
