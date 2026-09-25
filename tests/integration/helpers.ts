@@ -168,8 +168,6 @@ export async function createProfessional(
     nombrePila: string;
     apellido: string;
     diasAtencion: string[];
-    horarioInicio: string;
-    horarioFin: string;
     activo: boolean;
   }> = {}
 ) {
@@ -187,9 +185,6 @@ export async function createProfessional(
       matriculaNormalizada: license,
       especialidad: "Traumatología",
       diasAtencion: overrides.diasAtencion ?? ALL_WORKDAYS,
-      horarioInicio: overrides.horarioInicio ?? "08:00",
-      horarioFin: overrides.horarioFin ?? "20:00",
-      duracionDefault: 60,
       activo: overrides.activo ?? true,
       colorAvatar: "brand",
     },
@@ -234,7 +229,6 @@ export async function createAppointmentInDb(input: {
       profesionalNombre: input.professional.nombre,
       fecha: appDateToDb(input.date),
       hora: appTimeToDb(input.time),
-      duracion: 60,
       estado: input.status ?? "pendiente",
       tipoSesion: "Control",
     },

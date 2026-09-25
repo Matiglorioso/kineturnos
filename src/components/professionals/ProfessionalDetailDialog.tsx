@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   countProfessionalAppointments,
-  getProfessionalScheduleLabel,
+  getClinicScheduleLabel,
   getProfessionalUpcomingAppointments,
 } from "@/lib/professional-utils";
 import { cn, getInitials } from "@/lib/utils";
@@ -28,7 +28,6 @@ import {
   Mail,
   Phone,
   Stethoscope,
-  Timer,
   Trash2,
   User,
 } from "lucide-react";
@@ -68,7 +67,7 @@ export function ProfessionalDetailDialog({
 
   if (!activeProfessional) return null;
 
-  const scheduleLabel = getProfessionalScheduleLabel(activeProfessional);
+  const scheduleLabel = getClinicScheduleLabel();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,16 +124,11 @@ export function ProfessionalDetailDialog({
                 value={activeProfessional.email}
               />
             )}
-            <InfoRow
-              icon={Timer}
-              label="Duración estándar"
-              value={`${activeProfessional.defaultDuration} minutos`}
-            />
           </div>
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">
-              Días y horarios de atención
+              Días de atención (horario del consultorio)
             </h3>
             <div className="rounded-xl border border-slate-200/80 bg-muted/20 p-4">
               <div className="flex flex-wrap gap-1.5">

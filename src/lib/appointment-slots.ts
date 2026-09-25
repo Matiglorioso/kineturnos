@@ -1,4 +1,8 @@
-import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
+import {
+  APPOINTMENT_SLOT_DURATION_MINUTES,
+  CLINIC_CLOSING_TIME,
+  CLINIC_OPENING_TIME,
+} from "@/lib/appointment-constants";
 import { areSameAppDay, getNowAppMinutes, isTodayAppDate } from "@/lib/date-utils";
 import { formatAppointmentTimeRange } from "@/lib/datetime-format";
 import { professionalWorksOnDay } from "@/lib/professional-schedule";
@@ -37,7 +41,7 @@ function slotIsOccupied(
     if (!BLOCKING_STATUSES.has(appointment.status)) return false;
 
     const existingStart = timeToMinutes(appointment.time);
-    const existingEnd = existingStart + appointment.duration;
+    const existingEnd = existingStart + APPOINTMENT_SLOT_DURATION_MINUTES;
 
     return intervalsOverlap(newStart, newEnd, existingStart, existingEnd);
   });
@@ -49,12 +53,10 @@ export type HourlySlotOption = {
   available: boolean;
 };
 
-/** Inicios de bloque de 1 h dentro del horario laboral del profesional. */
-export function getProfessionalHourlySlotStarts(
-  professional: Professional
-): string[] {
-  const scheduleStart = timeToMinutes(professional.scheduleStart);
-  const scheduleEnd = timeToMinutes(professional.scheduleEnd);
+/** Inicios de bloque de 1 h dentro del horario del consultorio (igual para todos). */
+export function getHourlySlotStarts(): string[] {
+  const scheduleStart = timeToMinutes(CLINIC_OPENING_TIME);
+  const scheduleEnd = timeToMinutes(CLINIC_CLOSING_TIME);
   const slots: string[] = [];
 
   for (
@@ -69,10 +71,7 @@ export function getProfessionalHourlySlotStarts(
 }
 
 export function formatHourlySlotLabel(startTime: string): string {
-  return formatAppointmentTimeRange(
-    startTime,
-    APPOINTMENT_SLOT_DURATION_MINUTES
-  );
+  return formatAppointmentTimeRange(startTime);
 }
 
 /**
@@ -94,7 +93,7 @@ export function listHourlySlotOptions(
   const now = options?.now ?? new Date();
   const nowMinutes = isTodayAppDate(date, now) ? getNowAppMinutes(now) : null;
 
-  return getProfessionalHourlySlotStarts(professional).map((startTime) => {
+  return getHourlySlotStarts().map((startTime) => {
     const occupied = slotIsOccupied(
       existingAppointments,
       professional.id,
@@ -123,7 +122,6 @@ export function listHourlySlotOptionsForForm(
   options?: {
     excludeId?: string;
     currentTime?: string;
-    currentDuration?: number;
     now?: Date;
   }
 ): HourlySlotOption[] {
@@ -145,24 +143,18 @@ export function listHourlySlotOptionsForForm(
     return base;
   }
 
-  const duration = options?.currentDuration ?? APPOINTMENT_SLOT_DURATION_MINUTES;
   return [
     {
       startTime: currentTime,
-      label: `${formatAppointmentTimeRange(currentTime, duration)} (actual)`,
+      label: `${formatHourlySlotLabel(currentTime)} (actual)`,
       available: true,
     },
     ...base,
   ];
 }
 
-export function isValidHourlySlotStart(
-  professional: Professional | undefined,
-  startTime: string
-): boolean {
-  if (!professional) return false;
-  const normalized = normalizeTime(startTime);
-  return getProfessionalHourlySlotStarts(professional).includes(normalized);
+export function isValidHourlySlotStart(startTime: string): boolean {
+  return getHourlySlotStarts().includes(normalizeTime(startTime));
 }
 
 /** True si el turno existente usa otro día que el seleccionado (para reset de horario). */

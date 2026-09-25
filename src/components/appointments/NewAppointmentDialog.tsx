@@ -21,10 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { SESSION_TYPES } from "@/lib/appointment-constants";
 import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
-import {
-  APPOINTMENT_SLOT_DURATION_MINUTES,
-  listHourlySlotOptionsForForm,
-} from "@/lib/appointment-slots";
+import { listHourlySlotOptionsForForm } from "@/lib/appointment-slots";
 import {
   getStatusOptionsForAppointmentDate,
   validateAppointmentForm,
@@ -177,7 +174,6 @@ export function NewAppointmentDialog({
         {
           excludeId: editingAppointment?.id,
           currentTime: editingAppointment?.time,
-          currentDuration: editingAppointment?.duration,
         }
       ),
     [
@@ -186,7 +182,6 @@ export function NewAppointmentDialog({
       existingAppointments,
       editingAppointment?.id,
       editingAppointment?.time,
-      editingAppointment?.duration,
     ]
   );
 
@@ -224,7 +219,7 @@ export function NewAppointmentDialog({
     event.preventDefault();
 
     const validationErrors = validateAppointmentForm(
-      { ...form, duration: String(APPOINTMENT_SLOT_DURATION_MINUTES) },
+      form,
       existingAppointments,
       professionals,
       editingAppointment?.id,
@@ -258,7 +253,6 @@ export function NewAppointmentDialog({
       professionalName: professional.name,
       date: normalizeAppDate(form.date.trim()),
       time: normalizeTime(form.time),
-      duration: APPOINTMENT_SLOT_DURATION_MINUTES,
       status: form.status as AppointmentStatus,
       sessionType: form.sessionType as SessionType,
       notes: form.notes.trim() || undefined,

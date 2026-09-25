@@ -11,9 +11,6 @@ export interface ProfessionalWriteInput {
   phone?: string;
   specialty: string;
   days: WeekDay[];
-  scheduleStart: string;
-  scheduleEnd: string;
-  defaultDuration: number;
   active: boolean;
   avatarColor: string;
   notes?: string;
@@ -31,9 +28,6 @@ export function professionalToWriteInput(
     phone: professional.phone,
     specialty: professional.specialty,
     days: professional.days,
-    scheduleStart: professional.scheduleStart,
-    scheduleEnd: professional.scheduleEnd,
-    defaultDuration: professional.defaultDuration,
     active: professional.active,
     avatarColor: professional.avatarColor,
     notes: professional.notes,
@@ -54,9 +48,6 @@ export function toProfesionalWriteData(input: ProfessionalWriteInput) {
     telefono: input.phone?.trim() || null,
     especialidad: input.specialty,
     diasAtencion: input.days,
-    horarioInicio: input.scheduleStart.slice(0, 5),
-    horarioFin: input.scheduleEnd.slice(0, 5),
-    duracionDefault: input.defaultDuration,
     activo: input.active,
     colorAvatar: input.avatarColor,
     observaciones: input.notes?.trim() || null,

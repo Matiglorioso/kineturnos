@@ -60,9 +60,6 @@ export interface Professional {
   phone?: string;
   specialty: string;
   days: WeekDay[];
-  scheduleStart: string;
-  scheduleEnd: string;
-  defaultDuration: number;
   active: boolean;
   avatarColor: string;
   notes?: string;
@@ -78,8 +75,8 @@ export interface Appointment {
   professionalName: string;
   /** Formato dd-MM-yyyy */
   date: string;
+  /** HH:mm; todos los turnos duran 1 hora */
   time: string;
-  duration: number;
   status: AppointmentStatus;
   sessionType: SessionType;
   notes?: string;

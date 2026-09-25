@@ -25,7 +25,3 @@ export function minutesToTime(totalMinutes: number): string {
 export function getEndTime(startTime: string, durationMinutes: number): string {
   return minutesToTime(timeToMinutes(startTime) + durationMinutes);
 }
-
-export function isEndTimeAfterStart(start: string, end: string): boolean {
-  return timeToMinutes(end) > timeToMinutes(start);
-}

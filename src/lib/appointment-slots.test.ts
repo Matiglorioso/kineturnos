@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   formatHourlySlotLabel,
-  getProfessionalHourlySlotStarts,
+  getHourlySlotStarts,
   isValidHourlySlotStart,
   listHourlySlotOptions,
   listHourlySlotOptionsForForm,
@@ -15,6 +15,20 @@ const MONDAY = "07-06-2027";
 const WEDNESDAY = "09-06-2027";
 const SUNDAY = "06-06-2027";
 
+/** Horario del consultorio: 08:00 a 18:00, bloques de 1 hora. */
+const CLINIC_SLOTS = [
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+];
+
 const professional: Professional = {
   id: "pro-1",
   name: "Ana Gómez",
@@ -22,9 +36,6 @@ const professional: Professional = {
   lastName: "Gómez",
   specialty: "Traumatología",
   days: ["Lunes", "Miércoles", "Viernes"],
-  scheduleStart: "09:00",
-  scheduleEnd: "13:00",
-  defaultDuration: 45,
   active: true,
   avatarColor: "#0ea5e9",
 };
@@ -37,7 +48,6 @@ const appointment = (overrides: Partial<Appointment> = {}): Appointment => ({
   professionalName: professional.name,
   date: MONDAY,
   time: "10:00",
-  duration: 60,
   status: "confirmado",
   sessionType: "Rehabilitación",
   ...overrides,
@@ -49,35 +59,9 @@ function availability(options: { startTime: string; available: boolean }[]) {
   );
 }
 
-describe("slots: bloques de 1 h", () => {
-  it("genera un bloque por hora dentro del horario", () => {
-    assert.deepEqual(getProfessionalHourlySlotStarts(professional), [
-      "09:00",
-      "10:00",
-      "11:00",
-      "12:00",
-    ]);
-  });
-
-  it("horario no alineado a la hora (08:30) arranca los bloques desde ahí", () => {
-    const pro = { ...professional, scheduleStart: "08:30", scheduleEnd: "11:30" };
-    assert.deepEqual(getProfessionalHourlySlotStarts(pro), ["08:30", "09:30", "10:30"]);
-    assert.equal(isValidHourlySlotStart(pro, "09:00"), false);
-  });
-
-  it("descarta el bloque final si no entra completo", () => {
-    const pro = { ...professional, scheduleStart: "09:30", scheduleEnd: "12:00" };
-    assert.deepEqual(getProfessionalHourlySlotStarts(pro), ["09:30", "10:30"]);
-  });
-
-  it("horario menor a una hora no genera bloques", () => {
-    const pro = { ...professional, scheduleStart: "09:00", scheduleEnd: "09:45" };
-    assert.deepEqual(getProfessionalHourlySlotStarts(pro), []);
-  });
-
-  it("acepta horarios con segundos (HH:mm:ss)", () => {
-    const pro = { ...professional, scheduleStart: "09:00:00", scheduleEnd: "11:00:00" };
-    assert.deepEqual(getProfessionalHourlySlotStarts(pro), ["09:00", "10:00"]);
+describe("slots: bloques de 1 h del consultorio", () => {
+  it("genera un bloque por hora entre las 08:00 y las 18:00", () => {
+    assert.deepEqual(getHourlySlotStarts(), CLINIC_SLOTS);
   });
 
   it("formatea la etiqueta como rango de 1 h", () => {
@@ -93,15 +77,21 @@ describe("slots: disponibilidad por día", () => {
   });
 
   it("reconoce días con tilde (Miércoles)", () => {
-    assert.equal(listHourlySlotOptions(professional, WEDNESDAY, []).length, 4);
+    assert.equal(
+      listHourlySlotOptions(professional, WEDNESDAY, []).length,
+      CLINIC_SLOTS.length
+    );
   });
 
   it("sin turnos, todos los bloques están libres", () => {
     const options = listHourlySlotOptions(professional, MONDAY, []);
 
-    assert.equal(options.length, 4);
+    assert.deepEqual(
+      options.map((option) => option.startTime),
+      CLINIC_SLOTS
+    );
     assert.ok(options.every((option) => option.available));
-    assert.equal(options[0].label, "09:00 - 10:00 hs");
+    assert.equal(options[0].label, "08:00 - 09:00 hs");
   });
 });
 
@@ -124,22 +114,22 @@ describe("slots: ocupación", () => {
     });
   }
 
-  it("un turno fuera de grilla bloquea todos los bloques que pisa", () => {
-    const options = listHourlySlotOptions(professional, MONDAY, [
-      appointment({ time: "10:30", duration: 45 }), // 10:30–11:15
-    ]);
+  it("un turno fuera de grilla (1 h) bloquea los dos bloques que pisa", () => {
+    const slots = availability(
+      listHourlySlotOptions(professional, MONDAY, [
+        appointment({ time: "10:30" }), // 10:30–11:30
+      ])
+    );
 
-    assert.deepEqual(availability(options), {
-      "09:00": true,
-      "10:00": false,
-      "11:00": false,
-      "12:00": true,
-    });
+    assert.equal(slots["09:00"], true);
+    assert.equal(slots["10:00"], false);
+    assert.equal(slots["11:00"], false);
+    assert.equal(slots["12:00"], true);
   });
 
   it("turnos contiguos no se consideran solapados", () => {
     const options = listHourlySlotOptions(professional, MONDAY, [
-      appointment({ time: "09:00", duration: 60 }),
+      appointment({ time: "09:00" }),
     ]);
 
     assert.equal(availability(options)["09:00"], false);
@@ -180,14 +170,15 @@ describe("slots: horarios que ya pasaron hoy (M3)", () => {
   const now = new Date("2027-06-07T13:30:00Z");
 
   it("hoy, los bloques ya empezados no están disponibles", () => {
-    const options = listHourlySlotOptions(professional, MONDAY, [], undefined, { now });
+    const slots = availability(
+      listHourlySlotOptions(professional, MONDAY, [], undefined, { now })
+    );
 
-    assert.deepEqual(availability(options), {
-      "09:00": false,
-      "10:00": false,
-      "11:00": true,
-      "12:00": true,
-    });
+    assert.equal(slots["08:00"], false);
+    assert.equal(slots["09:00"], false);
+    assert.equal(slots["10:00"], false);
+    assert.equal(slots["11:00"], true);
+    assert.equal(slots["17:00"], true);
   });
 
   it("otro día no se ve afectado", () => {
@@ -213,29 +204,20 @@ describe("slots: opciones del formulario de edición", () => {
       currentTime: "10:00:00",
     });
 
-    assert.equal(options.length, 4);
+    assert.equal(options.length, CLINIC_SLOTS.length);
   });
 
-  it("agrega el horario actual fuera de grilla como primera opción", () => {
+  it("agrega el horario actual fuera de grilla como primera opción (1 h)", () => {
     const options = listHourlySlotOptionsForForm(professional, MONDAY, [], {
       currentTime: "10:15",
-      currentDuration: 45,
     });
 
-    assert.equal(options.length, 5);
+    assert.equal(options.length, CLINIC_SLOTS.length + 1);
     assert.deepEqual(options[0], {
       startTime: "10:15",
-      label: "10:15 - 11:00 hs (actual)",
+      label: "10:15 - 11:15 hs (actual)",
       available: true,
     });
-  });
-
-  it("sin duración actual usa el bloque de 60 min en la etiqueta", () => {
-    const [first] = listHourlySlotOptionsForForm(professional, MONDAY, [], {
-      currentTime: "10:15",
-    });
-
-    assert.equal(first.label, "10:15 - 11:15 hs (actual)");
   });
 
   it("sin horario actual devuelve las opciones base", () => {
@@ -247,19 +229,15 @@ describe("slots: opciones del formulario de edición", () => {
 });
 
 describe("slots: validación de inicio de bloque", () => {
-  it("acepta inicios de bloque (con o sin segundos)", () => {
-    assert.equal(isValidHourlySlotStart(professional, "09:00"), true);
-    assert.equal(isValidHourlySlotStart(professional, "12:00:00"), true);
+  it("acepta inicios de bloque del consultorio (con o sin segundos)", () => {
+    assert.equal(isValidHourlySlotStart("08:00"), true);
+    assert.equal(isValidHourlySlotStart("17:00:00"), true);
   });
 
-  it("rechaza horarios fuera de grilla o de horario", () => {
-    assert.equal(isValidHourlySlotStart(professional, "10:30"), false);
-    assert.equal(isValidHourlySlotStart(professional, "13:00"), false);
-    assert.equal(isValidHourlySlotStart(professional, "08:00"), false);
-  });
-
-  it("sin profesional nunca es válido", () => {
-    assert.equal(isValidHourlySlotStart(undefined, "09:00"), false);
+  it("rechaza horarios fuera de grilla o fuera del horario del consultorio", () => {
+    assert.equal(isValidHourlySlotStart("10:30"), false);
+    assert.equal(isValidHourlySlotStart("07:00"), false);
+    assert.equal(isValidHourlySlotStart("18:00"), false);
   });
 });
 

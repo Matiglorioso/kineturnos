@@ -63,10 +63,7 @@ export function AppointmentDetailDialog({
   if (!appointment) return null;
 
   const dateLabel = formatAppDateLong(appointment.date);
-  const scheduleDetail = formatAppointmentScheduleDetail(
-    appointment.time,
-    appointment.duration
-  );
+  const scheduleDetail = formatAppointmentScheduleDetail(appointment.time);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -48,7 +48,7 @@ export const moduleGuides: {
     title: "Agenda",
     summary: "Programación por lista o vista semanal, con filtros por profesional y estado.",
     tips: [
-      "Agendar turno valida horarios del profesional y evita solapamientos.",
+      "Agendar turno valida los días del profesional y evita solapamientos.",
       "Podés marcar confirmado, atendido, cancelado o ausente desde el detalle del turno.",
       "La vista Semana ayuda a distribuir la carga entre kinesiólogos.",
     ],
@@ -65,10 +65,10 @@ export const moduleGuides: {
   {
     icon: Stethoscope,
     title: "Profesionales",
-    summary: "Equipo de kinesiólogos con días, horario de atención y duración habitual de sesión.",
+    summary: "Equipo de kinesiólogos con especialidad y días de atención.",
     tips: [
       "La matrícula es única por profesional.",
-      "Solo se pueden agendar turnos dentro del horario configurado.",
+      "Todos los turnos duran 1 hora, dentro del horario del consultorio (08:00 a 18:00).",
     ],
   },
 ];

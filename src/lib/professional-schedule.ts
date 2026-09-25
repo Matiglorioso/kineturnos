@@ -1,13 +1,17 @@
+import {
+  APPOINTMENT_SLOT_DURATION_MINUTES,
+  CLINIC_CLOSING_TIME,
+  CLINIC_OPENING_TIME,
+} from "@/lib/appointment-constants";
 import { parseAppDate } from "@/lib/date-utils";
-import { getEndTime, isEndTimeAfterStart, timeToMinutes } from "@/lib/time-utils";
+import { timeToMinutes } from "@/lib/time-utils";
 import { Professional } from "@/types";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export { isEndTimeAfterStart };
-
-export function getProfessionalScheduleLabel(professional: Professional): string {
-  return `${professional.scheduleStart.slice(0, 5)} - ${professional.scheduleEnd.slice(0, 5)}`;
+/** Ej: "08:00 - 18:00": horario del consultorio, igual para todos los profesionales. */
+export function getClinicScheduleLabel(): string {
+  return `${CLINIC_OPENING_TIME} - ${CLINIC_CLOSING_TIME}`;
 }
 
 export function getWeekdayLabelFromAppDate(dateStr: string): string | null {
@@ -37,17 +41,13 @@ export function professionalWorksOnDay(
   return professional.days.some((day) => normalizeWeekday(day) === target);
 }
 
-/** Valida que inicio + duracion caigan dentro del horario laboral del profesional. */
-export function isWithinProfessionalSchedule(
-  professional: Professional,
-  startTime: string,
-  durationMinutes: number
-): boolean {
+/** Valida que el turno (1 h) empiece y termine dentro del horario del consultorio. */
+export function isWithinClinicSchedule(startTime: string): boolean {
   const start = timeToMinutes(startTime);
-  const end = start + durationMinutes;
-  const scheduleStart = timeToMinutes(professional.scheduleStart);
-  const scheduleEnd = timeToMinutes(professional.scheduleEnd);
-  return start >= scheduleStart && end <= scheduleEnd;
+  return (
+    start >= timeToMinutes(CLINIC_OPENING_TIME) &&
+    start + APPOINTMENT_SLOT_DURATION_MINUTES <= timeToMinutes(CLINIC_CLOSING_TIME)
+  );
 }
 
 export type ProfessionalSlotValidationErrors = {
@@ -58,8 +58,7 @@ export type ProfessionalSlotValidationErrors = {
 export function validateProfessionalAppointmentSlot(
   professional: Professional | undefined,
   date: string,
-  time: string,
-  durationMinutes: number
+  time: string
 ): ProfessionalSlotValidationErrors {
   if (!professional) return {};
 
@@ -70,19 +69,11 @@ export function validateProfessionalAppointmentSlot(
     };
   }
 
-  if (!isWithinProfessionalSchedule(professional, time, durationMinutes)) {
+  if (!isWithinClinicSchedule(time)) {
     return {
-      schedule: `El horario debe estar entre ${getProfessionalScheduleLabel(professional)}.`,
+      schedule: `El horario debe estar entre ${getClinicScheduleLabel()}.`,
     };
   }
 
   return {};
-}
-
-/** Alias descriptivo para calculo de fin de turno en UI de agenda del profesional. */
-export function getAppointmentEndTime(
-  startTime: string,
-  durationMinutes: number
-): string {
-  return getEndTime(startTime, durationMinutes);
 }
