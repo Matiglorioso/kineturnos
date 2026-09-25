@@ -98,6 +98,15 @@ export const APPOINTMENT_PATIENT_OVERLAP_ERROR =
 export const APPOINTMENT_FUTURE_STATUS_ERROR =
   "Un turno futuro no puede marcarse como atendido o ausente.";
 
+export function getAppointmentTransitionError(
+  from: AppointmentStatus,
+  to: AppointmentStatus
+): string {
+  void from;
+  void to;
+  return "";
+}
+
 export const APPOINTMENT_PAST_TIME_ERROR =
   "Ese horario ya pasó. Elegí un horario posterior a la hora actual.";
 
@@ -118,6 +127,7 @@ export type ValidateAppointmentFormOptions = {
   previousDate?: string;
   previousTime?: string;
   previousProfessionalId?: string;
+  previousStatus?: AppointmentStatus;
   /** Momento de referencia para "hoy" (inyectable en tests). */
   now?: Date;
 };
