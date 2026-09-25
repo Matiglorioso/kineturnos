@@ -40,7 +40,7 @@ La app ya persiste **pacientes, profesionales, turnos y usuarios** en PostgreSQL
    | `DATABASE_URL` | URL **Pooled** de Neon (paso 1) |
    | `NEXT_PUBLIC_SITE_URL` | `https://kineturnos.vercel.app` |
    | `AUTH_SECRET` | Secreto aleatorio (`openssl rand -base64 32`) |
-   | `VERIFY_SECRET` | *(opcional)* Para `verify:migration` sin login |
+   | `VERIFY_SECRET` | *(opcional)* Para `test:int` sin login |
 
 4. Marcá los tres entornos: **Production**, **Preview**, **Development**
 5. **Save**
@@ -87,16 +87,16 @@ Comprueba health, login público, redirect sin sesión y que Neon tenga usuarios
 Con el servidor corriendo (`npm run dev`) y `VERIFY_SECRET` en `.env`:
 
 ```powershell
-npm.cmd run verify:migration
+npm.cmd run test:int
 ```
 
 Opcional, contra otro puerto:
 
 ```powershell
-$env:VERIFY_BASE_URL='http://localhost:3001'; npm.cmd run verify:migration
+$env:VERIFY_BASE_URL='http://localhost:3001'; npm.cmd run test:int
 ```
 
-El script prueba integridad de DB, CRUD de pacientes/profesionales, validaciones de DNI/matrícula y turnos (incluido solapamiento).
+Los tests prueban integridad de DB, CRUD de pacientes/profesionales/turnos, validaciones, login por rol y permisos. Requieren la base sembrada con `npm run db:seed` y crean/borran datos de prueba: **no los corras contra la base de producción** (ver [CI.md](CI.md)).
 
 ---
 
