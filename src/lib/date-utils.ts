@@ -63,16 +63,16 @@ export function formatTodayLongLabel(referenceDate: Date = new Date()): string {
   return format(referenceDate, `EEEE ${APP_DATE_FORMAT}`, { locale: es });
 }
 
-export function isPastAppDate(dateStr: string): boolean {
+export function isPastAppDate(dateStr: string, now: Date = new Date()): boolean {
   const selected = parseAppDate(dateStr);
   if (!selected) return false;
-  return isBefore(startOfDay(selected), startOfDay(new Date()));
+  return isBefore(startOfDay(selected), startOfDay(now));
 }
 
-export function isFutureAppDate(dateStr: string): boolean {
+export function isFutureAppDate(dateStr: string, now: Date = new Date()): boolean {
   const selected = parseAppDate(dateStr);
   if (!selected) return false;
-  return isAfter(startOfDay(selected), startOfDay(new Date()));
+  return isAfter(startOfDay(selected), startOfDay(now));
 }
 
 export function getAppointmentDateTime(dateStr: string, time: string): Date {
