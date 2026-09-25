@@ -37,10 +37,9 @@ function intervalsOverlap(
   return startA < endB && startB < endA;
 }
 
-/** Detecta solapamiento con otros turnos del mismo profesional en la misma fecha. */
-export function hasProfessionalOverlap(
+function hasBlockingOverlap(
   appointments: Appointment[],
-  professionalId: string,
+  isSameOwner: (appointment: Appointment) => boolean,
   date: string,
   startTime: string,
   durationMinutes: number,
@@ -51,7 +50,7 @@ export function hasProfessionalOverlap(
 
   return appointments.some((appointment) => {
     if (appointment.id === excludeId) return false;
-    if (appointment.professionalId !== professionalId) return false;
+    if (!isSameOwner(appointment)) return false;
     if (!areSameAppDay(appointment.date, date)) return false;
     if (!BLOCKING_STATUSES.has(appointment.status)) return false;
 
@@ -60,6 +59,44 @@ export function hasProfessionalOverlap(
 
     return intervalsOverlap(newStart, newEnd, existingStart, existingEnd);
   });
+}
+
+/** Detecta solapamiento con otros turnos del mismo profesional en la misma fecha. */
+export function hasProfessionalOverlap(
+  appointments: Appointment[],
+  professionalId: string,
+  date: string,
+  startTime: string,
+  durationMinutes: number,
+  excludeId?: string
+): boolean {
+  return hasBlockingOverlap(
+    appointments,
+    (appointment) => appointment.professionalId === professionalId,
+    date,
+    startTime,
+    durationMinutes,
+    excludeId
+  );
+}
+
+/** Detecta si el paciente ya tiene otro turno (con cualquier profesional) en ese horario. */
+export function hasPatientOverlap(
+  appointments: Appointment[],
+  patientId: string,
+  date: string,
+  startTime: string,
+  durationMinutes: number,
+  excludeId?: string
+): boolean {
+  return hasBlockingOverlap(
+    appointments,
+    (appointment) => appointment.patientId === patientId,
+    date,
+    startTime,
+    durationMinutes,
+    excludeId
+  );
 }
 
 export const APPOINTMENT_OVERLAP_ERROR =
@@ -240,6 +277,18 @@ export function validateAppointmentForm(
 
     if (overlaps) {
       errors.overlap = APPOINTMENT_OVERLAP_ERROR;
+    } else if (
+      values.patientId &&
+      hasPatientOverlap(
+        existingAppointments,
+        values.patientId,
+        values.date,
+        normalizeTime(values.time),
+        slotDuration,
+        excludeId
+      )
+    ) {
+      errors.overlap = APPOINTMENT_PATIENT_OVERLAP_ERROR;
     }
 
     const scheduleErrors = validateProfessionalAppointmentSlot(
