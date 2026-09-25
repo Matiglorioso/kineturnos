@@ -6,7 +6,8 @@ import {
   toPacienteWriteData,
   type PatientWriteInput,
 } from "@/lib/db/patient-write";
-import { DuplicateFieldError } from "@/lib/db/errors";
+import { ACTIVE_APPOINTMENT_STATUSES } from "@/lib/appointment-status";
+import { DeleteBlockedError, DuplicateFieldError } from "@/lib/db/errors";
 import { syncTurnoPatientName } from "@/lib/db/sync";
 import {
   appDateToDb,
@@ -133,7 +134,21 @@ export async function updatePatientInDb(
   return mapPatient(record);
 }
 
+/**
+ * Borra el paciente y su historial (cascada). Se bloquea si tiene turnos
+ * activos (pendiente/confirmado), igual que con los profesionales.
+ */
 export async function deletePatientFromDb(id: string): Promise<void> {
+  const activeCount = await prisma.turno.count({
+    where: { pacienteId: id, estado: { in: [...ACTIVE_APPOINTMENT_STATUSES] } },
+  });
+
+  if (activeCount > 0) {
+    throw new DeleteBlockedError(
+      `No se puede eliminar el paciente porque tiene ${activeCount} turno(s) activo(s) (pendiente o confirmado). Cancelalos o atendelos antes de eliminar, o marcá al paciente como inactivo.`
+    );
+  }
+
   await prisma.paciente.delete({ where: { id } });
 }
 
