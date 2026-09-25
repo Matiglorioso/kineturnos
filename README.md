@@ -200,6 +200,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run db:clear-turnos` | Borra todos los turnos y limpia `ultimoTurno` |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run test:int` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
+| `npm run test:coverage` | Cobertura de los unitarios (c8); reporte HTML en `coverage/`. Resultados: [docs/TESTING.md](docs/TESTING.md) |
 | `npm run test:e2e` | Tests E2E con Playwright (levanta `npm run dev`; base sembrada con `db:seed`, nunca producción) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
 
