@@ -100,7 +100,7 @@ export const appointmentStatuses: {
 ];
 
 export const systemScope: string[] = [
-  "Un consultorio por instalación (Centro Kine Norte en esta instancia).",
+  "Un consultorio por instalación (SANMAR SALUD en esta instancia).",
   "Todos los usuarios con acceso ven los mismos módulos operativos.",
   "Sin recordatorios automáticos por email o WhatsApp por el momento.",
   "Sin facturación, obras sociales avanzadas ni historial clínico detallado.",
