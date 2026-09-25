@@ -3,6 +3,7 @@
  * Requieren Postgres migrado y sembrado (`db:seed`) y el dev server corriendo
  * (`VERIFY_BASE_URL`, `VERIFY_SECRET`). En CI los provee el job "Verify DB + API".
  */
+import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 import { addDays } from "date-fns";
 import { hashPassword } from "../../src/lib/auth/password";
@@ -263,6 +264,60 @@ export function appointmentBody(input: {
     status: input.status ?? "pendiente",
     notes: "",
   };
+}
+
+// ---------------------------------------------------------------- Scripts y bases descartables
+
+export type ScriptResult = { status: number | null; output: string };
+
+/** Corre un script de `prisma/` o `scripts/` con tsx, como lo haría npm. */
+export function runScript(
+  script: string,
+  env: Record<string, string>,
+  args: string[] = []
+): ScriptResult {
+  const result = spawnSync("npx", ["tsx", script, ...args], {
+    env: { ...process.env, ...env },
+    encoding: "utf8",
+    shell: process.platform === "win32",
+    timeout: 120_000,
+  });
+  return { status: result.status, output: `${result.stdout}\n${result.stderr}` };
+}
+
+/**
+ * Crea una base vacía y migrada en el mismo servidor, para correr scripts
+ * destructivos (seeds, purge) sin tocar la base que usan los demás tests.
+ */
+export async function withScratchDatabase(
+  fn: (db: { url: string; client: PrismaClient }) => Promise<void>
+): Promise<void> {
+  const baseUrl = process.env.DATABASE_URL;
+  if (!baseUrl) throw new Error("DATABASE_URL no está definido.");
+
+  const name = `kineturnos_it_${Date.now()}_${Math.floor(Math.random() * 1e4)}`;
+  const url = new URL(baseUrl);
+  url.pathname = `/${name}`;
+
+  await prisma.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
+  const client = new PrismaClient({ datasources: { db: { url: url.toString() } } });
+
+  try {
+    const migrate = spawnSync("npx", ["prisma", "migrate", "deploy"], {
+      env: { ...process.env, DATABASE_URL: url.toString() },
+      encoding: "utf8",
+      shell: process.platform === "win32",
+      timeout: 120_000,
+    });
+    if (migrate.status !== 0) {
+      throw new Error(`migrate deploy falló:\n${migrate.stdout}\n${migrate.stderr}`);
+    }
+
+    await fn({ url: url.toString(), client });
+  } finally {
+    await client.$disconnect();
+    await prisma.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+  }
 }
 
 /** Borra todo lo creado por los tests (prefijo `it-`), sin tocar el seed. */
