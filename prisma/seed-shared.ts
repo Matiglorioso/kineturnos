@@ -36,6 +36,59 @@ export function getDefaultUsers(professionalId?: string | null): SeedUserInput[]
   ];
 }
 
+export function hasForceFlag(): boolean {
+  return process.argv.includes("--force");
+}
+
+/**
+ * Aborta si la base ya tiene datos, salvo `--force`. Evita que un seed
+ * corrido por error (o contra la base equivocada) borre datos reales.
+ */
+export async function assertDatabaseEmptyOrForced(
+  prisma: PrismaClient,
+  forceCommand: string
+) {
+  const counts = {
+    pacientes: await prisma.paciente.count(),
+    profesionales: await prisma.profesional.count(),
+    turnos: await prisma.turno.count(),
+    usuarios: await prisma.usuario.count(),
+  };
+  const hasData = Object.values(counts).some((count) => count > 0);
+
+  if (hasData && !hasForceFlag()) {
+    throw new Error(
+      `La base ya tiene datos (${JSON.stringify(counts)}): el seed no se ejecuta sobre una base con datos. ` +
+        `Si estás seguro de que es la base correcta, repetí con: ${forceCommand}`
+    );
+  }
+}
+
+/** Crea los usuarios o, si ya existen, les restablece la contraseña (no toca rol ni vínculo). */
+export async function upsertUsers(
+  prisma: PrismaClient,
+  users: SeedUserInput[],
+  plainPassword: string
+) {
+  const passwordHash = await hashPassword(plainPassword);
+
+  for (const user of users) {
+    await prisma.usuario.upsert({
+      where: { email: user.email },
+      update: { passwordHash },
+      create: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        passwordHash,
+        rol: user.rol,
+        activo: true,
+        profesionalId: user.profesionalId ?? null,
+      },
+    });
+  }
+}
+
 export async function clearAllTables(prisma: PrismaClient) {
   await prisma.turno.deleteMany();
   await prisma.usuario.deleteMany();

@@ -1,23 +1,30 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  clearAllTables,
+  assertDatabaseEmptyOrForced,
   getDefaultUsers,
   resolveSeedPassword,
-  seedUsers,
+  upsertUsers,
 } from "./seed-shared";
 
 const prisma = new PrismaClient();
 
+/**
+ * Seed mínimo (go-live): solo los usuarios iniciales. Nunca borra datos.
+ * Con datos existentes aborta; con --force crea los usuarios que falten y
+ * restablece la contraseña de los que ya existen.
+ */
 async function main() {
   const password = resolveSeedPassword({ mode: "minimal" });
 
   console.log("Seed mínimo — solo usuarios (sin pacientes, profesionales ni turnos)");
-  console.log("Limpiando tablas...");
-  await clearAllTables(prisma);
+  await assertDatabaseEmptyOrForced(
+    prisma,
+    "npm run db:seed:minimal -- --force (no borra datos: crea los usuarios que falten y restablece su contraseña)"
+  );
 
   const users = getDefaultUsers(null);
-  console.log(`Insertando ${users.length} usuarios...`);
-  await seedUsers(prisma, users, password);
+  console.log(`Creando o actualizando ${users.length} usuarios...`);
+  await upsertUsers(prisma, users, password);
 
   const counts = {
     profesionales: await prisma.profesional.count(),
@@ -28,7 +35,7 @@ async function main() {
 
   console.log("Seed mínimo completado:", counts);
   console.log("");
-  console.log("Usuarios creados:");
+  console.log("Usuarios:");
   for (const user of users) {
     console.log(`  - ${user.nombre} (${user.email}) · ${user.rol}`);
   }
