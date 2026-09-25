@@ -159,9 +159,38 @@ describe("parseAppointmentWriteInput: validación", () => {
   it.todo("rechaza un status fuera de AppointmentStatus (\"foo\")");
   it.todo("rechaza un sessionType fuera de SESSION_TYPES");
   it.todo("rechaza horas mal formadas (\"25:99\", \"abc\")");
-  // Bug: el PUT de edición completa pasa por este parser sin excludeId/previousDate,
-  // así que editar un turno pasado (ej. marcarlo atendido desde el formulario) da 400.
-  it.todo("al editar un turno pasado sin cambiar la fecha, no lo rechaza como alta");
+});
+
+describe("parseAppointmentWriteInput: edición de turnos pasados", () => {
+  // Regresión: el PATCH de edición completa validaba como alta y respondía 400
+  // "No se pueden crear turnos en fechas pasadas" al editar un turno pasado.
+  it("permite editar un turno pasado sin cambiar la fecha", () => {
+    const date = pastDate();
+    const { input, error } = parseAppointmentWriteInput(
+      validBody({ date, status: "atendido" }),
+      { excludeId: "a-1", previousDate: date }
+    );
+
+    assert.equal(error, undefined);
+    assert.equal(input?.status, "atendido");
+  });
+
+  it("rechaza mover un turno a otra fecha pasada", () => {
+    const { error } = parseAppointmentWriteInput(
+      validBody({ date: toAppDate(subDays(new Date(), 14)) }),
+      { excludeId: "a-1", previousDate: pastDate() }
+    );
+
+    assert.equal(error, "No se puede mover un turno a una fecha pasada");
+  });
+
+  it("sin opciones de edición, una fecha pasada sigue siendo un alta inválida", () => {
+    const { error } = parseAppointmentWriteInput(
+      validBody({ date: pastDate() })
+    );
+
+    assert.equal(error, "No se pueden crear turnos en fechas pasadas");
+  });
 });
 
 describe("parseAppointmentStatusInput", () => {
