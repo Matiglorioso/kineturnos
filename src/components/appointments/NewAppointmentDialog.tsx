@@ -232,6 +232,7 @@ export function NewAppointmentDialog({
         ? {
             previousDate: editingAppointment.date,
             previousTime: editingAppointment.time,
+            previousProfessionalId: editingAppointment.professionalId,
           }
         : undefined
     );

@@ -155,7 +155,11 @@ export async function assertAppointmentInputValid(
     professionals,
     excludeId,
     existing
-      ? { previousDate: existing.date, previousTime: existing.time }
+      ? {
+          previousDate: existing.date,
+          previousTime: existing.time,
+          previousProfessionalId: existing.professionalId,
+        }
       : undefined
   );
 
