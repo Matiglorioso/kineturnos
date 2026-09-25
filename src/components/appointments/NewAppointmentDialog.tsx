@@ -20,7 +20,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SESSION_TYPES } from "@/lib/appointment-constants";
-import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
+import {
+  APPOINTMENT_STATUS_LABELS,
+  getNextAppointmentStatuses,
+  isFinalAppointmentStatus,
+} from "@/lib/appointment-status";
 import { listHourlySlotOptionsForForm } from "@/lib/appointment-slots";
 import {
   getStatusOptionsForAppointmentDate,
@@ -105,6 +109,10 @@ export function NewAppointmentDialog({
   editingAppointment = null,
 }: NewAppointmentDialogProps) {
   const isEditing = Boolean(editingAppointment);
+  // Máquina de estados: un turno final no se reprograma (solo tipo y observaciones).
+  const isFinalEditing = Boolean(
+    editingAppointment && isFinalAppointmentStatus(editingAppointment.status)
+  );
   const selectableProfessionals = useMemo(() => {
     const active = professionals.filter((professional) => professional.active);
 
@@ -142,23 +150,36 @@ export function NewAppointmentDialog({
     }
   }, [open, defaultDate, editingAppointment]);
 
-  const statusOptions = useMemo(() => {
-    const allowed = getStatusOptionsForAppointmentDate(
+  // Estados posibles: los que admite la fecha y, al editar, las transiciones
+  // permitidas desde el estado actual del turno.
+  const allowedStatuses = useMemo(() => {
+    const byDate = getStatusOptionsForAppointmentDate(
       form.date || getTodayAppDate()
     );
-    return allowed.map((value) => ({
-      value,
-      label: APPOINTMENT_STATUS_LABELS[value],
-    }));
-  }, [form.date]);
+    if (!editingAppointment) return byDate;
+
+    const reachable = [
+      editingAppointment.status,
+      ...getNextAppointmentStatuses(editingAppointment.status),
+    ];
+    return byDate.filter((status) => reachable.includes(status));
+  }, [form.date, editingAppointment]);
+
+  const statusOptions = useMemo(
+    () =>
+      allowedStatuses.map((value) => ({
+        value,
+        label: APPOINTMENT_STATUS_LABELS[value],
+      })),
+    [allowedStatuses]
+  );
 
   useEffect(() => {
-    if (!form.status || !form.date) return;
-    const allowed = getStatusOptionsForAppointmentDate(form.date);
-    if (!allowed.includes(form.status as AppointmentStatus)) {
-      setForm((prev) => ({ ...prev, status: "pendiente" }));
+    if (!form.status || !form.date || allowedStatuses.length === 0) return;
+    if (!allowedStatuses.includes(form.status as AppointmentStatus)) {
+      setForm((prev) => ({ ...prev, status: allowedStatuses[0] }));
     }
-  }, [form.date, form.status]);
+  }, [allowedStatuses, form.date, form.status]);
 
   const selectedProfessional = useMemo(
     () => professionals.find((item) => item.id === form.professionalId),
@@ -228,6 +249,7 @@ export function NewAppointmentDialog({
             previousDate: editingAppointment.date,
             previousTime: editingAppointment.time,
             previousProfessionalId: editingAppointment.professionalId,
+            previousStatus: editingAppointment.status,
           }
         : undefined
     );
@@ -282,9 +304,11 @@ export function NewAppointmentDialog({
             {isEditing ? "Editar turno" : "Agendar turno"}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Modificá los datos del turno seleccionado."
-              : "Programá una sesión indicando paciente, profesional, fecha y bloque horario (turnos de 1 hora)."}
+            {isFinalEditing && editingAppointment
+              ? `Este turno está ${APPOINTMENT_STATUS_LABELS[editingAppointment.status].toLowerCase()}: no se puede reprogramar. Podés editar el tipo de sesión y las observaciones.`
+              : isEditing
+                ? "Modificá los datos del turno seleccionado."
+                : "Programá una sesión indicando paciente, profesional, fecha y bloque horario (turnos de 1 hora)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -299,6 +323,7 @@ export function NewAppointmentDialog({
               <Select
                 value={form.patientId}
                 onValueChange={(value) => updateField("patientId", value)}
+                disabled={isFinalEditing}
               >
                 <SelectTrigger id="patientId">
                   <SelectValue placeholder="Seleccionar paciente" />
@@ -322,6 +347,7 @@ export function NewAppointmentDialog({
               <Select
                 value={form.professionalId}
                 onValueChange={(value) => updateField("professionalId", value)}
+                disabled={isFinalEditing}
               >
                 <SelectTrigger id="professionalId">
                   <SelectValue placeholder="Seleccionar profesional" />
@@ -345,6 +371,7 @@ export function NewAppointmentDialog({
                 inputMode="numeric"
                 placeholder={APP_DATE_FORMAT}
                 value={form.date}
+                disabled={isFinalEditing}
                 onChange={(e) => updateField("date", e.target.value)}
                 onBlur={(e) => {
                   const value = e.target.value.trim();
@@ -365,6 +392,7 @@ export function NewAppointmentDialog({
                 value={form.time}
                 onValueChange={(value) => updateField("time", value)}
                 disabled={
+                  isFinalEditing ||
                   !form.professionalId ||
                   !form.date ||
                   !isValidAppDate(form.date) ||

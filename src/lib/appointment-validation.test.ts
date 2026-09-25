@@ -187,7 +187,6 @@ describe("cambio de solo estado (A2)", () => {
     const errors = validateAppointmentStatusChange(
       slot({ time: "10:15", status: "confirmado" }),
       "cancelado",
-      [],
       now
     );
     assert.deepEqual(errors, {});
@@ -197,7 +196,6 @@ describe("cambio de solo estado (A2)", () => {
     const errors = validateAppointmentStatusChange(
       slot({ date: "10-09-2026", status: "confirmado" }),
       "atendido",
-      [],
       now
     );
     assert.deepEqual(errors, {});
@@ -205,7 +203,7 @@ describe("cambio de solo estado (A2)", () => {
 
   it("rechaza atendido o ausente en un turno futuro", () => {
     for (const status of ["atendido", "ausente"] as const) {
-      const errors = validateAppointmentStatusChange(slot(), status, [], now);
+      const errors = validateAppointmentStatusChange(slot(), status, now);
       assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR, status);
     }
   });
@@ -220,7 +218,6 @@ describe("cambio de solo estado (A2)", () => {
       const errors = validateAppointmentStatusChange(
         slot({ date: "10-09-2026", status: from }),
         to,
-        [],
         now
       );
       assert.equal(errors.status, getAppointmentTransitionError(from, to), `${from} → ${to}`);
@@ -231,19 +228,15 @@ describe("cambio de solo estado (A2)", () => {
     const errors = validateAppointmentStatusChange(
       slot({ status: "confirmado" }),
       "pendiente",
-      [],
       now
     );
     assert.equal(errors.status, getAppointmentTransitionError("confirmado", "pendiente"));
   });
 
-  it("entre estados activos no vuelve a chequear solapamiento", () => {
-    // Un solapamiento heredado no debe impedir confirmar.
-    const legacy = slot({ id: "a-2", patientId: "p-9", status: "pendiente" });
+  it("pendiente → confirmado está permitido", () => {
     const errors = validateAppointmentStatusChange(
       slot({ status: "pendiente" }),
       "confirmado",
-      [legacy],
       now
     );
     assert.deepEqual(errors, {});
