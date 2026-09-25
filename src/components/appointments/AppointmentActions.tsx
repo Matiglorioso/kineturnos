@@ -4,6 +4,7 @@ import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import { Button } from "@/components/ui/button";
 import { formatAppointmentSlotLabel } from "@/lib/datetime-format";
 import {
+  getNextAppointmentStatuses,
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
@@ -67,6 +68,8 @@ export function AppointmentActions({
     appointment.time
   );
 
+  // Máquina de estados: solo se ofrecen las transiciones permitidas.
+  const nextStatuses = getNextAppointmentStatuses(appointment.status);
   const isActive = isActiveAppointmentStatus(appointment.status);
   const isFinal = isFinalAppointmentStatus(appointment.status);
   const showCancel = isActive;
@@ -115,7 +118,7 @@ export function AppointmentActions({
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            disabled={appointment.status === "atendido"}
+            disabled={!nextStatuses.includes("atendido")}
             onSelect={(event) => {
               event.preventDefault();
               closeMenuThen(() => onStatusChange(appointment, "atendido"));
@@ -125,7 +128,7 @@ export function AppointmentActions({
             Marcar como atendido
           </DropdownMenuItem>
           <DropdownMenuItem
-            disabled={appointment.status === "ausente"}
+            disabled={!nextStatuses.includes("ausente")}
             onSelect={(event) => {
               event.preventDefault();
               closeMenuThen(() => setAbsentOpen(true));

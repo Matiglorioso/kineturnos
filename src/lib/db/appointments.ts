@@ -159,6 +159,7 @@ export async function assertAppointmentInputValid(
           previousDate: existing.date,
           previousTime: existing.time,
           previousProfessionalId: existing.professionalId,
+          previousStatus: existing.status,
         }
       : undefined
   );
@@ -263,11 +264,7 @@ export async function updateAppointmentStatusInDb(
     [existing.professionalId],
     async (tx) => {
       // Solo reglas de estado: no se revalida contra la agenda actual del profesional.
-      const errors = validateAppointmentStatusChange(
-        existing,
-        status,
-        await getAppointmentsFromDb(undefined, tx)
-      );
+      const errors = validateAppointmentStatusChange(existing, status);
       throwFirstValidationError(errors);
 
       try {
