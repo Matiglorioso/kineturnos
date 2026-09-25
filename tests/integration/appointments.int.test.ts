@@ -272,3 +272,54 @@ describe("sincronización con pacientes", () => {
     assert.equal(updated.data?.patientName, "Nombre Nuevo");
   });
 });
+
+describe("máquina de estados en la API", () => {
+  it("un turno cancelado no se reactiva (400 en status)", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    const body = appointmentBody({
+      patientId: patient.id,
+      professionalId: professional.id,
+      date: futureWorkday(18),
+      time: "09:00",
+    });
+    assert.equal((await api("/api/appointments", { method: "POST", body })).status, 201);
+    assert.equal(
+      (await api(`/api/appointments/${body.id}`, { method: "PATCH", body: { status: "cancelado" } })).status,
+      200
+    );
+
+    const res = await api(`/api/appointments/${body.id}`, {
+      method: "PATCH",
+      body: { status: "pendiente" },
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.field, "status");
+  });
+
+  it("un turno atendido no se reprograma (400 en date)", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    const turno = await createAppointmentInDb({
+      patient,
+      professional,
+      date: "10-02-2026",
+      time: "10:00",
+      status: "atendido",
+    });
+
+    const res = await api(`/api/appointments/${turno.id}`, {
+      method: "PATCH",
+      body: appointmentBody({
+        id: turno.id,
+        patientId: patient.id,
+        professionalId: professional.id,
+        date: futureWorkday(19),
+        time: "10:00",
+        status: "atendido",
+      }),
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.field, "date");
+  });
+});

@@ -13,6 +13,7 @@ npm run lint           # next lint
 npx tsc --noEmit -p .  # chequeo de tipos rápido
 
 npm test               # unitarios: node:test + tsx sobre src/lib/**/*.test.ts
+npm run test:coverage  # cobertura de los unitarios con c8 (--all sobre src/lib; HTML en coverage/)
 npm run test:int       # integración DB + API: tests/integration/*.int.test.ts
 npm run test:e2e       # E2E Playwright: e2e/*.spec.ts (levanta npm run dev)
 

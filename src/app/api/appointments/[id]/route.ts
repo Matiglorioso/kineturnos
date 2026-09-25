@@ -109,6 +109,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       previousDate: existing.date,
       previousTime: existing.time,
       previousProfessionalId: existing.professionalId,
+      previousStatus: existing.status,
     });
     if (!parsed.input) {
       return NextResponse.json(
