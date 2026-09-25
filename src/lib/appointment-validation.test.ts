@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { nextDay, subDays } from "date-fns";
 import {
-  APPOINTMENT_DURATION_INVALID_ERROR,
   APPOINTMENT_FUTURE_STATUS_ERROR,
   APPOINTMENT_OVERLAP_ERROR,
   APPOINTMENT_PAST_TIME_ERROR,
@@ -39,9 +38,6 @@ const professional: Professional = {
   lastName: "Gómez",
   specialty: "Traumatología",
   days: ["Lunes", "Miércoles", "Viernes"],
-  scheduleStart: "09:00",
-  scheduleEnd: "13:00",
-  defaultDuration: 45,
   active: true,
   avatarColor: "#0ea5e9",
 };
@@ -51,7 +47,6 @@ const baseValues = (): AppointmentFormInput => ({
   professionalId: professional.id,
   date: nextMondayAppDate(),
   time: "10:00",
-  duration: "60",
   sessionType: "Rehabilitación",
   status: "pendiente",
 });
@@ -64,7 +59,6 @@ const existingSlot = (overrides: Partial<Appointment> = {}): Appointment => ({
   professionalName: professional.name,
   date: nextMondayAppDate(),
   time: "10:00",
-  duration: 45,
   status: "confirmado",
   sessionType: "Rehabilitación",
   ...overrides,
@@ -99,8 +93,7 @@ describe("validación de agendado: conflicto de horario", () => {
       [existingSlot({ date })],
       professional.id,
       date,
-      "10:15",
-      45
+      "10:15"
     );
 
     assert.equal(overlaps, true);
@@ -112,8 +105,7 @@ describe("validación de agendado: conflicto de horario", () => {
       [existingSlot({ date, status: "cancelado" })],
       professional.id,
       date,
-      "10:00",
-      45
+      "10:00"
     );
 
     assert.equal(overlaps, false);
@@ -161,20 +153,6 @@ describe("validación de agendado: conflicto de horario", () => {
   });
 });
 
-describe("validación de agendado: duración", () => {
-  for (const duration of ["0", "-30", "7", "45"] as const) {
-    it(`rechaza duración inválida (${duration})`, () => {
-      const errors = validateAppointmentForm(
-        { ...baseValues(), duration },
-        [],
-        [professional]
-      );
-
-      assert.equal(errors.duration, APPOINTMENT_DURATION_INVALID_ERROR);
-    });
-  }
-});
-
 describe("validación de agendado: estado vs fecha", () => {
   it("rechaza atendido en fecha futura", () => {
     const errors = validateAppointmentForm(
@@ -201,7 +179,7 @@ describe("cambio de solo estado (A2)", () => {
   // Jueves 24-09-2026 a las 18:00 ART.
   const now = new Date("2026-09-24T21:00:00Z");
   const slot = (overrides: Partial<Appointment> = {}): Appointment =>
-    existingSlot({ id: "a-1", date: "30-09-2026", time: "10:00", duration: 60, ...overrides });
+    existingSlot({ id: "a-1", date: "30-09-2026", time: "10:00", ...overrides });
 
   it("cancela aunque el profesional ya no atienda ese día ni ese horario", () => {
     // El turno es un miércoles 10:15 (fuera de grilla); la validación de estado no mira la agenda.
@@ -283,12 +261,10 @@ describe("cambio de solo estado (A2)", () => {
 
 describe("edición completa con la agenda del profesional modificada (A2)", () => {
   // Turno existente: miércoles 30-09-2026 a las 10:15 (fuera de grilla).
-  // El profesional ahora atiende solo lunes y viernes, de 08:30 a 12:30.
+  // El profesional ahora atiende solo lunes y viernes.
   const changedProfessional: Professional = {
     ...professional,
     days: ["Lunes", "Viernes"],
-    scheduleStart: "08:30",
-    scheduleEnd: "12:30",
   };
   const now = new Date("2026-09-24T21:00:00Z");
   const previous = {
@@ -319,7 +295,7 @@ describe("edición completa con la agenda del profesional modificada (A2)", () =
 
   it("si se mueve a otro horario, valida contra la agenda actual", () => {
     const errors = validateAppointmentForm(
-      editValues({ time: "11:30" }), // bloque válido, pero el miércoles ya no atiende
+      editValues({ time: "11:00" }), // bloque válido, pero el miércoles ya no atiende
       [],
       [changedProfessional],
       "a-1",
@@ -379,7 +355,7 @@ describe("validación de agendado: paciente con dos turnos a la vez (M2)", () =>
   it("detecta solapamiento parcial", () => {
     const errors = validateAppointmentForm(
       baseValues(), // 10:00–11:00
-      [patientSlot({ time: "10:30", duration: 45 })],
+      [patientSlot({ time: "10:30" })], // 10:30–11:30
       professionals
     );
 
@@ -421,14 +397,12 @@ describe("validación de agendado: paciente con dos turnos a la vez (M2)", () =>
 });
 
 describe("validación de agendado: horario pasado de hoy (M3)", () => {
-  // Jueves 24-09-2026 a las 18:00 ART (21:00 UTC).
+  // Jueves 24-09-2026 a las 14:00 ART (17:00 UTC).
   const TODAY = "24-09-2026";
-  const now = new Date("2026-09-24T21:00:00Z");
+  const now = new Date("2026-09-24T17:00:00Z");
   const allDay: Professional = {
     ...professional,
     days: ["Jueves", "Viernes"],
-    scheduleStart: "08:00",
-    scheduleEnd: "22:00",
   };
 
   const todayValues = (time: string): AppointmentFormInput => ({
@@ -438,7 +412,7 @@ describe("validación de agendado: horario pasado de hoy (M3)", () => {
   });
 
   it("rechaza crear un turno para hoy a una hora que ya pasó", () => {
-    for (const time of ["08:00", "17:00"]) {
+    for (const time of ["08:00", "13:00"]) {
       const errors = validateAppointmentForm(
         todayValues(time),
         [],
@@ -451,7 +425,7 @@ describe("validación de agendado: horario pasado de hoy (M3)", () => {
   });
 
   it("acepta un turno para hoy que todavía no empezó", () => {
-    for (const time of ["18:00", "19:00"]) {
+    for (const time of ["14:00", "17:00"]) {
       const errors = validateAppointmentForm(
         todayValues(time),
         [],

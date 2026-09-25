@@ -1,7 +1,4 @@
-import {
-  APPOINTMENT_DURATION_OPTIONS,
-  APPOINTMENT_SLOT_DURATION_MINUTES,
-} from "@/lib/appointment-constants";
+import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
 import {
   isValidHourlySlotStart,
 } from "@/lib/appointment-slots";
@@ -26,8 +23,6 @@ const BLOCKING_STATUSES = new Set<AppointmentStatus>([
   "atendido",
 ]);
 
-const VALID_DURATIONS = new Set<number>(APPOINTMENT_DURATION_OPTIONS);
-
 function intervalsOverlap(
   startA: number,
   endA: number,
@@ -42,11 +37,10 @@ function hasBlockingOverlap(
   isSameOwner: (appointment: Appointment) => boolean,
   date: string,
   startTime: string,
-  durationMinutes: number,
   excludeId?: string
 ): boolean {
   const newStart = timeToMinutes(startTime);
-  const newEnd = newStart + durationMinutes;
+  const newEnd = newStart + APPOINTMENT_SLOT_DURATION_MINUTES;
 
   return appointments.some((appointment) => {
     if (appointment.id === excludeId) return false;
@@ -55,7 +49,7 @@ function hasBlockingOverlap(
     if (!BLOCKING_STATUSES.has(appointment.status)) return false;
 
     const existingStart = timeToMinutes(appointment.time);
-    const existingEnd = existingStart + appointment.duration;
+    const existingEnd = existingStart + APPOINTMENT_SLOT_DURATION_MINUTES;
 
     return intervalsOverlap(newStart, newEnd, existingStart, existingEnd);
   });
@@ -67,7 +61,6 @@ export function hasProfessionalOverlap(
   professionalId: string,
   date: string,
   startTime: string,
-  durationMinutes: number,
   excludeId?: string
 ): boolean {
   return hasBlockingOverlap(
@@ -75,7 +68,6 @@ export function hasProfessionalOverlap(
     (appointment) => appointment.professionalId === professionalId,
     date,
     startTime,
-    durationMinutes,
     excludeId
   );
 }
@@ -86,7 +78,6 @@ export function hasPatientOverlap(
   patientId: string,
   date: string,
   startTime: string,
-  durationMinutes: number,
   excludeId?: string
 ): boolean {
   return hasBlockingOverlap(
@@ -94,7 +85,6 @@ export function hasPatientOverlap(
     (appointment) => appointment.patientId === patientId,
     date,
     startTime,
-    durationMinutes,
     excludeId
   );
 }
@@ -104,9 +94,6 @@ export const APPOINTMENT_OVERLAP_ERROR =
 
 export const APPOINTMENT_PATIENT_OVERLAP_ERROR =
   "El paciente ya tiene otro turno en ese horario.";
-
-export const APPOINTMENT_DURATION_INVALID_ERROR =
-  "Los turnos son de 1 hora; la duración debe ser 60 minutos.";
 
 export const APPOINTMENT_FUTURE_STATUS_ERROR =
   "Un turno futuro no puede marcarse como atendido o ausente.";
@@ -119,7 +106,6 @@ export type AppointmentFormInput = {
   professionalId: string;
   date: string;
   time: string;
-  duration: string;
   sessionType: string;
   status: string;
 };
@@ -135,14 +121,6 @@ export type ValidateAppointmentFormOptions = {
   /** Momento de referencia para "hoy" (inyectable en tests). */
   now?: Date;
 };
-
-export function isAllowedAppointmentDuration(duration: number): boolean {
-  return (
-    Number.isInteger(duration) &&
-    duration > 0 &&
-    VALID_DURATIONS.has(duration)
-  );
-}
 
 /** Estados permitidos según si la fecha es futura, hoy o pasada. */
 export function getStatusOptionsForAppointmentDate(
@@ -190,7 +168,6 @@ export function validateAppointmentStatusChange(
       existing.professionalId,
       existing.date,
       time,
-      existing.duration,
       existing.id
     )
   ) {
@@ -201,7 +178,6 @@ export function validateAppointmentStatusChange(
       existing.patientId,
       existing.date,
       time,
-      existing.duration,
       existing.id
     )
   ) {
@@ -276,7 +252,7 @@ export function validateAppointmentForm(
     values.date &&
     isValidAppDate(values.date) &&
     !errors.date &&
-    !isValidHourlySlotStart(professional, values.time)
+    !isValidHourlySlotStart(values.time)
   ) {
     errors.time =
       "Elegí un bloque horario válido (cada turno dura 1 hora).";
@@ -301,14 +277,6 @@ export function validateAppointmentForm(
     errors.time = APPOINTMENT_PAST_TIME_ERROR;
   }
 
-  const durationNum = values.duration
-    ? Number(values.duration)
-    : APPOINTMENT_SLOT_DURATION_MINUTES;
-
-  if (values.duration && !isAllowedAppointmentDuration(durationNum)) {
-    errors.duration = APPOINTMENT_DURATION_INVALID_ERROR;
-  }
-
   if (!values.sessionType) {
     errors.sessionType = "Seleccioná un tipo de sesión";
   }
@@ -330,16 +298,13 @@ export function validateAppointmentForm(
     values.date &&
     values.time &&
     !errors.date &&
-    !errors.time &&
-    !errors.duration
+    !errors.time
   ) {
-    const slotDuration = APPOINTMENT_SLOT_DURATION_MINUTES;
     const overlaps = hasProfessionalOverlap(
       existingAppointments,
       values.professionalId,
       values.date,
       normalizeTime(values.time),
-      slotDuration,
       excludeId
     );
 
@@ -352,7 +317,6 @@ export function validateAppointmentForm(
         values.patientId,
         values.date,
         normalizeTime(values.time),
-        slotDuration,
         excludeId
       )
     ) {
@@ -364,8 +328,7 @@ export function validateAppointmentForm(
       : validateProfessionalAppointmentSlot(
           professional,
           values.date,
-          normalizeTime(values.time),
-          slotDuration
+          normalizeTime(values.time)
         );
 
     if (scheduleErrors.day) {

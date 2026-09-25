@@ -3,6 +3,7 @@ import { Appointment } from "@/types";
 import { cn, formatTime, getInitials } from "@/lib/utils";
 import { Calendar, Clock, Stethoscope, User } from "lucide-react";
 import { formatAppDate } from "@/lib/date-utils";
+import { formatAppointmentTimeRange } from "@/lib/datetime-format";
 import { ReactNode } from "react";
 
 interface AppointmentCardProps {
@@ -71,9 +72,7 @@ export function AppointmentCard({
       <div className="space-y-2 border-t border-slate-100 pt-4">
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <Clock className="h-4 w-4 text-slate-400" />
-          <span>
-            {formatTime(appointment.time)} · {appointment.duration} min
-          </span>
+          <span>{formatAppointmentTimeRange(appointment.time)}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <Calendar className="h-4 w-4 text-slate-400" />

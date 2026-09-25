@@ -18,8 +18,6 @@ async function insertRealData(client: PrismaClient) {
       apellido: "Profesional",
       especialidad: "RPG",
       diasAtencion: ["Lunes"],
-      horarioInicio: "08:00",
-      horarioFin: "12:00",
       colorAvatar: "brand",
     },
   });
@@ -125,8 +123,6 @@ describe("db:purge-demo (M5)", () => {
           apellido: mock.lastName,
           especialidad: mock.specialty,
           diasAtencion: mock.days,
-          horarioInicio: mock.scheduleStart,
-          horarioFin: mock.scheduleEnd,
           colorAvatar: mock.avatarColor,
         },
       });
@@ -152,7 +148,6 @@ describe("db:purge-demo (M5)", () => {
             profesionalNombre: "x",
             fecha: appDateToDb(fecha),
             hora: appTimeToDb("10:00"),
-            duracion: 60,
             estado: "atendido",
             tipoSesion: "Control",
           },

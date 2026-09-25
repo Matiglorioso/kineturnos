@@ -29,8 +29,8 @@ import {
 } from "@/lib/professional-form";
 import {
   buildProfessionalName,
+  getClinicScheduleLabel,
   pickAvatarColor,
-  PROFESSIONAL_DURATION_OPTIONS,
   PROFESSIONAL_SPECIALTIES,
   WEEK_DAYS,
 } from "@/lib/professional-utils";
@@ -124,9 +124,6 @@ export function NewProfessionalDialog({
       phone: form.phone.trim() || undefined,
       specialty: form.specialty,
       days: form.days,
-      scheduleStart: form.scheduleStart.slice(0, 5),
-      scheduleEnd: form.scheduleEnd.slice(0, 5),
-      defaultDuration: Number(form.defaultDuration),
       active: form.active,
       avatarColor:
         editingProfessional?.avatarColor ?? pickAvatarColor(existingCount),
@@ -159,7 +156,7 @@ export function NewProfessionalDialog({
           <DialogDescription>
             {isEditing
               ? "Actualizá los datos y la disponibilidad del kinesiólogo."
-              : "Completá la ficha con especialidad, días y horario de atención."}
+              : "Completá la ficha con especialidad y días de atención."}
           </DialogDescription>
         </DialogHeader>
 
@@ -250,6 +247,9 @@ export function NewProfessionalDialog({
                 );
               })}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Horario del consultorio: {getClinicScheduleLabel()} hs, turnos de 1 hora.
+            </p>
             {errors.days && (
               <p className="text-xs text-destructive" role="alert">
                 {errors.days}
@@ -258,58 +258,6 @@ export function NewProfessionalDialog({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField
-              id="scheduleStart"
-              label="Hora de inicio"
-              required
-              error={errors.scheduleStart}
-            >
-              <Input
-                id="scheduleStart"
-                type="time"
-                value={form.scheduleStart}
-                onChange={(e) => updateField("scheduleStart", e.target.value)}
-              />
-            </FormField>
-            <FormField
-              id="scheduleEnd"
-              label="Hora de fin"
-              required
-              error={errors.scheduleEnd}
-            >
-              <Input
-                id="scheduleEnd"
-                type="time"
-                value={form.scheduleEnd}
-                onChange={(e) => updateField("scheduleEnd", e.target.value)}
-              />
-            </FormField>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormField
-              id="defaultDuration"
-              label="Duración estándar del turno"
-              required
-              error={errors.defaultDuration}
-            >
-              <Select
-                value={form.defaultDuration}
-                onValueChange={(value) => updateField("defaultDuration", value)}
-              >
-                <SelectTrigger id="defaultDuration">
-                  <SelectValue placeholder="Seleccionar duración" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFESSIONAL_DURATION_OPTIONS.map((minutes) => (
-                    <SelectItem key={minutes} value={String(minutes)}>
-                      {minutes} minutos
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-
             <FormField id="active" label="Estado">
               <Select
                 value={form.active ? "activo" : "inactivo"}

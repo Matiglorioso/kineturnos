@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getProfessionalScheduleLabel } from "@/lib/professional-utils";
+import { getClinicScheduleLabel } from "@/lib/professional-utils";
 import { cn, getInitials } from "@/lib/utils";
 import { Professional } from "@/types";
 import { Calendar, Clock, Eye, Pencil, Stethoscope, UserX } from "lucide-react";
@@ -23,7 +23,7 @@ export function ProfessionalCard({
   onToggleActive,
   className,
 }: ProfessionalCardProps) {
-  const scheduleLabel = getProfessionalScheduleLabel(professional);
+  const scheduleLabel = getClinicScheduleLabel();
 
   return (
     <Card

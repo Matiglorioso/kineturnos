@@ -32,10 +32,7 @@ export function WeekAppointmentBlock({
   className,
   style,
 }: WeekAppointmentBlockProps) {
-  const timeRangeLabel = formatAppointmentTimeRange(
-    appointment.time,
-    appointment.duration
-  );
+  const timeRangeLabel = formatAppointmentTimeRange(appointment.time);
 
   return (
     <div

@@ -11,7 +11,6 @@ function toRequestBody(appointment: Appointment) {
     professionalId: input.professionalId,
     date: input.date,
     time: input.time,
-    duration: String(input.duration),
     sessionType: input.sessionType,
     status: input.status,
     notes: input.notes ?? "",

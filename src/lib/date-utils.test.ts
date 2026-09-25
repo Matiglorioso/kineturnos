@@ -4,7 +4,10 @@ process.env.TZ = "UTC";
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { validateAppointmentForm } from "@/lib/appointment-validation";
+import {
+  APPOINTMENT_FUTURE_STATUS_ERROR,
+  validateAppointmentForm,
+} from "@/lib/appointment-validation";
 import {
   getTodayAppDate,
   isFutureAppDate,
@@ -46,29 +49,40 @@ describe("validación de turnos con el servidor en UTC (M1)", () => {
     firstName: "Ana",
     lastName: "Gómez",
     specialty: "Traumatología",
-    days: ["Jueves"],
-    scheduleStart: "08:00",
-    scheduleEnd: "23:00",
-    defaultDuration: 60,
+    days: ["Viernes"],
     active: true,
     avatarColor: "#0ea5e9",
   };
+  // Jueves 24-09 a las 21:30 ART = viernes 25-09 00:30 UTC.
+  const now = new Date("2026-09-25T00:30:00Z");
+  const tomorrowValues = (status: string) => ({
+    patientId: "p-1",
+    professionalId: professional.id,
+    date: "25-09-2026", // viernes: mañana en Argentina, "hoy" en UTC
+    time: "08:00",
+    sessionType: "Rehabilitación",
+    status,
+  });
 
-  it("crear un turno para hoy a las 22:00 ART (21:30 ART) funciona", () => {
+  it("mañana sigue siendo futuro: no se puede marcar atendido", () => {
     const errors = validateAppointmentForm(
-      {
-        patientId: "p-1",
-        professionalId: professional.id,
-        date: "24-09-2026", // jueves
-        time: "22:00",
-        duration: "60",
-        sessionType: "Rehabilitación",
-        status: "pendiente",
-      },
+      tomorrowValues("atendido"),
       [],
       [professional],
       undefined,
-      { now: new Date("2026-09-25T00:30:00Z") } // 24-09 21:30 ART
+      { now }
+    );
+
+    assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+
+  it("se puede agendar para mañana a primera hora", () => {
+    const errors = validateAppointmentForm(
+      tomorrowValues("pendiente"),
+      [],
+      [professional],
+      undefined,
+      { now }
     );
 
     assert.deepEqual(errors, {});

@@ -1,4 +1,3 @@
-import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
 import { appDateToDb, appTimeToDb } from "@/lib/db/date-codec";
 import type { Appointment, AppointmentStatus, SessionType } from "@/types";
 
@@ -8,7 +7,6 @@ export interface AppointmentWriteInput {
   professionalId: string;
   date: string;
   time: string;
-  duration: number;
   status: AppointmentStatus;
   sessionType: SessionType;
   notes?: string;
@@ -23,7 +21,6 @@ export function appointmentToWriteInput(
     professionalId: appointment.professionalId,
     date: appointment.date,
     time: appointment.time,
-    duration: appointment.duration,
     status: appointment.status,
     sessionType: appointment.sessionType,
     notes: appointment.notes,
@@ -41,7 +38,6 @@ export function toTurnoWriteData(
     profesionalNombre: names.profesionalNombre,
     fecha: appDateToDb(input.date, "date"),
     hora: appTimeToDb(input.time, "time"),
-    duracion: APPOINTMENT_SLOT_DURATION_MINUTES,
     estado: input.status,
     tipoSesion: input.sessionType,
     observaciones: input.notes?.trim() || null,
@@ -58,7 +54,6 @@ export function toAppointmentFormInput(input: AppointmentWriteInput) {
     professionalId: input.professionalId,
     date: input.date,
     time: input.time,
-    duration: String(input.duration || APPOINTMENT_SLOT_DURATION_MINUTES),
     sessionType: input.sessionType,
     status: input.status,
   };

@@ -72,13 +72,8 @@ export function AgendaListView({
             {appointments.map((appointment) => (
               <TableRow key={appointment.id} className="hover:bg-muted/30">
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
-                      {formatTimeShort(appointment.time)}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {appointment.duration} min
-                    </span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
+                    {formatTimeShort(appointment.time)}
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">
