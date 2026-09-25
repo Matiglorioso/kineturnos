@@ -65,6 +65,9 @@ export function hasProfessionalOverlap(
 export const APPOINTMENT_OVERLAP_ERROR =
   "El profesional ya tiene un turno en ese horario. Elegí otro horario o profesional.";
 
+export const APPOINTMENT_PATIENT_OVERLAP_ERROR =
+  "El paciente ya tiene otro turno en ese horario.";
+
 export const APPOINTMENT_DURATION_INVALID_ERROR =
   "Los turnos son de 1 hora; la duración debe ser 60 minutos.";
 
