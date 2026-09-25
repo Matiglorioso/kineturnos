@@ -10,7 +10,7 @@ import {
   isScopedToOwnProfessional,
   type Permission,
 } from "./permissions";
-import { canAccessAppPath, isPublicPath } from "./route-access";
+import { canAccessAppPath, hasVerifyBypass, isPublicPath } from "./route-access";
 
 const ROLES: RolUsuario[] = ["admin", "recepcion", "profesional"];
 
@@ -116,5 +116,41 @@ describe("route-access", () => {
   it("canAccessAppPath deja pasar /api (la autorización la hace cada endpoint)", () => {
     assert.equal(canAccessAppPath("profesional", "/api/professionals"), true);
     assert.equal(canAccessAppPath("profesional", "/profesionales"), false);
+  });
+});
+
+describe("bypass de verificación (VERIFY_SECRET)", () => {
+  const env = process.env as Record<string, string | undefined>;
+  const request = (secret?: string) =>
+    new Request("http://localhost:3000/api/patients", {
+      headers: secret ? { "x-verify-secret": secret } : {},
+    });
+
+  function withEnv(values: Record<string, string | undefined>, fn: () => void) {
+    const previous = { NODE_ENV: env.NODE_ENV, VERIFY_SECRET: env.VERIFY_SECRET };
+    Object.assign(env, values);
+    try {
+      fn();
+    } finally {
+      Object.assign(env, previous);
+    }
+  }
+
+  it("fuera de producción, con el secreto correcto y solo en /api", () => {
+    withEnv({ NODE_ENV: "development", VERIFY_SECRET: "s3cr3t" }, () => {
+      assert.equal(hasVerifyBypass(request("s3cr3t"), "/api/patients"), true);
+      assert.equal(hasVerifyBypass(request("otro"), "/api/patients"), false);
+      assert.equal(hasVerifyBypass(request(), "/api/patients"), false);
+      assert.equal(hasVerifyBypass(request("s3cr3t"), "/agenda"), false);
+    });
+  });
+
+  it("nunca en producción, ni sin VERIFY_SECRET configurado", () => {
+    withEnv({ NODE_ENV: "production", VERIFY_SECRET: "s3cr3t" }, () => {
+      assert.equal(hasVerifyBypass(request("s3cr3t"), "/api/patients"), false);
+    });
+    withEnv({ NODE_ENV: "development", VERIFY_SECRET: undefined }, () => {
+      assert.equal(hasVerifyBypass(request(""), "/api/patients"), false);
+    });
   });
 });
