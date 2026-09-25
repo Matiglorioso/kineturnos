@@ -74,7 +74,7 @@ describe("helpers de UI", () => {
   it("iniciales, clases y etiquetas de rol", () => {
     assert.equal(getInitials("ana maría torres"), "AM");
     assert.equal(cn("px-2", false && "hidden", "px-4"), "px-4");
-    assert.equal(getRoleLabel("recepcion"), "Recepción");
+    assert.equal(getRoleLabel("superadmin"), "Superadmin");
   });
 
   it("describe el borrado permanente según la cantidad de turnos", () => {

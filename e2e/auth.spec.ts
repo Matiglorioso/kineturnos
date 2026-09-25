@@ -29,21 +29,21 @@ test.describe("login", () => {
     await expect(page).toHaveURL(/\/login\?.*callbackUrl=%2Fpacientes/);
     await waitForLoginForm(page);
 
-    await loginViaUi(page, USERS.recepcion.email, SEED_PASSWORD);
+    await loginViaUi(page, USERS.recepcionista.email, SEED_PASSWORD);
     await expect(page).toHaveURL("/pacientes");
   });
 
   test("con callbackUrl externo queda dentro de la app (A4)", async ({ page }) => {
     await page.goto("/login?callbackUrl=https://example.com");
     await waitForLoginForm(page);
-    await loginViaUi(page, USERS.recepcion.email, SEED_PASSWORD);
+    await loginViaUi(page, USERS.recepcionista.email, SEED_PASSWORD);
 
     await expect(page).toHaveURL("/");
     expect(new URL(page.url()).host).not.toBe("example.com");
   });
 
   test("con contraseña incorrecta muestra el error y no entra", async ({ page }) => {
-    const user = await createUser({ rol: "recepcion" });
+    const user = await createUser({ rol: "admin" });
     await page.goto("/login");
     await waitForLoginForm(page);
     await loginViaUi(page, user.email, "incorrecta-123");
@@ -53,7 +53,7 @@ test.describe("login", () => {
   });
 
   test("después de 5 intentos fallidos bloquea el login (rate limit)", async ({ page }) => {
-    const user = await createUser({ rol: "recepcion" });
+    const user = await createUser({ rol: "admin" });
     await page.goto("/login");
     await waitForLoginForm(page);
 

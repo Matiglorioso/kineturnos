@@ -72,12 +72,12 @@ describe("db:seed:minimal (A1)", () => {
       assert.deepEqual(await counts(client), {
         pacientes: 1,
         profesionales: 1,
-        usuarios: 3,
+        usuarios: 4,
       });
     });
   });
 
-  it("en una base vacía crea los 3 usuarios", async () => {
+  it("en una base vacía crea los 4 usuarios", async () => {
     await withScratchDatabase(async ({ url, client }) => {
       const result = runScript("prisma/seed-minimal.ts", {
         ...SEED_ENV,
@@ -85,7 +85,7 @@ describe("db:seed:minimal (A1)", () => {
       });
 
       assert.equal(result.status, 0, result.output);
-      assert.equal(await client.usuario.count(), 3);
+      assert.equal(await client.usuario.count(), 4);
     });
   });
 });

@@ -15,8 +15,10 @@ export {
 } from "../tests/integration/helpers";
 
 export const USERS = {
+  superadmin: { email: "superadmin@kineturnos.local", roleLabel: "Superadmin" },
   admin: { email: "admin@kineturnos.local", roleLabel: "Administración" },
-  recepcion: { email: "recepcion@kineturnos.local", roleLabel: "Recepción" },
+  // La recepcionista tiene perfil Administrador (como en la tesis).
+  recepcionista: { email: "recepcion@kineturnos.local", roleLabel: "Administración" },
   profesional: { email: "profe@kineturnos.local", roleLabel: "Profesional" },
 } as const;
 

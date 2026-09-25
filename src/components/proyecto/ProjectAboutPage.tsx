@@ -133,7 +133,7 @@ export function ProjectAboutPage() {
             <p className="leading-relaxed text-slate-600">
               <strong className="font-medium text-slate-800">KineTurnos</strong>{" "}
               organiza turnos, pacientes y profesionales en un solo lugar. Está
-              pensado para recepción y kinesiólogos que necesitan coordinar
+              pensado para administración y kinesiólogos que necesitan coordinar
               sesiones, estados y disponibilidad sin planillas ni mensajes
               dispersos.
             </p>
