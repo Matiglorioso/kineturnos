@@ -1,5 +1,6 @@
 import { mapAppointment } from "@/lib/db/mappers";
 import {
+  ConflictError,
   NotFoundError,
   ValidationError,
 } from "@/lib/db/errors";
@@ -88,9 +89,19 @@ function rethrowTurnoSlotUniqueViolation(error: unknown): never {
     error.code === "P2002" &&
     isTurnoProfessionalSlotViolation(error)
   ) {
-    throw new ValidationError(APPOINTMENT_OVERLAP_ERROR, "overlap");
+    throw new ConflictError(APPOINTMENT_OVERLAP_ERROR, "overlap");
   }
   throw error;
+}
+
+/** Lanza el primer error de validación; un choque de horario es un conflicto (409). */
+function throwFirstValidationError(errors: Record<string, string | undefined>): void {
+  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
+  if (!firstErrorEntry) return;
+
+  const [field, message] = firstErrorEntry;
+  if (field === "overlap") throw new ConflictError(message!, field);
+  throw new ValidationError(message!, field);
 }
 
 export async function assertAppointmentInputValid(
@@ -114,11 +125,7 @@ export async function assertAppointmentInputValid(
       : undefined
   );
 
-  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
-  if (firstErrorEntry) {
-    const [field, message] = firstErrorEntry;
-    throw new ValidationError(message!, field);
-  }
+  throwFirstValidationError(errors);
 }
 
 export async function createAppointmentInDb(
@@ -209,11 +216,7 @@ export async function updateAppointmentStatusInDb(
     status,
     await getAppointmentsFromDb()
   );
-  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
-  if (firstErrorEntry) {
-    const [field, message] = firstErrorEntry;
-    throw new ValidationError(message!, field);
-  }
+  throwFirstValidationError(errors);
 
   let record;
   try {

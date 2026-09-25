@@ -25,6 +25,14 @@ export class ValidationError extends Error {
   }
 }
 
+/** Choque con un recurso existente (p. ej. horario ocupado): se responde 409. */
+export class ConflictError extends ValidationError {
+  constructor(message: string, field?: string) {
+    super(message, field);
+    this.name = "ConflictError";
+  }
+}
+
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
