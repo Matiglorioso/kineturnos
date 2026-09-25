@@ -2,11 +2,20 @@ import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
 import {
   validateAppointmentForm,
   type AppointmentFormInput,
+  type ValidateAppointmentFormOptions,
 } from "@/lib/appointment-validation";
 import type { AppointmentWriteInput } from "@/lib/db/appointment-write";
 import type { AppointmentStatus, SessionType } from "@/types";
 
-export function parseAppointmentWriteInput(body: unknown): {
+/** Al editar, excludeId + previousDate evitan validar el turno como alta. */
+export type ParseAppointmentWriteOptions = ValidateAppointmentFormOptions & {
+  excludeId?: string;
+};
+
+export function parseAppointmentWriteInput(
+  body: unknown,
+  options?: ParseAppointmentWriteOptions
+): {
   input?: AppointmentWriteInput;
   error?: string;
 } {
@@ -26,7 +35,13 @@ export function parseAppointmentWriteInput(body: unknown): {
     status: String(payload.status ?? "pendiente"),
   };
 
-  const validationErrors = validateAppointmentForm(values, [], [], undefined);
+  const validationErrors = validateAppointmentForm(
+    values,
+    [],
+    [],
+    options?.excludeId,
+    { previousDate: options?.previousDate }
+  );
   const basicErrors = Object.fromEntries(
     Object.entries(validationErrors).filter(
       ([key]) => key !== "overlap" && key !== "schedule"

@@ -104,7 +104,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return forbiddenResponse();
     }
 
-    const parsed = parseAppointmentWriteInput(body);
+    const parsed = parseAppointmentWriteInput(body, {
+      excludeId: id,
+      previousDate: existing.date,
+    });
     if (!parsed.input) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
