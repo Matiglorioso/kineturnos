@@ -5,6 +5,7 @@ import {
   APPOINTMENT_DURATION_INVALID_ERROR,
   APPOINTMENT_FUTURE_STATUS_ERROR,
   APPOINTMENT_OVERLAP_ERROR,
+  APPOINTMENT_PAST_TIME_ERROR,
   hasProfessionalOverlap,
   validateAppointmentForm,
   type AppointmentFormInput,
@@ -191,6 +192,83 @@ describe("validación de agendado: estado vs fecha", () => {
     );
 
     assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+});
+
+describe("validación de agendado: horario pasado de hoy (M3)", () => {
+  // Jueves 24-09-2026 a las 18:00 ART (21:00 UTC).
+  const TODAY = "24-09-2026";
+  const now = new Date("2026-09-24T21:00:00Z");
+  const allDay: Professional = {
+    ...professional,
+    days: ["Jueves", "Viernes"],
+    scheduleStart: "08:00",
+    scheduleEnd: "22:00",
+  };
+
+  const todayValues = (time: string): AppointmentFormInput => ({
+    ...baseValues(),
+    date: TODAY,
+    time,
+  });
+
+  it("rechaza crear un turno para hoy a una hora que ya pasó", () => {
+    for (const time of ["08:00", "17:00"]) {
+      const errors = validateAppointmentForm(
+        todayValues(time),
+        [],
+        [allDay],
+        undefined,
+        { now }
+      );
+      assert.equal(errors.time, APPOINTMENT_PAST_TIME_ERROR, time);
+    }
+  });
+
+  it("acepta un turno para hoy que todavía no empezó", () => {
+    for (const time of ["18:00", "19:00"]) {
+      const errors = validateAppointmentForm(
+        todayValues(time),
+        [],
+        [allDay],
+        undefined,
+        { now }
+      );
+      assert.deepEqual(errors, {}, time);
+    }
+  });
+
+  it("acepta mañana a primera hora", () => {
+    const errors = validateAppointmentForm(
+      { ...todayValues("08:00"), date: "25-09-2026" },
+      [],
+      [allDay],
+      undefined,
+      { now }
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("al editar, deja tocar un turno de hoy que ya empezó sin moverlo", () => {
+    const errors = validateAppointmentForm(
+      { ...todayValues("08:00"), status: "atendido" },
+      [],
+      [allDay],
+      "a-1",
+      { previousDate: TODAY, previousTime: "08:00", now }
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("al editar, rechaza moverlo a otra hora que ya pasó", () => {
+    const errors = validateAppointmentForm(
+      todayValues("09:00"),
+      [],
+      [allDay],
+      "a-1",
+      { previousDate: TODAY, previousTime: "08:00", now }
+    );
+    assert.equal(errors.time, APPOINTMENT_PAST_TIME_ERROR);
   });
 });
 
