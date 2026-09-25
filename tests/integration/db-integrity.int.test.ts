@@ -16,12 +16,12 @@ describe("integridad de la base sembrada", () => {
     assert.ok((await prisma.profesional.count({ where: notTestData })) > 0);
   });
 
-  it("existen los usuarios admin, recepción y profesional", async () => {
+  it("existen los perfiles superadmin, administrador y profesional", async () => {
     const users = await prisma.usuario.findMany({ where: notTestData });
     const roles = new Set(users.map((user) => user.rol));
 
+    assert.ok(roles.has("superadmin"));
     assert.ok(roles.has("admin"));
-    assert.ok(roles.has("recepcion"));
     assert.ok(roles.has("profesional"));
   });
 

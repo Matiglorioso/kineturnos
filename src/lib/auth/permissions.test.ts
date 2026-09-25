@@ -12,19 +12,19 @@ import {
 } from "./permissions";
 import { canAccessAppPath, isPublicPath } from "./route-access";
 
-const ROLES: RolUsuario[] = ["admin", "recepcion", "profesional"];
+const ROLES: RolUsuario[] = ["superadmin", "admin", "profesional"];
 
 /** Matriz esperada rol × permiso; cualquier cambio en permisos debe reflejarse acá. */
 const EXPECTED: Record<Permission, Record<RolUsuario, boolean>> = {
-  "appointments:read": { admin: true, recepcion: true, profesional: true },
-  "appointments:write": { admin: true, recepcion: true, profesional: false },
-  "appointments:status": { admin: true, recepcion: true, profesional: true },
-  "patients:read": { admin: true, recepcion: true, profesional: true },
-  "patients:write": { admin: true, recepcion: true, profesional: false },
-  "patients:delete": { admin: true, recepcion: true, profesional: false },
-  "professionals:read": { admin: true, recepcion: true, profesional: true },
-  "professionals:write": { admin: true, recepcion: false, profesional: false },
-  "professionals:delete": { admin: true, recepcion: false, profesional: false },
+  "appointments:read": { superadmin: true, admin: true, profesional: true },
+  "appointments:write": { superadmin: true, admin: true, profesional: false },
+  "appointments:status": { superadmin: true, admin: true, profesional: true },
+  "patients:read": { superadmin: true, admin: true, profesional: true },
+  "patients:write": { superadmin: true, admin: true, profesional: false },
+  "patients:delete": { superadmin: true, admin: true, profesional: false },
+  "professionals:read": { superadmin: true, admin: true, profesional: true },
+  "professionals:write": { superadmin: true, admin: true, profesional: false },
+  "professionals:delete": { superadmin: true, admin: true, profesional: false },
 };
 
 describe("permisos: matriz rol × permiso", () => {
@@ -41,26 +41,24 @@ describe("permisos: matriz rol × permiso", () => {
 });
 
 describe("permisos: helpers por capacidad", () => {
-  it("solo admin y recepción agendan turnos y gestionan pacientes", () => {
-    assert.equal(canScheduleAppointments("admin"), true);
-    assert.equal(canScheduleAppointments("recepcion"), true);
-    assert.equal(canScheduleAppointments("profesional"), false);
-
-    assert.equal(canManagePatients("admin"), true);
-    assert.equal(canManagePatients("recepcion"), true);
-    assert.equal(canManagePatients("profesional"), false);
+  it("administración y superadmin agendan turnos y gestionan pacientes y profesionales", () => {
+    for (const role of ["superadmin", "admin"] as const) {
+      assert.equal(canScheduleAppointments(role), true, role);
+      assert.equal(canManagePatients(role), true, role);
+      assert.equal(canManageProfessionals(role), true, role);
+    }
   });
 
-  it("solo admin gestiona profesionales", () => {
-    assert.equal(canManageProfessionals("admin"), true);
-    assert.equal(canManageProfessionals("recepcion"), false);
+  it("el profesional no agenda ni gestiona pacientes o profesionales", () => {
+    assert.equal(canScheduleAppointments("profesional"), false);
+    assert.equal(canManagePatients("profesional"), false);
     assert.equal(canManageProfessionals("profesional"), false);
   });
 
   it("solo el rol profesional queda acotado a sus propios turnos", () => {
     assert.equal(isScopedToOwnProfessional("profesional"), true);
     assert.equal(isScopedToOwnProfessional("admin"), false);
-    assert.equal(isScopedToOwnProfessional("recepcion"), false);
+    assert.equal(isScopedToOwnProfessional("superadmin"), false);
   });
 });
 
@@ -77,7 +75,7 @@ describe("permisos: acceso a páginas", () => {
     assert.equal(canAccessPage("profesional", "/profesionales"), false);
     assert.equal(canAccessPage("profesional", "/profesionales/123"), false);
     assert.equal(canAccessPage("admin", "/profesionales"), true);
-    assert.equal(canAccessPage("recepcion", "/profesionales/123"), true);
+    assert.equal(canAccessPage("superadmin", "/profesionales/123"), true);
   });
 
   it("permite subrutas de un prefijo habilitado", () => {

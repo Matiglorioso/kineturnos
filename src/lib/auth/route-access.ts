@@ -1,3 +1,4 @@
+import type { RolUsuario } from "@prisma/client";
 import { canAccessPage } from "@/lib/auth/permissions";
 
 export function isPublicPath(pathname: string): boolean {
@@ -27,7 +28,7 @@ export function hasVerifyBypass(request: Request, pathname: string): boolean {
 
 /** Solo páginas UI (no /api). */
 export function canAccessAppPath(
-  role: "admin" | "recepcion" | "profesional",
+  role: RolUsuario,
   pathname: string
 ): boolean {
   if (pathname.startsWith("/api/")) return true;

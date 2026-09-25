@@ -18,7 +18,7 @@ export const helpMeta = {
 export const helpIntro = {
   title: "Guía de uso",
   description:
-    "KineTurnos centraliza turnos, pacientes y profesionales del consultorio. Esta página resume los flujos principales para el equipo de recepción y kinesiólogos.",
+    "KineTurnos centraliza turnos, pacientes y profesionales del consultorio. Esta página resume los flujos principales para administración y kinesiólogos.",
 };
 
 export const quickStartSteps: string[] = [

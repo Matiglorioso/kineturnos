@@ -11,7 +11,7 @@ import {
 } from "./helpers";
 
 // Corre en el proyecto "mobile" (390 × 844).
-test.use({ storageState: storageStateFor("recepcion") });
+test.use({ storageState: storageStateFor("recepcionista") });
 test.afterAll(cleanupTestData);
 
 test.describe("mobile (390 px)", () => {

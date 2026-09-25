@@ -9,9 +9,19 @@ export type SeedUserInput = {
   profesionalId?: string | null;
 };
 
-/** Usuarios iniciales para Centro Kine Norte (go-live o desarrollo). */
+/**
+ * Usuarios iniciales (go-live o desarrollo): Superadmin del equipo de
+ * desarrollo, dos Administradores (dueño y recepción) y un Profesional.
+ */
 export function getDefaultUsers(professionalId?: string | null): SeedUserInput[] {
   return [
+    {
+      id: "u-superadmin",
+      email: "superadmin@kineturnos.local",
+      nombre: "Equipo de desarrollo",
+      rol: "superadmin",
+      profesionalId: null,
+    },
     {
       id: "u-admin",
       email: "admin@kineturnos.local",
@@ -23,7 +33,7 @@ export function getDefaultUsers(professionalId?: string | null): SeedUserInput[]
       id: "u-recepcion",
       email: "recepcion@kineturnos.local",
       nombre: "Laura Mendoza",
-      rol: "recepcion",
+      rol: "admin",
       profesionalId: null,
     },
     {

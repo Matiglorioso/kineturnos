@@ -23,17 +23,15 @@ const ALL_PERMISSIONS: Permission[] = [
   "professionals:delete",
 ];
 
+/**
+ * Perfiles de la tesis: Administrador (dueños y recepción) gestiona todo el
+ * consultorio; Profesional ve su agenda y registra asistencia. Superadmin es
+ * el acceso técnico del equipo de desarrollo: todo lo del Administrador, y a
+ * futuro las tareas de mantenimiento.
+ */
 const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
+  superadmin: ALL_PERMISSIONS,
   admin: ALL_PERMISSIONS,
-  recepcion: [
-    "appointments:read",
-    "appointments:write",
-    "appointments:status",
-    "patients:read",
-    "patients:write",
-    "patients:delete",
-    "professionals:read",
-  ],
   profesional: [
     "appointments:read",
     "appointments:status",
@@ -44,8 +42,8 @@ const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
 
 /** Rutas de página permitidas por rol (además de públicas). */
 const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
+  superadmin: ["/", "/agenda", "/pacientes", "/profesionales", "/proyecto"],
   admin: ["/", "/agenda", "/pacientes", "/profesionales", "/proyecto"],
-  recepcion: ["/", "/agenda", "/pacientes", "/profesionales", "/proyecto"],
   profesional: ["/", "/agenda", "/pacientes", "/proyecto"],
 };
 

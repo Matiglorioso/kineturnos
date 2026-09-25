@@ -24,9 +24,11 @@ enum EstadoTurno {
   @@map("estado_turno")
 }
 
+/// Perfiles: Administrador (dueños y recepción) y Profesional, como en la tesis;
+/// superadmin es el acceso técnico del equipo de desarrollo.
 enum RolUsuario {
+  superadmin
   admin
-  recepcion
   profesional
 
   @@map("rol_usuario")
@@ -78,7 +80,7 @@ model Usuario {
   email         String       @unique
   nombre        String
   passwordHash  String       @map("password_hash")
-  rol           RolUsuario   @default(recepcion)
+  rol           RolUsuario   @default(profesional)
   activo        Boolean      @default(true)
   profesionalId String?      @unique @map("profesional_id")
   profesional   Profesional? @relation(fields: [profesionalId], references: [id], onDelete: SetNull)

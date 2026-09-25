@@ -12,6 +12,8 @@ import {
   futureWorkday,
   login,
   prisma,
+  testId,
+  uniqueDigits,
   type Auth,
 } from "./helpers";
 
@@ -31,8 +33,9 @@ describe("autenticación de la API", () => {
   });
 
   for (const email of [
+    "superadmin@kineturnos.local",
     "admin@kineturnos.local",
-    "recepcion@kineturnos.local",
+    "recepcion@kineturnos.local", // recepcionista: perfil Administrador
     "profe@kineturnos.local",
   ]) {
     it(`${email} inicia sesión y lee pacientes`, async () => {
@@ -45,7 +48,7 @@ describe("autenticación de la API", () => {
 
 describe("sesión con el usuario modificado (A3)", () => {
   it("un usuario desactivado con sesión abierta recibe 401 en la siguiente llamada", async () => {
-    const user = await createUser({ rol: "recepcion" });
+    const user = await createUser({ rol: "admin" });
     const session = await login(user.email);
     assert.equal((await api("/api/patients", { auth: session })).status, 200);
 
@@ -56,7 +59,7 @@ describe("sesión con el usuario modificado (A3)", () => {
   });
 
   it("un cambio de rol se aplica sin volver a loguearse", async () => {
-    const user = await createUser({ rol: "recepcion" });
+    const user = await createUser({ rol: "admin" });
     const session = await login(user.email);
     const patient = await createPatient();
 
@@ -81,14 +84,32 @@ describe("sesión con el usuario modificado (A3)", () => {
 });
 
 describe("permisos por rol", () => {
-  it("recepción no puede crear profesionales (403)", async () => {
-    const session = await login("recepcion@kineturnos.local");
+  it("el profesional no puede crear profesionales (403)", async () => {
+    const session = await login("profe@kineturnos.local");
     const res = await api("/api/professionals", {
       method: "POST",
       auth: session,
       body: { firstName: "No", lastName: "Permitido" },
     });
     assert.equal(res.status, 403);
+  });
+
+  it("la recepcionista, con perfil Administrador, sí gestiona profesionales (201)", async () => {
+    const session = await login("recepcion@kineturnos.local");
+    const res = await api("/api/professionals", {
+      method: "POST",
+      auth: session,
+      body: {
+        id: testId("prof"),
+        firstName: "Alta",
+        lastName: "Recepcion",
+        license: `MN ${uniqueDigits(6)}`,
+        specialty: "RPG",
+        days: ["Lunes"],
+        active: true,
+      },
+    });
+    assert.equal(res.status, 201, res.error);
   });
 });
 
