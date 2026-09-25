@@ -1,4 +1,8 @@
-import { getAppointmentDateTime, maxAppDate } from "@/lib/date-utils";
+import {
+  getAppointmentDateTime,
+  isFutureAppDate,
+  maxAppDate,
+} from "@/lib/date-utils";
 import { isActiveAppointmentStatus } from "@/lib/appointment-status";
 import { Appointment } from "@/types";
 
@@ -18,13 +22,23 @@ export function countPatientAppointments(
   return getPatientAppointments(appointments, patientId).length;
 }
 
-/** "Último turno" del paciente (dd-MM-yyyy) a partir de sus turnos. */
+/**
+ * "Último turno" del paciente (dd-MM-yyyy): el último atendido con fecha ≤ hoy.
+ * Pendientes/confirmados futuros, cancelados y ausentes no cuentan.
+ */
 export function getPatientLastAppointmentDate(
   appointments: Pick<Appointment, "date" | "status">[],
   now: Date = new Date()
 ): string | null {
-  void now;
-  return maxAppDate(appointments.map((appointment) => appointment.date));
+  return maxAppDate(
+    appointments
+      .filter(
+        (appointment) =>
+          appointment.status === "atendido" &&
+          !isFutureAppDate(appointment.date, now)
+      )
+      .map((appointment) => appointment.date)
+  );
 }
 
 export function removePatientAppointments(
