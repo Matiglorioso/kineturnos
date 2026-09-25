@@ -43,6 +43,22 @@ export const APPOINTMENT_STATUS_FORM_OPTIONS = (
   Object.entries(APPOINTMENT_STATUS_LABELS) as [AppointmentStatus, string][]
 ).map(([value, label]) => ({ value, label }));
 
+/** Estados a los que puede pasar un turno. */
+export function getNextAppointmentStatuses(
+  status: AppointmentStatus
+): AppointmentStatus[] {
+  return (Object.keys(APPOINTMENT_STATUS_LABELS) as AppointmentStatus[]).filter(
+    (next) => next !== status
+  );
+}
+
+export function canTransitionAppointmentStatus(
+  from: AppointmentStatus,
+  to: AppointmentStatus
+): boolean {
+  return from === to || getNextAppointmentStatuses(from).includes(to);
+}
+
 export function getAppointmentStatusLabel(status: AppointmentStatus): string {
   return APPOINTMENT_STATUS_LABELS[status];
 }
