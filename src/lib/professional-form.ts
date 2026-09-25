@@ -1,4 +1,3 @@
-import { isEndTimeAfterStart } from "@/lib/professional-schedule";
 import {
   DUPLICATE_LICENSE_MESSAGE,
   isDuplicateLicense,
@@ -15,9 +14,6 @@ export interface ProfessionalFormValues {
   phone: string;
   specialty: string;
   days: WeekDay[];
-  scheduleStart: string;
-  scheduleEnd: string;
-  defaultDuration: string;
   active: boolean;
   notes: string;
 }
@@ -39,9 +35,6 @@ export const INITIAL_PROFESSIONAL_FORM: ProfessionalFormValues = {
   phone: "",
   specialty: "",
   days: [],
-  scheduleStart: "",
-  scheduleEnd: "",
-  defaultDuration: "45",
   active: true,
   notes: "",
 };
@@ -57,9 +50,6 @@ export function buildProfessionalFormValues(
     phone: professional.phone ?? "",
     specialty: professional.specialty,
     days: [...professional.days],
-    scheduleStart: professional.scheduleStart.slice(0, 5),
-    scheduleEnd: professional.scheduleEnd.slice(0, 5),
-    defaultDuration: String(professional.defaultDuration),
     active: professional.active,
     notes: professional.notes ?? "",
   };
@@ -103,26 +93,6 @@ export function validateProfessionalForm(
 
   if (values.days.length === 0) {
     errors.days = "Seleccioná al menos un día de atención";
-  }
-
-  if (!values.scheduleStart) {
-    errors.scheduleStart = "La hora de inicio es obligatoria";
-  }
-
-  if (!values.scheduleEnd) {
-    errors.scheduleEnd = "La hora de fin es obligatoria";
-  }
-
-  if (
-    values.scheduleStart &&
-    values.scheduleEnd &&
-    !isEndTimeAfterStart(values.scheduleStart, values.scheduleEnd)
-  ) {
-    errors.scheduleEnd = "La hora de fin debe ser posterior a la de inicio";
-  }
-
-  if (!values.defaultDuration) {
-    errors.defaultDuration = "La duración es obligatoria";
   }
 
   const emailError = emailValidationError(values.email);

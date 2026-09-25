@@ -62,7 +62,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Activación / desactivación y eliminación con confirmación
 
 ### Profesionales
-- CRUD de kinesiólogos con especialidad, días y horario de atención
+- CRUD de kinesiólogos con especialidad y días de atención (turnos de 1 hora, horario del consultorio 08:00 a 18:00)
 - Duración estándar por sesión
 - Turnos asignados y contador del día
 

@@ -18,8 +18,7 @@ export function PatientAppointmentList({
       {appointments.map((appointment) => {
         const { dateLabel, timeLabel } = formatAppointmentListLine(
           appointment.date,
-          appointment.time,
-          appointment.duration
+          appointment.time
         );
 
         return (

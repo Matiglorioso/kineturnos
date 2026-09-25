@@ -1,7 +1,4 @@
-import {
-  APPOINTMENT_SLOT_DURATION_MINUTES,
-  SESSION_TYPES,
-} from "@/lib/appointment-constants";
+import { SESSION_TYPES } from "@/lib/appointment-constants";
 import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
 import {
   validateAppointmentForm,
@@ -55,7 +52,6 @@ export function parseAppointmentWriteInput(
     professionalId: String(payload.professionalId ?? ""),
     date: String(payload.date ?? ""),
     time: String(payload.time ?? "").trim(),
-    duration: String(payload.duration ?? APPOINTMENT_SLOT_DURATION_MINUTES),
     sessionType: String(payload.sessionType ?? ""),
     status: String(payload.status ?? "pendiente"),
   };
@@ -85,7 +81,6 @@ export function parseAppointmentWriteInput(
     professionalId: values.professionalId,
     date: values.date.trim(),
     time: values.time.trim(),
-    duration: APPOINTMENT_SLOT_DURATION_MINUTES,
     status: values.status as AppointmentStatus,
     sessionType: values.sessionType as SessionType,
     notes: typeof payload.notes === "string" ? payload.notes : undefined,

@@ -63,9 +63,6 @@ model Profesional {
   telefono             String?
   especialidad         String
   diasAtencion         String[] @map("dias_atencion")
-  horarioInicio        String   @map("horario_inicio")
-  horarioFin           String   @map("horario_fin")
-  duracionDefault      Int      @default(45) @map("duracion_default")
   activo               Boolean  @default(true)
   colorAvatar          String   @map("color_avatar")
   observaciones        String?
@@ -97,7 +94,6 @@ model Turno {
   profesionalNombre  String      @map("profesional_nombre")
   fecha              DateTime    @db.Date
   hora               DateTime    @db.Time(0)
-  duracion           Int
   estado             EstadoTurno @default(pendiente)
   tipoSesion         String      @map("tipo_sesion")
   observaciones      String?

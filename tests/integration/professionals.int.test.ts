@@ -25,9 +25,6 @@ const professionalBody = (overrides: Record<string, unknown> = {}) => ({
   phone: "+54 11 8888-8888",
   specialty: "Traumatología",
   days: ["Lunes", "Martes"],
-  scheduleStart: "09:00",
-  scheduleEnd: "17:00",
-  defaultDuration: "60",
   active: true,
   avatarColor: "brand",
   notes: "",
@@ -126,8 +123,6 @@ describe("API de profesionales", () => {
         firstName: "Nombre",
         lastName: "Nuevo",
         days: professional.diasAtencion,
-        scheduleStart: professional.horarioInicio,
-        scheduleEnd: professional.horarioFin,
       }),
     });
     assert.equal(renamed.status, 200, renamed.error);
