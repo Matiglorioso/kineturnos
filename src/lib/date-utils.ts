@@ -1,17 +1,46 @@
 import { normalizeTime } from "@/lib/time-utils";
-import { isAfter, isBefore, isValid, parse, parseISO, startOfDay, format } from "date-fns";
+import { isValid, parse, parseISO, format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export const APP_DATE_FORMAT = "dd-MM-yyyy";
 const APP_DATE_REGEX = /^\d{2}-\d{2}-\d{4}$/;
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Zona horaria del consultorio: "hoy" no depende de la del servidor (UTC en Vercel). */
+export const APP_TIME_ZONE = "America/Argentina/Buenos_Aires";
+
+const appClockFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function getAppClockParts(referenceDate: Date): Record<string, string> {
+  return Object.fromEntries(
+    appClockFormatter
+      .formatToParts(referenceDate)
+      .map((part) => [part.type, part.value])
+  );
+}
+
+/** Minutos transcurridos del día en la zona horaria del consultorio. */
+export function getNowAppMinutes(referenceDate: Date = new Date()): number {
+  const { hour, minute } = getAppClockParts(referenceDate);
+  return Number(hour) * 60 + Number(minute);
+}
+
 export function toAppDate(date: Date): string {
   return format(date, APP_DATE_FORMAT);
 }
 
+/** Fecha de hoy (dd-MM-yyyy) en la zona horaria del consultorio. */
 export function getTodayAppDate(referenceDate: Date = new Date()): string {
-  return toAppDate(referenceDate);
+  const { day, month, year } = getAppClockParts(referenceDate);
+  return `${day}-${month}-${year}`;
 }
 
 export function isValidAppDate(dateStr: string): boolean {
@@ -63,16 +92,19 @@ export function formatTodayLongLabel(referenceDate: Date = new Date()): string {
   return format(referenceDate, `EEEE ${APP_DATE_FORMAT}`, { locale: es });
 }
 
-export function isPastAppDate(dateStr: string): boolean {
-  const selected = parseAppDate(dateStr);
-  if (!selected) return false;
-  return isBefore(startOfDay(selected), startOfDay(new Date()));
+export function isPastAppDate(dateStr: string, now: Date = new Date()): boolean {
+  if (!parseAppDate(dateStr)) return false;
+  return compareAppDates(dateStr, getTodayAppDate(now)) < 0;
 }
 
-export function isFutureAppDate(dateStr: string): boolean {
-  const selected = parseAppDate(dateStr);
-  if (!selected) return false;
-  return isAfter(startOfDay(selected), startOfDay(new Date()));
+export function isFutureAppDate(dateStr: string, now: Date = new Date()): boolean {
+  if (!parseAppDate(dateStr)) return false;
+  return compareAppDates(dateStr, getTodayAppDate(now)) > 0;
+}
+
+export function isTodayAppDate(dateStr: string, now: Date = new Date()): boolean {
+  if (!parseAppDate(dateStr)) return false;
+  return compareAppDates(dateStr, getTodayAppDate(now)) === 0;
 }
 
 export function getAppointmentDateTime(dateStr: string, time: string): Date {

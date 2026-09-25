@@ -2,18 +2,25 @@ import {
   validatePatientForm,
   type PatientFormValues,
 } from "@/lib/patient-form";
+import { firstFieldError, type ParseResult } from "@/lib/api/parse-result";
 import type { PatientWriteInput } from "@/lib/db/patient-write";
 import type { PatientStatus } from "@/types";
 
-export function parsePatientWriteInput(body: unknown): {
-  input?: PatientWriteInput;
-  error?: string;
-} {
+const PATIENT_STATUSES: PatientStatus[] = ["activo", "inactivo"];
+
+export function parsePatientWriteInput(
+  body: unknown
+): ParseResult<PatientWriteInput> {
   if (!body || typeof body !== "object") {
     return { error: "Cuerpo de solicitud invalido." };
   }
 
   const payload = body as Record<string, unknown>;
+  const status = payload.status ?? "activo";
+
+  if (!PATIENT_STATUSES.includes(status as PatientStatus)) {
+    return { error: "Estado de paciente inválido", field: "status" };
+  }
 
   const values: PatientFormValues = {
     firstName: String(payload.firstName ?? ""),
@@ -22,16 +29,12 @@ export function parsePatientWriteInput(body: unknown): {
     phone: String(payload.phone ?? ""),
     email: String(payload.email ?? ""),
     insurance: String(payload.insurance ?? ""),
-    status: (payload.status as PatientStatus) ?? "activo",
+    status: status as PatientStatus,
     notes: String(payload.notes ?? ""),
   };
 
-  const validationErrors = validatePatientForm(values);
-  const errorMessages = Object.values(validationErrors).filter(Boolean);
-
-  if (errorMessages.length > 0) {
-    return { error: errorMessages[0] };
-  }
+  const invalid = firstFieldError(validatePatientForm(values));
+  if (invalid) return invalid;
 
   const input: PatientWriteInput = {
     id: typeof payload.id === "string" ? payload.id : undefined,

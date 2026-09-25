@@ -104,9 +104,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       return forbiddenResponse();
     }
 
-    const parsed = parseAppointmentWriteInput(body);
+    const parsed = parseAppointmentWriteInput(body, {
+      excludeId: id,
+      previousDate: existing.date,
+      previousTime: existing.time,
+    });
     if (!parsed.input) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return NextResponse.json(
+        { error: parsed.error, field: parsed.field },
+        { status: 400 }
+      );
     }
 
     const ownProfessionalId = getOwnProfessionalId(user);
