@@ -125,7 +125,7 @@ Bash / macOS / Linux:
 SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
 ```
 
-Crea admin, recepción y profesional (sin vincular) para **Centro Kine Norte**. Cambiá emails y contraseña antes de entregar al cliente.
+Crea admin, recepción y profesional (sin vincular) para **SANMAR SALUD**. Cambiá emails y contraseña antes de entregar al cliente.
 
 > Si la base ya tiene datos, el seed **aborta** sin tocar nada. Para restablecer la contraseña de los usuarios iniciales sobre una base en uso: `npm run db:seed:minimal -- --force` (nunca borra pacientes, profesionales ni turnos).
 

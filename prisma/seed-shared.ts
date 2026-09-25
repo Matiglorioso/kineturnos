@@ -9,7 +9,7 @@ export type SeedUserInput = {
   profesionalId?: string | null;
 };
 
-/** Usuarios iniciales para Centro Kine Norte (go-live o desarrollo). */
+/** Usuarios iniciales para SANMAR SALUD (go-live o desarrollo). */
 export function getDefaultUsers(professionalId?: string | null): SeedUserInput[] {
   return [
     {
