@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "tsx --test \"src/lib/**/*.test.ts\"",
     "test:int": "tsx --test --test-concurrency=1 \"tests/integration/**/*.int.test.ts\"",
+    "test:e2e": "playwright test",
     "clean": "node scripts/clean-cache.js",
     "dev:clean": "node scripts/kill-port.js && node scripts/clean-cache.js && next dev -p 3000",
     "postinstall": "prisma generate",
@@ -53,6 +54,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/container-queries": "^0.1.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.2",
