@@ -73,7 +73,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     const parsed = parsePatientWriteInput(body);
 
     if (!parsed.input) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return NextResponse.json(
+        { error: parsed.error, field: parsed.field },
+        { status: 400 }
+      );
     }
 
     const patient = await updatePatientInDb(id, {

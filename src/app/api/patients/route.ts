@@ -44,7 +44,10 @@ export async function POST(request: Request) {
     const parsed = parsePatientWriteInput(body);
 
     if (!parsed.input) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return NextResponse.json(
+        { error: parsed.error, field: parsed.field },
+        { status: 400 }
+      );
     }
 
     const patient = await createPatientInDb(parsed.input);

@@ -110,7 +110,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       previousTime: existing.time,
     });
     if (!parsed.input) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return NextResponse.json(
+        { error: parsed.error, field: parsed.field },
+        { status: 400 }
+      );
     }
 
     const ownProfessionalId = getOwnProfessionalId(user);

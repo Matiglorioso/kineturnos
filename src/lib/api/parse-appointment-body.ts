@@ -1,9 +1,15 @@
-import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
+import {
+  APPOINTMENT_SLOT_DURATION_MINUTES,
+  SESSION_TYPES,
+} from "@/lib/appointment-constants";
+import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
 import {
   validateAppointmentForm,
   type AppointmentFormInput,
   type ValidateAppointmentFormOptions,
 } from "@/lib/appointment-validation";
+import { firstFieldError, type ParseResult } from "@/lib/api/parse-result";
+import { isValidTime } from "@/lib/time-utils";
 import type { AppointmentWriteInput } from "@/lib/db/appointment-write";
 import type { AppointmentStatus, SessionType } from "@/types";
 
@@ -12,13 +18,32 @@ export type ParseAppointmentWriteOptions = ValidateAppointmentFormOptions & {
   excludeId?: string;
 };
 
+/** Formato de campos que el formulario no puede producir mal, pero la API sí recibe. */
+function formatError(
+  values: AppointmentFormInput
+): { error: string; field: string } | undefined {
+  if (!(values.status in APPOINTMENT_STATUS_LABELS)) {
+    return { error: "Estado de turno inválido", field: "status" };
+  }
+
+  if (
+    values.sessionType &&
+    !(SESSION_TYPES as string[]).includes(values.sessionType)
+  ) {
+    return { error: "Tipo de sesión inválido", field: "sessionType" };
+  }
+
+  if (values.time && !isValidTime(values.time)) {
+    return { error: "Horario inválido (usá HH:mm)", field: "time" };
+  }
+
+  return undefined;
+}
+
 export function parseAppointmentWriteInput(
   body: unknown,
   options?: ParseAppointmentWriteOptions
-): {
-  input?: AppointmentWriteInput;
-  error?: string;
-} {
+): ParseResult<AppointmentWriteInput> {
   if (!body || typeof body !== "object") {
     return { error: "Cuerpo de solicitud invalido." };
   }
@@ -29,11 +54,14 @@ export function parseAppointmentWriteInput(
     patientId: String(payload.patientId ?? ""),
     professionalId: String(payload.professionalId ?? ""),
     date: String(payload.date ?? ""),
-    time: String(payload.time ?? ""),
+    time: String(payload.time ?? "").trim(),
     duration: String(payload.duration ?? APPOINTMENT_SLOT_DURATION_MINUTES),
     sessionType: String(payload.sessionType ?? ""),
     status: String(payload.status ?? "pendiente"),
   };
+
+  const formatInvalid = formatError(values);
+  if (formatInvalid) return formatInvalid;
 
   const validationErrors = validateAppointmentForm(
     values,
@@ -42,16 +70,13 @@ export function parseAppointmentWriteInput(
     options?.excludeId,
     { previousDate: options?.previousDate }
   );
-  const basicErrors = Object.fromEntries(
-    Object.entries(validationErrors).filter(
-      ([key]) => key !== "overlap" && key !== "schedule"
-    )
-  );
-  const errorMessages = Object.values(basicErrors).filter(Boolean);
+  // Solapamiento y agenda del profesional se validan en la capa de DB, con datos reales.
+  const { overlap, schedule, ...basicErrors } = validationErrors;
+  void overlap;
+  void schedule;
 
-  if (errorMessages.length > 0) {
-    return { error: errorMessages[0] };
-  }
+  const invalid = firstFieldError(basicErrors);
+  if (invalid) return invalid;
 
   const input: AppointmentWriteInput = {
     id: typeof payload.id === "string" ? payload.id : undefined,

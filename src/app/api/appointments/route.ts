@@ -47,7 +47,10 @@ export async function POST(request: Request) {
     const parsed = parseAppointmentWriteInput(body);
 
     if (!parsed.input) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return NextResponse.json(
+        { error: parsed.error, field: parsed.field },
+        { status: 400 }
+      );
     }
 
     const ownProfessionalId = getOwnProfessionalId(access.session.user);
