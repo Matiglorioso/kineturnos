@@ -3,6 +3,8 @@
  * Para vaciar solo turnos usá npm run db:clear-turnos.
  */
 import { PrismaClient } from "@prisma/client";
+import { recomputePatientLastAppointment } from "../src/lib/db/sync";
+import { prisma as appPrisma } from "../src/lib/prisma";
 import { mockPatients } from "./fixtures/mockPatients";
 import { mockProfessionals } from "./fixtures/mockProfessionals";
 
@@ -14,6 +16,17 @@ const mockProfessionalIds = mockProfessionals.map(
 );
 
 async function main() {
+  // Pacientes reales que tienen turnos con profesionales demo: al borrar esos
+  // turnos hay que recalcular su último turno (y solo el de ellos).
+  const affected = await prisma.turno.findMany({
+    where: {
+      profesionalId: { in: mockProfessionalIds },
+      pacienteId: { notIn: mockPatientIds },
+    },
+    select: { pacienteId: true },
+    distinct: ["pacienteId"],
+  });
+
   const turnos = await prisma.turno.deleteMany({
     where: {
       OR: [
@@ -31,16 +44,15 @@ async function main() {
     where: { id: { in: mockProfessionalIds } },
   });
 
-  const clearedUltimoTurno = await prisma.paciente.updateMany({
-    where: { ultimoTurno: { not: null } },
-    data: { ultimoTurno: null },
-  });
+  for (const { pacienteId } of affected) {
+    await recomputePatientLastAppointment(pacienteId);
+  }
 
   console.log("Datos demo eliminados:", {
     turnos: turnos.count,
     pacientes: pacientes.count,
     profesionales: profesionales.count,
-    ultimoTurnoLimpiadoEnOtrosPacientes: clearedUltimoTurno.count,
+    ultimoTurnoRecalculadoEnPacientesReales: affected.length,
   });
   console.log(
     "Usuarios de login no se tocaron. Vinculá el usuario profesional desde la app cuando cargues kinesiólogos reales."
@@ -54,4 +66,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await appPrisma.$disconnect();
   });
