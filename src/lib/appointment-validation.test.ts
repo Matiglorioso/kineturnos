@@ -9,6 +9,7 @@ import {
   APPOINTMENT_PATIENT_OVERLAP_ERROR,
   hasProfessionalOverlap,
   validateAppointmentForm,
+  validateAppointmentStatusChange,
   type AppointmentFormInput,
 } from "@/lib/appointment-validation";
 import { parseAppDate, toAppDate } from "@/lib/date-utils";
@@ -193,6 +194,90 @@ describe("validación de agendado: estado vs fecha", () => {
     );
 
     assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+});
+
+describe("cambio de solo estado (A2)", () => {
+  // Jueves 24-09-2026 a las 18:00 ART.
+  const now = new Date("2026-09-24T21:00:00Z");
+  const slot = (overrides: Partial<Appointment> = {}): Appointment =>
+    existingSlot({ id: "a-1", date: "30-09-2026", time: "10:00", duration: 60, ...overrides });
+
+  it("cancela aunque el profesional ya no atienda ese día ni ese horario", () => {
+    // El turno es un miércoles 10:15 (fuera de grilla); la validación de estado no mira la agenda.
+    const errors = validateAppointmentStatusChange(
+      slot({ time: "10:15", status: "confirmado" }),
+      "cancelado",
+      [],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("marca atendido un turno pasado sin revalidar la fecha", () => {
+    const errors = validateAppointmentStatusChange(
+      slot({ date: "10-09-2026", status: "confirmado" }),
+      "atendido",
+      [],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("rechaza atendido o ausente en un turno futuro", () => {
+    for (const status of ["atendido", "ausente"] as const) {
+      const errors = validateAppointmentStatusChange(slot(), status, [], now);
+      assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR, status);
+    }
+  });
+
+  it("al reactivar un cancelado, chequea que el horario del profesional siga libre", () => {
+    const taken = slot({ id: "a-2", patientId: "p-9", status: "confirmado" });
+    const errors = validateAppointmentStatusChange(
+      slot({ status: "cancelado" }),
+      "pendiente",
+      [taken],
+      now
+    );
+    assert.equal(errors.overlap, APPOINTMENT_OVERLAP_ERROR);
+  });
+
+  it("al reactivar un ausente, chequea que el paciente no tenga otro turno", () => {
+    const patientBusy = slot({
+      id: "a-2",
+      professionalId: "pro-2",
+      status: "pendiente",
+    });
+    const errors = validateAppointmentStatusChange(
+      slot({ date: "10-09-2026", status: "ausente" }),
+      "atendido",
+      [{ ...patientBusy, date: "10-09-2026" }],
+      now
+    );
+    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
+  });
+
+  it("reactivar con el horario libre funciona", () => {
+    const freed = slot({ id: "a-2", patientId: "p-9", status: "cancelado" });
+    const errors = validateAppointmentStatusChange(
+      slot({ status: "cancelado" }),
+      "confirmado",
+      [freed],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("entre estados activos no vuelve a chequear solapamiento", () => {
+    // Un solapamiento heredado no debe impedir confirmar.
+    const legacy = slot({ id: "a-2", patientId: "p-9", status: "pendiente" });
+    const errors = validateAppointmentStatusChange(
+      slot({ status: "pendiente" }),
+      "confirmado",
+      [legacy],
+      now
+    );
+    assert.deepEqual(errors, {});
   });
 });
 

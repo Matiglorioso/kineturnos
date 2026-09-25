@@ -155,6 +155,20 @@ export function getStatusOptionsForAppointmentDate(
   return ["pendiente", "confirmado", "atendido", "cancelado", "ausente"];
 }
 
+/** Reglas de un cambio de solo estado (sin tocar fecha, hora ni profesional). */
+export function validateAppointmentStatusChange(
+  existing: Appointment,
+  status: AppointmentStatus,
+  appointments: Appointment[],
+  now: Date = new Date()
+): AppointmentFormErrors {
+  void existing;
+  void status;
+  void appointments;
+  void now;
+  return {};
+}
+
 /**
  * Validación compartida de alta/edición de turnos (UI + `assertAppointmentInputValid`).
  * Invariantes críticos (cubiertos por `appointment-validation.test.ts`):
