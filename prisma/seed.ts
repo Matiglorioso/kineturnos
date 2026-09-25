@@ -6,6 +6,7 @@ import { resolveNameParts } from "../src/lib/person-name";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
 import type { Patient } from "../src/types";
 import {
+  assertDatabaseEmptyOrForced,
   clearAllTables,
   ensureDevSeedAllowed,
   getDefaultUsers,
@@ -43,6 +44,11 @@ async function main() {
   ensureDevSeedAllowed();
   console.log("Seed completo — datos de desarrollo (mocks + usuarios)");
   const password = resolveSeedPassword({ mode: "dev" });
+
+  await assertDatabaseEmptyOrForced(
+    prisma,
+    "npx prisma db seed -- --force (borra todo y recarga los mocks)"
+  );
 
   console.log("Limpiando tablas...");
   await clearAllTables(prisma);

@@ -4,6 +4,7 @@ import {
   type Permission,
 } from "@/lib/auth/permissions";
 import { hasVerifyBypass } from "@/lib/auth/route-access";
+import { prisma } from "@/lib/prisma";
 import type { RolUsuario } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -49,26 +50,41 @@ export async function requireApiSession(
   const session = await auth();
 
   if (!session?.user?.id) {
-    return {
-      session: null,
-      unauthorized: NextResponse.json(
-        { error: "No autorizado. Iniciá sesión." },
-        { status: 401 }
-      ),
-    };
+    return unauthorizedResult();
+  }
+
+  // El JWT dura días: rol, vínculo y estado activo se leen de la base en cada
+  // llamada, para que desactivar o cambiar el rol de un usuario tenga efecto ya.
+  const user = await prisma.usuario.findUnique({
+    where: { id: session.user.id },
+    select: { rol: true, activo: true, profesionalId: true },
+  });
+
+  if (!user || !user.activo) {
+    return unauthorizedResult();
   }
 
   return {
     session: {
       user: {
         id: session.user.id,
-        role: session.user.role,
-        professionalId: session.user.professionalId ?? null,
+        role: user.rol,
+        professionalId: user.profesionalId,
         name: session.user.name,
         email: session.user.email,
       },
     },
     unauthorized: null,
+  };
+}
+
+function unauthorizedResult(): SessionFail {
+  return {
+    session: null,
+    unauthorized: NextResponse.json(
+      { error: "No autorizado. Iniciá sesión." },
+      { status: 401 }
+    ),
   };
 }
 

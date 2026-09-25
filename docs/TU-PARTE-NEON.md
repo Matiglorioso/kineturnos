@@ -57,10 +57,10 @@ npm.cmd run dev
 Con `npm run dev` activo, en otra terminal:
 
 ```powershell
-npm.cmd run verify:migration
+npm.cmd run test:int
 ```
 
-Debería terminar con **25 OK, 0 FAIL**.
+Debería terminar con **0 fail**. Requiere la base sembrada con `npm run db:seed` (usuarios demo) y crea/borra datos de prueba: no lo corras contra la base de producción (ver [CI.md](CI.md)).
 
 ## 7. Vercel (producción)
 

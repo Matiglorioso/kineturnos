@@ -1,5 +1,6 @@
 import { mapAppointment } from "@/lib/db/mappers";
 import {
+  ConflictError,
   NotFoundError,
   ValidationError,
 } from "@/lib/db/errors";
@@ -17,17 +18,18 @@ import {
   validateAppointmentForm,
   validateAppointmentStatusChange,
 } from "@/lib/appointment-validation";
-import { prisma } from "@/lib/prisma";
+import { prisma, type DbClient } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { Prisma } from "@prisma/client";
 
 export type { AppointmentWriteInput } from "@/lib/db/appointment-write";
 export { appointmentToWriteInput } from "@/lib/db/appointment-write";
 
-export async function getAppointmentsFromDb(options?: {
-  professionalId?: string;
-}): Promise<Appointment[]> {
-  const records = await prisma.turno.findMany({
+export async function getAppointmentsFromDb(
+  options?: { professionalId?: string },
+  db: DbClient = prisma
+): Promise<Appointment[]> {
+  const records = await db.turno.findMany({
     where: options?.professionalId
       ? { profesionalId: options.professionalId }
       : undefined,
@@ -38,16 +40,48 @@ export async function getAppointmentsFromDb(options?: {
 }
 
 export async function getAppointmentByIdFromDb(
-  id: string
+  id: string,
+  db: DbClient = prisma
 ): Promise<Appointment | null> {
-  const record = await prisma.turno.findUnique({ where: { id } });
+  const record = await db.turno.findUnique({ where: { id } });
   return record ? mapAppointment(record) : null;
 }
 
-async function resolveAppointmentNames(patientId: string, professionalId: string) {
+/**
+ * Serializa las escrituras de turnos que tocan al mismo paciente o profesional
+ * (advisory locks de transacción): validar + escribir queda atómico frente a
+ * altas concurrentes. Se toman primero los de pacientes y después los de
+ * profesionales, en orden, para no generar deadlocks.
+ */
+async function withAppointmentLocks<T>(
+  patientIds: string[],
+  professionalIds: string[],
+  fn: (tx: DbClient) => Promise<T>
+): Promise<T> {
+  const keys = [
+    ...[...new Set(patientIds)].sort().map((id) => `turno:paciente:${id}`),
+    ...[...new Set(professionalIds)].sort().map((id) => `turno:profesional:${id}`),
+  ];
+
+  return prisma.$transaction(
+    async (tx) => {
+      for (const key of keys) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
+      }
+      return fn(tx);
+    },
+    { timeout: 15_000 }
+  );
+}
+
+async function resolveAppointmentNames(
+  patientId: string,
+  professionalId: string,
+  db: DbClient = prisma
+) {
   const [paciente, profesional] = await Promise.all([
-    prisma.paciente.findUnique({ where: { id: patientId } }),
-    prisma.profesional.findUnique({ where: { id: professionalId } }),
+    db.paciente.findUnique({ where: { id: patientId } }),
+    db.profesional.findUnique({ where: { id: professionalId } }),
   ]);
 
   if (!paciente) {
@@ -88,20 +122,31 @@ function rethrowTurnoSlotUniqueViolation(error: unknown): never {
     error.code === "P2002" &&
     isTurnoProfessionalSlotViolation(error)
   ) {
-    throw new ValidationError(APPOINTMENT_OVERLAP_ERROR, "overlap");
+    throw new ConflictError(APPOINTMENT_OVERLAP_ERROR, "overlap");
   }
   throw error;
 }
 
+/** Lanza el primer error de validación; un choque de horario es un conflicto (409). */
+function throwFirstValidationError(errors: Record<string, string | undefined>): void {
+  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
+  if (!firstErrorEntry) return;
+
+  const [field, message] = firstErrorEntry;
+  if (field === "overlap") throw new ConflictError(message!, field);
+  throw new ValidationError(message!, field);
+}
+
 export async function assertAppointmentInputValid(
   input: AppointmentWriteInput,
-  excludeId?: string
+  excludeId?: string,
+  db: DbClient = prisma
 ): Promise<void> {
   // create/update pasan por validateAppointmentForm (días de atención + overlap).
   const [appointments, professionals, existing] = await Promise.all([
-    getAppointmentsFromDb(),
-    getProfessionalsFromDb(),
-    excludeId ? getAppointmentByIdFromDb(excludeId) : Promise.resolve(null),
+    getAppointmentsFromDb(undefined, db),
+    getProfessionalsFromDb(db),
+    excludeId ? getAppointmentByIdFromDb(excludeId, db) : Promise.resolve(null),
   ]);
 
   const errors = validateAppointmentForm(
@@ -110,38 +155,43 @@ export async function assertAppointmentInputValid(
     professionals,
     excludeId,
     existing
-      ? { previousDate: existing.date, previousTime: existing.time }
+      ? {
+          previousDate: existing.date,
+          previousTime: existing.time,
+          previousProfessionalId: existing.professionalId,
+        }
       : undefined
   );
 
-  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
-  if (firstErrorEntry) {
-    const [field, message] = firstErrorEntry;
-    throw new ValidationError(message!, field);
-  }
+  throwFirstValidationError(errors);
 }
 
 export async function createAppointmentInDb(
   input: AppointmentWriteInput
 ): Promise<Appointment> {
-  await assertAppointmentInputValid(input);
+  const record = await withAppointmentLocks(
+    [input.patientId],
+    [input.professionalId],
+    async (tx) => {
+      await assertAppointmentInputValid(input, undefined, tx);
+      const names = await resolveAppointmentNames(
+        input.patientId,
+        input.professionalId,
+        tx
+      );
 
-  const names = await resolveAppointmentNames(
-    input.patientId,
-    input.professionalId
+      try {
+        return await tx.turno.create({
+          data: {
+            id: resolveAppointmentId(input),
+            ...toTurnoWriteData(input, names),
+          },
+        });
+      } catch (error) {
+        rethrowTurnoSlotUniqueViolation(error);
+      }
+    }
   );
-
-  let record;
-  try {
-    record = await prisma.turno.create({
-      data: {
-        id: resolveAppointmentId(input),
-        ...toTurnoWriteData(input, names),
-      },
-    });
-  } catch (error) {
-    rethrowTurnoSlotUniqueViolation(error);
-  }
 
   if (input.status === "atendido") {
     await recomputePatientLastAppointment(input.patientId);
@@ -154,27 +204,32 @@ export async function updateAppointmentInDb(
   id: string,
   input: AppointmentWriteInput
 ): Promise<Appointment> {
-  await assertAppointmentInputValid(input, id);
-
   const existing = await getAppointmentByIdFromDb(id);
   if (!existing) {
     throw new NotFoundError("Turno no encontrado.");
   }
 
-  const names = await resolveAppointmentNames(
-    input.patientId,
-    input.professionalId
-  );
+  const record = await withAppointmentLocks(
+    [existing.patientId, input.patientId],
+    [existing.professionalId, input.professionalId],
+    async (tx) => {
+      await assertAppointmentInputValid(input, id, tx);
+      const names = await resolveAppointmentNames(
+        input.patientId,
+        input.professionalId,
+        tx
+      );
 
-  let record;
-  try {
-    record = await prisma.turno.update({
-      where: { id },
-      data: toTurnoWriteData(input, names),
-    });
-  } catch (error) {
-    rethrowTurnoSlotUniqueViolation(error);
-  }
+      try {
+        return await tx.turno.update({
+          where: { id },
+          data: toTurnoWriteData(input, names),
+        });
+      } catch (error) {
+        rethrowTurnoSlotUniqueViolation(error);
+      }
+    }
+  );
 
   const statusChanged = existing.status !== input.status;
   const patientChanged = existing.patientId !== input.patientId;
@@ -203,27 +258,28 @@ export async function updateAppointmentStatusInDb(
     throw new NotFoundError("Turno no encontrado.");
   }
 
-  // Solo reglas de estado: no se revalida contra la agenda actual del profesional.
-  const errors = validateAppointmentStatusChange(
-    existing,
-    status,
-    await getAppointmentsFromDb()
-  );
-  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
-  if (firstErrorEntry) {
-    const [field, message] = firstErrorEntry;
-    throw new ValidationError(message!, field);
-  }
+  const record = await withAppointmentLocks(
+    [existing.patientId],
+    [existing.professionalId],
+    async (tx) => {
+      // Solo reglas de estado: no se revalida contra la agenda actual del profesional.
+      const errors = validateAppointmentStatusChange(
+        existing,
+        status,
+        await getAppointmentsFromDb(undefined, tx)
+      );
+      throwFirstValidationError(errors);
 
-  let record;
-  try {
-    record = await prisma.turno.update({
-      where: { id },
-      data: { estado: status },
-    });
-  } catch (error) {
-    rethrowTurnoSlotUniqueViolation(error);
-  }
+      try {
+        return await tx.turno.update({
+          where: { id },
+          data: { estado: status },
+        });
+      } catch (error) {
+        rethrowTurnoSlotUniqueViolation(error);
+      }
+    }
+  );
 
   if (existing.status === "atendido" || status === "atendido") {
     await recomputePatientLastAppointment(existing.patientId);
