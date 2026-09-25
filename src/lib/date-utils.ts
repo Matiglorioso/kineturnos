@@ -27,6 +27,12 @@ function getAppClockParts(referenceDate: Date): Record<string, string> {
   );
 }
 
+/** Minutos transcurridos del día en la zona horaria del consultorio. */
+export function getNowAppMinutes(referenceDate: Date = new Date()): number {
+  const { hour, minute } = getAppClockParts(referenceDate);
+  return Number(hour) * 60 + Number(minute);
+}
+
 export function toAppDate(date: Date): string {
   return format(date, APP_DATE_FORMAT);
 }
@@ -94,6 +100,11 @@ export function isPastAppDate(dateStr: string, now: Date = new Date()): boolean 
 export function isFutureAppDate(dateStr: string, now: Date = new Date()): boolean {
   if (!parseAppDate(dateStr)) return false;
   return compareAppDates(dateStr, getTodayAppDate(now)) > 0;
+}
+
+export function isTodayAppDate(dateStr: string, now: Date = new Date()): boolean {
+  if (!parseAppDate(dateStr)) return false;
+  return compareAppDates(dateStr, getTodayAppDate(now)) === 0;
 }
 
 export function getAppointmentDateTime(dateStr: string, time: string): Date {

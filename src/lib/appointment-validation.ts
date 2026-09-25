@@ -8,9 +8,11 @@ import {
 import {
   APP_DATE_FORMAT,
   areSameAppDay,
+  getNowAppMinutes,
   getTodayAppDate,
   isFutureAppDate,
   isPastAppDate,
+  isTodayAppDate,
   isValidAppDate,
 } from "@/lib/date-utils";
 import { validateProfessionalAppointmentSlot } from "@/lib/professional-schedule";
@@ -170,6 +172,25 @@ export function validateAppointmentForm(
   ) {
     errors.time =
       "Elegí un bloque horario válido (cada turno dura 1 hora).";
+  }
+
+  // Al editar sin mover el turno (misma fecha y hora) se permite aunque ya haya empezado.
+  const timeChanged =
+    isEditing &&
+    options?.previousTime !== undefined &&
+    values.time !== "" &&
+    normalizeTime(values.time) !== normalizeTime(options.previousTime);
+  const slotChanged = !isEditing || Boolean(dateChanged) || timeChanged;
+
+  if (
+    slotChanged &&
+    values.time &&
+    !errors.date &&
+    !errors.time &&
+    isTodayAppDate(values.date, now) &&
+    timeToMinutes(values.time) < getNowAppMinutes(now)
+  ) {
+    errors.time = APPOINTMENT_PAST_TIME_ERROR;
   }
 
   const durationNum = values.duration
