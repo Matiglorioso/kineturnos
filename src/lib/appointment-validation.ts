@@ -155,18 +155,59 @@ export function getStatusOptionsForAppointmentDate(
   return ["pendiente", "confirmado", "atendido", "cancelado", "ausente"];
 }
 
-/** Reglas de un cambio de solo estado (sin tocar fecha, hora ni profesional). */
+/**
+ * Reglas de un cambio de solo estado (sin tocar fecha, hora ni profesional).
+ * No revalida la agenda del profesional: el turno ya existe aunque su día u
+ * horario hayan cambiado después. Solo al reactivar un cancelado/ausente se
+ * vuelve a ocupar el horario, y ahí sí se chequea solapamiento.
+ */
 export function validateAppointmentStatusChange(
   existing: Appointment,
   status: AppointmentStatus,
   appointments: Appointment[],
   now: Date = new Date()
 ): AppointmentFormErrors {
-  void existing;
-  void status;
-  void appointments;
-  void now;
-  return {};
+  const errors: AppointmentFormErrors = {};
+
+  if (
+    (status === "atendido" || status === "ausente") &&
+    isFutureAppDate(existing.date, now)
+  ) {
+    errors.status = APPOINTMENT_FUTURE_STATUS_ERROR;
+    return errors;
+  }
+
+  const reactivates =
+    !BLOCKING_STATUSES.has(existing.status) && BLOCKING_STATUSES.has(status);
+  if (!reactivates) return errors;
+
+  const time = normalizeTime(existing.time);
+
+  if (
+    hasProfessionalOverlap(
+      appointments,
+      existing.professionalId,
+      existing.date,
+      time,
+      existing.duration,
+      existing.id
+    )
+  ) {
+    errors.overlap = APPOINTMENT_OVERLAP_ERROR;
+  } else if (
+    hasPatientOverlap(
+      appointments,
+      existing.patientId,
+      existing.date,
+      time,
+      existing.duration,
+      existing.id
+    )
+  ) {
+    errors.overlap = APPOINTMENT_PATIENT_OVERLAP_ERROR;
+  }
+
+  return errors;
 }
 
 /**
