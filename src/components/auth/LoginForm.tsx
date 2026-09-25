@@ -6,6 +6,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { getSupportMailto } from "@/data/public-help";
+import { safeCallbackUrl } from "@/lib/auth/safe-callback-url";
 import { getLoginErrorMessage } from "@/lib/login-errors";
 import { siteConfig } from "@/lib/site-config";
 import { showErrorToast } from "@/lib/toast";
@@ -34,7 +35,7 @@ function getAuthNotice(
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
   const reason = searchParams.get("reason");
   const emailRef = useRef<HTMLInputElement>(null);
 

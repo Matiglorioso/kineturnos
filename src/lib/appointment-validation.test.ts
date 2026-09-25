@@ -5,8 +5,11 @@ import {
   APPOINTMENT_DURATION_INVALID_ERROR,
   APPOINTMENT_FUTURE_STATUS_ERROR,
   APPOINTMENT_OVERLAP_ERROR,
+  APPOINTMENT_PAST_TIME_ERROR,
+  APPOINTMENT_PATIENT_OVERLAP_ERROR,
   hasProfessionalOverlap,
   validateAppointmentForm,
+  validateAppointmentStatusChange,
   type AppointmentFormInput,
 } from "@/lib/appointment-validation";
 import { parseAppDate, toAppDate } from "@/lib/date-utils";
@@ -191,6 +194,236 @@ describe("validación de agendado: estado vs fecha", () => {
     );
 
     assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+});
+
+describe("cambio de solo estado (A2)", () => {
+  // Jueves 24-09-2026 a las 18:00 ART.
+  const now = new Date("2026-09-24T21:00:00Z");
+  const slot = (overrides: Partial<Appointment> = {}): Appointment =>
+    existingSlot({ id: "a-1", date: "30-09-2026", time: "10:00", duration: 60, ...overrides });
+
+  it("cancela aunque el profesional ya no atienda ese día ni ese horario", () => {
+    // El turno es un miércoles 10:15 (fuera de grilla); la validación de estado no mira la agenda.
+    const errors = validateAppointmentStatusChange(
+      slot({ time: "10:15", status: "confirmado" }),
+      "cancelado",
+      [],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("marca atendido un turno pasado sin revalidar la fecha", () => {
+    const errors = validateAppointmentStatusChange(
+      slot({ date: "10-09-2026", status: "confirmado" }),
+      "atendido",
+      [],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("rechaza atendido o ausente en un turno futuro", () => {
+    for (const status of ["atendido", "ausente"] as const) {
+      const errors = validateAppointmentStatusChange(slot(), status, [], now);
+      assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR, status);
+    }
+  });
+
+  it("al reactivar un cancelado, chequea que el horario del profesional siga libre", () => {
+    const taken = slot({ id: "a-2", patientId: "p-9", status: "confirmado" });
+    const errors = validateAppointmentStatusChange(
+      slot({ status: "cancelado" }),
+      "pendiente",
+      [taken],
+      now
+    );
+    assert.equal(errors.overlap, APPOINTMENT_OVERLAP_ERROR);
+  });
+
+  it("al reactivar un ausente, chequea que el paciente no tenga otro turno", () => {
+    const patientBusy = slot({
+      id: "a-2",
+      professionalId: "pro-2",
+      status: "pendiente",
+    });
+    const errors = validateAppointmentStatusChange(
+      slot({ date: "10-09-2026", status: "ausente" }),
+      "atendido",
+      [{ ...patientBusy, date: "10-09-2026" }],
+      now
+    );
+    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
+  });
+
+  it("reactivar con el horario libre funciona", () => {
+    const freed = slot({ id: "a-2", patientId: "p-9", status: "cancelado" });
+    const errors = validateAppointmentStatusChange(
+      slot({ status: "cancelado" }),
+      "confirmado",
+      [freed],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("entre estados activos no vuelve a chequear solapamiento", () => {
+    // Un solapamiento heredado no debe impedir confirmar.
+    const legacy = slot({ id: "a-2", patientId: "p-9", status: "pendiente" });
+    const errors = validateAppointmentStatusChange(
+      slot({ status: "pendiente" }),
+      "confirmado",
+      [legacy],
+      now
+    );
+    assert.deepEqual(errors, {});
+  });
+});
+
+describe("validación de agendado: paciente con dos turnos a la vez (M2)", () => {
+  const otherProfessional: Professional = {
+    ...professional,
+    id: "pro-2",
+    name: "Luis Díaz",
+  };
+  const professionals = [professional, otherProfessional];
+  const patientSlot = (overrides: Partial<Appointment> = {}) =>
+    existingSlot({
+      patientId: "p-1",
+      professionalId: otherProfessional.id,
+      professionalName: otherProfessional.name,
+      ...overrides,
+    });
+
+  it("rechaza un turno del mismo paciente, a la misma hora, con otro profesional", () => {
+    const errors = validateAppointmentForm(
+      baseValues(),
+      [patientSlot()],
+      professionals
+    );
+
+    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
+  });
+
+  it("detecta solapamiento parcial", () => {
+    const errors = validateAppointmentForm(
+      baseValues(), // 10:00–11:00
+      [patientSlot({ time: "10:30", duration: 45 })],
+      professionals
+    );
+
+    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
+  });
+
+  it("un turno cancelado o ausente del paciente no bloquea", () => {
+    for (const status of ["cancelado", "ausente"] as const) {
+      const errors = validateAppointmentForm(
+        baseValues(),
+        [patientSlot({ status })],
+        professionals
+      );
+      assert.equal(errors.overlap, undefined, status);
+    }
+  });
+
+  it("a otra hora el paciente puede tener otro turno", () => {
+    const errors = validateAppointmentForm(
+      baseValues(),
+      [patientSlot({ time: "11:00" })],
+      professionals
+    );
+
+    assert.equal(errors.overlap, undefined);
+  });
+
+  it("al editar, no choca consigo mismo", () => {
+    const own = patientSlot({ id: "a-own", professionalId: professional.id });
+    const errors = validateAppointmentForm(
+      baseValues(),
+      [own],
+      professionals,
+      "a-own"
+    );
+
+    assert.equal(errors.overlap, undefined);
+  });
+});
+
+describe("validación de agendado: horario pasado de hoy (M3)", () => {
+  // Jueves 24-09-2026 a las 18:00 ART (21:00 UTC).
+  const TODAY = "24-09-2026";
+  const now = new Date("2026-09-24T21:00:00Z");
+  const allDay: Professional = {
+    ...professional,
+    days: ["Jueves", "Viernes"],
+    scheduleStart: "08:00",
+    scheduleEnd: "22:00",
+  };
+
+  const todayValues = (time: string): AppointmentFormInput => ({
+    ...baseValues(),
+    date: TODAY,
+    time,
+  });
+
+  it("rechaza crear un turno para hoy a una hora que ya pasó", () => {
+    for (const time of ["08:00", "17:00"]) {
+      const errors = validateAppointmentForm(
+        todayValues(time),
+        [],
+        [allDay],
+        undefined,
+        { now }
+      );
+      assert.equal(errors.time, APPOINTMENT_PAST_TIME_ERROR, time);
+    }
+  });
+
+  it("acepta un turno para hoy que todavía no empezó", () => {
+    for (const time of ["18:00", "19:00"]) {
+      const errors = validateAppointmentForm(
+        todayValues(time),
+        [],
+        [allDay],
+        undefined,
+        { now }
+      );
+      assert.deepEqual(errors, {}, time);
+    }
+  });
+
+  it("acepta mañana a primera hora", () => {
+    const errors = validateAppointmentForm(
+      { ...todayValues("08:00"), date: "25-09-2026" },
+      [],
+      [allDay],
+      undefined,
+      { now }
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("al editar, deja tocar un turno de hoy que ya empezó sin moverlo", () => {
+    const errors = validateAppointmentForm(
+      { ...todayValues("08:00"), status: "atendido" },
+      [],
+      [allDay],
+      "a-1",
+      { previousDate: TODAY, previousTime: "08:00", now }
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("al editar, rechaza moverlo a otra hora que ya pasó", () => {
+    const errors = validateAppointmentForm(
+      todayValues("09:00"),
+      [],
+      [allDay],
+      "a-1",
+      { previousDate: TODAY, previousTime: "08:00", now }
+    );
+    assert.equal(errors.time, APPOINTMENT_PAST_TIME_ERROR);
   });
 });
 

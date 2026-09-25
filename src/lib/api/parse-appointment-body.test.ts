@@ -4,6 +4,7 @@ import { nextDay, subDays } from "date-fns";
 import {
   APPOINTMENT_DURATION_INVALID_ERROR,
   APPOINTMENT_FUTURE_STATUS_ERROR,
+  APPOINTMENT_PAST_TIME_ERROR,
 } from "@/lib/appointment-validation";
 import { toAppDate } from "@/lib/date-utils";
 import {
@@ -96,9 +97,7 @@ describe("parseAppointmentWriteInput: payload válido", () => {
 
 describe("parseAppointmentWriteInput: validación", () => {
   it("objeto vacío informa primero el paciente", () => {
-    assert.deepEqual(parseAppointmentWriteInput({}), {
-      error: "Seleccioná un paciente",
-    });
+    assert.equal(parseAppointmentWriteInput({}).error, "Seleccioná un paciente");
   });
 
   it("requiere profesional, horario y tipo de sesión", () => {
@@ -155,13 +154,87 @@ describe("parseAppointmentWriteInput: validación", () => {
     }
   });
 
-  // Brechas M7 (plan de testing, paso 2): hoy el parser las acepta.
-  it.todo("rechaza un status fuera de AppointmentStatus (\"foo\")");
-  it.todo("rechaza un sessionType fuera de SESSION_TYPES");
-  it.todo("rechaza horas mal formadas (\"25:99\", \"abc\")");
-  // Bug: el PUT de edición completa pasa por este parser sin excludeId/previousDate,
-  // así que editar un turno pasado (ej. marcarlo atendido desde el formulario) da 400.
-  it.todo("al editar un turno pasado sin cambiar la fecha, no lo rechaza como alta");
+});
+
+describe("parseAppointmentWriteInput: validaciones de formato (M7)", () => {
+  it("rechaza un estado desconocido", () => {
+    assert.deepEqual(parseAppointmentWriteInput(validBody({ status: "foo" })), {
+      error: "Estado de turno inválido",
+      field: "status",
+    });
+  });
+
+  it("rechaza un tipo de sesión fuera de la lista", () => {
+    assert.deepEqual(
+      parseAppointmentWriteInput(validBody({ sessionType: "Yoga" })),
+      { error: "Tipo de sesión inválido", field: "sessionType" }
+    );
+  });
+
+  it("rechaza horas mal formadas", () => {
+    for (const time of ["25:99", "abc", "10"]) {
+      assert.deepEqual(
+        parseAppointmentWriteInput(validBody({ time })),
+        { error: "Horario inválido (usá HH:mm)", field: "time" },
+        time
+      );
+    }
+  });
+
+  it("los errores de validación indican el campo", () => {
+    assert.deepEqual(parseAppointmentWriteInput(validBody({ patientId: "" })), {
+      error: "Seleccioná un paciente",
+      field: "patientId",
+    });
+  });
+});
+
+describe("parseAppointmentWriteInput: edición de turnos pasados", () => {
+  // Regresión: el PATCH de edición completa validaba como alta y respondía 400
+  // "No se pueden crear turnos en fechas pasadas" al editar un turno pasado.
+  it("permite editar un turno pasado sin cambiar la fecha", () => {
+    const date = pastDate();
+    const { input, error } = parseAppointmentWriteInput(
+      validBody({ date, status: "atendido" }),
+      { excludeId: "a-1", previousDate: date }
+    );
+
+    assert.equal(error, undefined);
+    assert.equal(input?.status, "atendido");
+  });
+
+  it("rechaza mover un turno a otra fecha pasada", () => {
+    const { error } = parseAppointmentWriteInput(
+      validBody({ date: toAppDate(subDays(new Date(), 14)) }),
+      { excludeId: "a-1", previousDate: pastDate() }
+    );
+
+    assert.equal(error, "No se puede mover un turno a una fecha pasada");
+  });
+
+  it("reenvía previousTime y now: mover un turno de hoy a una hora pasada falla", () => {
+    // Jueves 24-09-2026 a las 18:00 ART.
+    const { error, field } = parseAppointmentWriteInput(
+      validBody({ date: "24-09-2026", time: "08:00" }),
+      {
+        excludeId: "a-1",
+        previousDate: "24-09-2026",
+        previousTime: "19:00",
+        now: new Date("2026-09-24T21:00:00Z"),
+      }
+    );
+
+    assert.equal(error, APPOINTMENT_PAST_TIME_ERROR);
+    assert.equal(field, "time");
+  });
+
+  it("sin opciones de edición, una fecha pasada sigue siendo un alta inválida", () => {
+    const { error } = parseAppointmentWriteInput(
+      validBody({ date: pastDate() })
+    );
+
+    assert.equal(error, "No se pueden crear turnos en fechas pasadas");
+  });
 });
 
 describe("parseAppointmentStatusInput", () => {

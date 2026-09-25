@@ -111,9 +111,7 @@ describe("parsePatientWriteInput: payload válido", () => {
 
 describe("parsePatientWriteInput: validación", () => {
   it("objeto vacío informa primero el nombre obligatorio", () => {
-    assert.deepEqual(parsePatientWriteInput({}), {
-      error: "El nombre es obligatorio",
-    });
+    assert.equal(parsePatientWriteInput({}).error, "El nombre es obligatorio");
   });
 
   it("requiere apellido", () => {
@@ -150,7 +148,23 @@ describe("parsePatientWriteInput: validación", () => {
     assert.equal(error, "Ingresá un email válido");
   });
 
-  // Brechas M7 (plan de testing, paso 2): hoy el parser las acepta.
-  it.todo("rechaza un status de paciente fuera de activo/inactivo");
-  it.todo("el error indica el campo inválido (field) para responder 400");
+});
+
+describe("parsePatientWriteInput: validaciones de formato (M7)", () => {
+  it("rechaza un estado fuera de activo/inactivo", () => {
+    for (const status of ["borrado", "Activo", 1]) {
+      assert.deepEqual(
+        parsePatientWriteInput(validBody({ status })),
+        { error: "Estado de paciente inválido", field: "status" },
+        String(status)
+      );
+    }
+  });
+
+  it("los errores de validación indican el campo", () => {
+    assert.deepEqual(parsePatientWriteInput(validBody({ dni: "12" })), {
+      error: "El DNI debe tener 7 u 8 dígitos",
+      field: "dni",
+    });
+  });
 });

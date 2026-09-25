@@ -4,7 +4,6 @@ import {
   ValidationError,
 } from "@/lib/db/errors";
 import {
-  appointmentToWriteInput,
   resolveAppointmentId,
   toAppointmentFormInput,
   toTurnoWriteData,
@@ -16,6 +15,7 @@ import { isFinalAppointmentStatus } from "@/lib/appointment-status";
 import {
   APPOINTMENT_OVERLAP_ERROR,
   validateAppointmentForm,
+  validateAppointmentStatusChange,
 } from "@/lib/appointment-validation";
 import { prisma } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
@@ -109,7 +109,9 @@ export async function assertAppointmentInputValid(
     appointments,
     professionals,
     excludeId,
-    existing ? { previousDate: existing.date } : undefined
+    existing
+      ? { previousDate: existing.date, previousTime: existing.time }
+      : undefined
   );
 
   const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
@@ -201,10 +203,33 @@ export async function updateAppointmentStatusInDb(
     throw new NotFoundError("Turno no encontrado.");
   }
 
-  return updateAppointmentInDb(id, {
-    ...appointmentToWriteInput(existing),
+  // Solo reglas de estado: no se revalida contra la agenda actual del profesional.
+  const errors = validateAppointmentStatusChange(
+    existing,
     status,
-  });
+    await getAppointmentsFromDb()
+  );
+  const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
+  if (firstErrorEntry) {
+    const [field, message] = firstErrorEntry;
+    throw new ValidationError(message!, field);
+  }
+
+  let record;
+  try {
+    record = await prisma.turno.update({
+      where: { id },
+      data: { estado: status },
+    });
+  } catch (error) {
+    rethrowTurnoSlotUniqueViolation(error);
+  }
+
+  if (existing.status === "atendido" || status === "atendido") {
+    await recomputePatientLastAppointment(existing.patientId);
+  }
+
+  return mapAppointment(record);
 }
 
 /**

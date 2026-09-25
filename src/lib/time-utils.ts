@@ -1,5 +1,12 @@
 /** Utilidades de hora en formato HH:mm (24 h). */
 
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+
+/** HH:mm (o HH:mm:ss) entre 00:00 y 23:59. */
+export function isValidTime(time: string): boolean {
+  return TIME_REGEX.test(time);
+}
+
 export function normalizeTime(time: string): string {
   return time.slice(0, 5);
 }

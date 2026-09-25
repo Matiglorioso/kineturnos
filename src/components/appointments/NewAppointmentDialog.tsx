@@ -228,7 +228,12 @@ export function NewAppointmentDialog({
       existingAppointments,
       professionals,
       editingAppointment?.id,
-      editingAppointment ? { previousDate: editingAppointment.date } : undefined
+      editingAppointment
+        ? {
+            previousDate: editingAppointment.date,
+            previousTime: editingAppointment.time,
+          }
+        : undefined
     );
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
