@@ -109,7 +109,9 @@ export async function assertAppointmentInputValid(
     appointments,
     professionals,
     excludeId,
-    existing ? { previousDate: existing.date } : undefined
+    existing
+      ? { previousDate: existing.date, previousTime: existing.time }
+      : undefined
   );
 
   const firstErrorEntry = Object.entries(errors).find(([, message]) => message);
