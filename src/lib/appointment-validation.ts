@@ -131,6 +131,7 @@ export type AppointmentFormErrors = Partial<
 export type ValidateAppointmentFormOptions = {
   previousDate?: string;
   previousTime?: string;
+  previousProfessionalId?: string;
   /** Momento de referencia para "hoy" (inyectable en tests). */
   now?: Date;
 };

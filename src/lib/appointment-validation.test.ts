@@ -281,6 +281,76 @@ describe("cambio de solo estado (A2)", () => {
   });
 });
 
+describe("edición completa con la agenda del profesional modificada (A2)", () => {
+  // Turno existente: miércoles 30-09-2026 a las 10:15 (fuera de grilla).
+  // El profesional ahora atiende solo lunes y viernes, de 08:30 a 12:30.
+  const changedProfessional: Professional = {
+    ...professional,
+    days: ["Lunes", "Viernes"],
+    scheduleStart: "08:30",
+    scheduleEnd: "12:30",
+  };
+  const now = new Date("2026-09-24T21:00:00Z");
+  const previous = {
+    previousDate: "30-09-2026",
+    previousTime: "10:15",
+    previousProfessionalId: changedProfessional.id,
+    now,
+  };
+  const editValues = (overrides: Partial<AppointmentFormInput> = {}) => ({
+    ...baseValues(),
+    date: "30-09-2026",
+    time: "10:15",
+    status: "confirmado",
+    sessionType: "Control",
+    ...overrides,
+  });
+
+  it("deja editar el turno sin moverlo aunque quede fuera de la agenda actual", () => {
+    const errors = validateAppointmentForm(
+      editValues(),
+      [],
+      [changedProfessional],
+      "a-1",
+      previous
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("si se mueve a otro horario, valida contra la agenda actual", () => {
+    const errors = validateAppointmentForm(
+      editValues({ time: "11:30" }), // bloque válido, pero el miércoles ya no atiende
+      [],
+      [changedProfessional],
+      "a-1",
+      previous
+    );
+    assert.ok(errors.date, "el miércoles ya no es día de atención");
+  });
+
+  it("si cambia de profesional, valida contra la agenda del nuevo", () => {
+    const errors = validateAppointmentForm(
+      editValues({ professionalId: "pro-2" }),
+      [],
+      [changedProfessional, { ...changedProfessional, id: "pro-2", name: "Otro" }],
+      "a-1",
+      previous
+    );
+    assert.ok(errors.date || errors.time, "el turno no entra en la agenda del nuevo");
+  });
+
+  it("sin mover el turno, sigue chequeando solapamientos", () => {
+    const errors = validateAppointmentForm(
+      editValues(),
+      [existingSlot({ id: "a-2", date: "30-09-2026", time: "10:00", patientId: "p-9" })],
+      [changedProfessional],
+      "a-1",
+      previous
+    );
+    assert.equal(errors.overlap, APPOINTMENT_OVERLAP_ERROR);
+  });
+});
+
 describe("validación de agendado: paciente con dos turnos a la vez (M2)", () => {
   const otherProfessional: Professional = {
     ...professional,
