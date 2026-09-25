@@ -2,13 +2,45 @@ import {
   validateProfessionalForm,
   type ProfessionalFormValues,
 } from "@/lib/professional-form";
+import { WEEK_DAYS } from "@/lib/professional-utils";
+import { isValidTime } from "@/lib/time-utils";
+import { firstFieldError, type ParseResult } from "@/lib/api/parse-result";
 import type { ProfessionalWriteInput } from "@/lib/db/professional-write";
 import type { WeekDay } from "@/types";
 
-export function parseProfessionalWriteInput(body: unknown): {
-  input?: ProfessionalWriteInput;
-  error?: string;
-} {
+/** Formato de campos que el formulario no puede producir mal, pero la API sí recibe. */
+function formatError(
+  values: ProfessionalFormValues
+): { error: string; field: string } | undefined {
+  const invalidDay = values.days.find(
+    (day) => !(WEEK_DAYS as string[]).includes(day)
+  );
+  if (invalidDay !== undefined) {
+    return { error: `Día de atención inválido: ${String(invalidDay)}`, field: "days" };
+  }
+
+  if (values.scheduleStart && !isValidTime(values.scheduleStart)) {
+    return { error: "Hora de inicio inválida (usá HH:mm)", field: "scheduleStart" };
+  }
+
+  if (values.scheduleEnd && !isValidTime(values.scheduleEnd)) {
+    return { error: "Hora de fin inválida (usá HH:mm)", field: "scheduleEnd" };
+  }
+
+  const duration = Number(values.defaultDuration);
+  if (values.defaultDuration && (!Number.isInteger(duration) || duration <= 0)) {
+    return {
+      error: "La duración debe ser un número entero de minutos",
+      field: "defaultDuration",
+    };
+  }
+
+  return undefined;
+}
+
+export function parseProfessionalWriteInput(
+  body: unknown
+): ParseResult<ProfessionalWriteInput> {
   if (!body || typeof body !== "object") {
     return { error: "Cuerpo de solicitud invalido." };
   }
@@ -30,12 +62,9 @@ export function parseProfessionalWriteInput(body: unknown): {
     notes: String(payload.notes ?? ""),
   };
 
-  const validationErrors = validateProfessionalForm(values);
-  const errorMessages = Object.values(validationErrors).filter(Boolean);
-
-  if (errorMessages.length > 0) {
-    return { error: errorMessages[0] };
-  }
+  const invalid =
+    formatError(values) ?? firstFieldError(validateProfessionalForm(values));
+  if (invalid) return invalid;
 
   const input: ProfessionalWriteInput = {
     id: typeof payload.id === "string" ? payload.id : undefined,
