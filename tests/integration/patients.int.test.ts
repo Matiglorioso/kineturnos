@@ -3,6 +3,10 @@ import { after, describe, it } from "node:test";
 import {
   api,
   cleanupTestData,
+  createAppointmentInDb,
+  createPatient,
+  createProfessional,
+  futureWorkday,
   prisma,
   testId,
   uniqueDigits,
@@ -75,6 +79,40 @@ describe("API de pacientes", () => {
     });
     assert.equal(duplicate.status, 409);
     assert.equal(duplicate.field, "dni");
+  });
+
+  it("no deja borrar un paciente con turnos activos (M4)", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    await createAppointmentInDb({
+      patient,
+      professional,
+      date: futureWorkday(30),
+      time: "10:00",
+      status: "pendiente",
+    });
+
+    const res = await api(`/api/patients/${patient.id}`, { method: "DELETE" });
+    assert.equal(res.status, 409);
+    assert.match(res.error ?? "", /turno\(s\) activo/);
+    assert.equal(await prisma.paciente.count({ where: { id: patient.id } }), 1);
+    assert.equal(await prisma.turno.count({ where: { pacienteId: patient.id } }), 1);
+  });
+
+  it("con solo turnos finales, borra el paciente y su historial", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    await createAppointmentInDb({
+      patient,
+      professional,
+      date: "10-02-2026",
+      time: "10:00",
+      status: "atendido",
+    });
+
+    const res = await api(`/api/patients/${patient.id}`, { method: "DELETE" });
+    assert.equal(res.status, 200, res.error);
+    assert.equal(await prisma.turno.count({ where: { pacienteId: patient.id } }), 0);
   });
 
   it("un body inválido responde 400 con el campo", async () => {
