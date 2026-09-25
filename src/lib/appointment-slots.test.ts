@@ -175,6 +175,38 @@ describe("slots: ocupación", () => {
   });
 });
 
+describe("slots: horarios que ya pasaron hoy (M3)", () => {
+  // Lunes 07-06-2027 a las 10:30 ART.
+  const now = new Date("2027-06-07T13:30:00Z");
+
+  it("hoy, los bloques ya empezados no están disponibles", () => {
+    const options = listHourlySlotOptions(professional, MONDAY, [], undefined, { now });
+
+    assert.deepEqual(availability(options), {
+      "09:00": false,
+      "10:00": false,
+      "11:00": true,
+      "12:00": true,
+    });
+  });
+
+  it("otro día no se ve afectado", () => {
+    const options = listHourlySlotOptions(professional, WEDNESDAY, [], undefined, { now });
+    assert.ok(options.every((option) => option.available));
+  });
+
+  it("al editar, el horario actual del turno sigue disponible aunque ya haya pasado", () => {
+    const options = listHourlySlotOptionsForForm(professional, MONDAY, [], {
+      excludeId: "a-1",
+      currentTime: "09:00",
+      now,
+    });
+
+    assert.equal(availability(options)["09:00"], true);
+    assert.equal(availability(options)["10:00"], false);
+  });
+});
+
 describe("slots: opciones del formulario de edición", () => {
   it("si el horario actual es un bloque estándar, no agrega opciones", () => {
     const options = listHourlySlotOptionsForForm(professional, MONDAY, [], {
