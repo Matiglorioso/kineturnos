@@ -85,6 +85,8 @@ export type AppointmentFormErrors = Partial<
 
 export type ValidateAppointmentFormOptions = {
   previousDate?: string;
+  /** Momento de referencia para "hoy" (inyectable en tests). */
+  now?: Date;
 };
 
 export function isAllowedAppointmentDuration(duration: number): boolean {
@@ -97,9 +99,10 @@ export function isAllowedAppointmentDuration(duration: number): boolean {
 
 /** Estados permitidos según si la fecha es futura, hoy o pasada. */
 export function getStatusOptionsForAppointmentDate(
-  dateStr: string
+  dateStr: string,
+  now: Date = new Date()
 ): AppointmentStatus[] {
-  if (!isValidAppDate(dateStr) || isFutureAppDate(dateStr)) {
+  if (!isValidAppDate(dateStr) || isFutureAppDate(dateStr, now)) {
     return ["pendiente", "confirmado", "cancelado"];
   }
 
@@ -125,6 +128,7 @@ export function validateAppointmentForm(
   );
   const isEditing = Boolean(excludeId);
   const previousDate = options?.previousDate;
+  const now = options?.now ?? new Date();
   const dateChanged =
     isEditing &&
     previousDate !== undefined &&
@@ -142,8 +146,8 @@ export function validateAppointmentForm(
   if (!values.date) {
     errors.date = "La fecha es obligatoria";
   } else if (!isValidAppDate(values.date)) {
-    errors.date = `Usá el formato ${APP_DATE_FORMAT} (ej: ${getTodayAppDate()})`;
-  } else if (isPastAppDate(values.date)) {
+    errors.date = `Usá el formato ${APP_DATE_FORMAT} (ej: ${getTodayAppDate(now)})`;
+  } else if (isPastAppDate(values.date, now)) {
     if (!isEditing) {
       errors.date = "No se pueden crear turnos en fechas pasadas";
     } else if (dateChanged) {
@@ -182,7 +186,7 @@ export function validateAppointmentForm(
     values.date &&
     isValidAppDate(values.date) &&
     !errors.date &&
-    isFutureAppDate(values.date) &&
+    isFutureAppDate(values.date, now) &&
     (values.status === "atendido" || values.status === "ausente")
   ) {
     errors.status = APPOINTMENT_FUTURE_STATUS_ERROR;
