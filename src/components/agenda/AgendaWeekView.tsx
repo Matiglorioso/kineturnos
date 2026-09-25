@@ -187,10 +187,7 @@ export function AgendaWeekView({
                           startHour,
                           HOUR_HEIGHT
                         ),
-                        height: getAppointmentHeight(
-                          appointment.duration,
-                          HOUR_HEIGHT
-                        ),
+                        height: getAppointmentHeight(HOUR_HEIGHT),
                         left: `calc(${leftPercent}% + 2px)`,
                         width: `calc(${widthPercent}% - 4px)`,
                       }}

@@ -181,12 +181,11 @@ describe("cambio de estado con la agenda del profesional modificada (A2)", () =>
     });
     assert.equal((await api("/api/appointments", { method: "POST", body })).status, 201);
 
-    // Se le saca ese día y se corre el horario: el turno queda fuera de agenda.
+    // Se le saca ese día: el turno queda fuera de su agenda.
     await prisma.profesional.update({
       where: { id: professional.id },
       data: {
         diasAtencion: weekdayName(date) === "Lunes" ? ["Martes"] : ["Lunes"],
-        horarioInicio: "08:30",
       },
     });
 

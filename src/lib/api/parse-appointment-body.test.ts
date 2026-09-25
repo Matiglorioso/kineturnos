@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { nextDay, subDays } from "date-fns";
 import {
-  APPOINTMENT_DURATION_INVALID_ERROR,
   APPOINTMENT_FUTURE_STATUS_ERROR,
   APPOINTMENT_PAST_TIME_ERROR,
 } from "@/lib/appointment-validation";
@@ -21,7 +20,6 @@ const validBody = (overrides: Record<string, unknown> = {}) => ({
   professionalId: "pro-1",
   date: futureDate(),
   time: "10:00",
-  duration: 60,
   sessionType: "Rehabilitación",
   status: "pendiente",
   notes: "Primera sesión",
@@ -52,22 +50,26 @@ describe("parseAppointmentWriteInput: payload válido", () => {
       professionalId: "pro-1",
       date,
       time: "10:00",
-      duration: 60,
       status: "pendiente",
       sessionType: "Rehabilitación",
       notes: "Primera sesión",
     });
   });
 
-  it("sin duración ni estado usa 60 min y pendiente", () => {
+  it("sin estado usa pendiente", () => {
     const body = validBody();
-    delete (body as Record<string, unknown>).duration;
     delete (body as Record<string, unknown>).status;
 
     const { input } = parseAppointmentWriteInput(body);
 
-    assert.equal(input?.duration, 60);
     assert.equal(input?.status, "pendiente");
+  });
+
+  it("ignora una duración enviada por un cliente viejo (todos duran 1 h)", () => {
+    const { input, error } = parseAppointmentWriteInput(validBody({ duration: 45 }));
+
+    assert.equal(error, undefined);
+    assert.equal("duration" in (input ?? {}), false);
   });
 
   it("recorta espacios en la hora", () => {
@@ -132,16 +134,6 @@ describe("parseAppointmentWriteInput: validación", () => {
   it("rechaza fechas pasadas", () => {
     const { error } = parseAppointmentWriteInput(validBody({ date: pastDate() }));
     assert.equal(error, "No se pueden crear turnos en fechas pasadas");
-  });
-
-  it("rechaza duraciones distintas de 60", () => {
-    for (const duration of [30, 45, "90", "abc"]) {
-      assert.equal(
-        parseAppointmentWriteInput(validBody({ duration })).error,
-        APPOINTMENT_DURATION_INVALID_ERROR,
-        String(duration)
-      );
-    }
   });
 
   it("rechaza atendido o ausente en fecha futura", () => {

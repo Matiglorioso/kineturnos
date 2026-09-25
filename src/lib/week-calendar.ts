@@ -1,3 +1,4 @@
+import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
 import { timeToMinutes } from "@/lib/time-utils";
 import { parseAppDate, toAppDate } from "@/lib/date-utils";
 import { Appointment } from "@/types";
@@ -153,7 +154,7 @@ export function getWeekHourBounds(
 
   appointments.forEach((appointment) => {
     const start = timeToMinutes(appointment.time);
-    const end = start + appointment.duration;
+    const end = start + APPOINTMENT_SLOT_DURATION_MINUTES;
     minMinutes = Math.min(minMinutes, start);
     maxMinutes = Math.max(maxMinutes, end);
   });
@@ -183,19 +184,19 @@ export function getAppointmentTopOffset(
   return (minutesFromStart / 60) * hourHeight;
 }
 
-export function getAppointmentHeight(
-  duration: number,
-  hourHeight: number,
-  minHeight = 52
-): number {
-  return Math.max(minHeight, (duration / 60) * hourHeight - 4);
+/** Alto del bloque de un turno (todos duran 1 hora). */
+export function getAppointmentHeight(hourHeight: number, minHeight = 52): number {
+  return Math.max(
+    minHeight,
+    (APPOINTMENT_SLOT_DURATION_MINUTES / 60) * hourHeight - 4
+  );
 }
 
 function appointmentsOverlap(a: Appointment, b: Appointment): boolean {
   const aStart = timeToMinutes(a.time);
-  const aEnd = aStart + a.duration;
+  const aEnd = aStart + APPOINTMENT_SLOT_DURATION_MINUTES;
   const bStart = timeToMinutes(b.time);
-  const bEnd = bStart + b.duration;
+  const bEnd = bStart + APPOINTMENT_SLOT_DURATION_MINUTES;
   return aStart < bEnd && bStart < aEnd;
 }
 
@@ -258,7 +259,7 @@ export function layoutDayAppointments(
 
     for (const appointment of cluster) {
       const start = timeToMinutes(appointment.time);
-      const end = start + appointment.duration;
+      const end = start + APPOINTMENT_SLOT_DURATION_MINUTES;
       let placed = false;
 
       for (let column = 0; column < columnEndMinutes.length; column++) {

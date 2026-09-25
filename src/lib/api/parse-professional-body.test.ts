@@ -10,9 +10,6 @@ const validBody = (overrides: Record<string, unknown> = {}) => ({
   phone: "11 5555-5555",
   specialty: "Traumatología",
   days: ["Lunes", "Miércoles"],
-  scheduleStart: "09:00",
-  scheduleEnd: "13:00",
-  defaultDuration: 60,
   active: true,
   avatarColor: "#0ea5e9",
   notes: "Notas",
@@ -45,9 +42,6 @@ describe("parseProfessionalWriteInput: payload válido", () => {
       phone: "11 5555-5555",
       specialty: "Traumatología",
       days: ["Lunes", "Miércoles"],
-      scheduleStart: "09:00",
-      scheduleEnd: "13:00",
-      defaultDuration: 60,
       active: true,
       avatarColor: "#0ea5e9",
       notes: "Notas",
@@ -80,17 +74,15 @@ describe("parseProfessionalWriteInput: payload válido", () => {
     assert.equal(input?.notes, undefined);
   });
 
-  it("aplica defaults: activo, color 'brand' y duración 45", () => {
+  it("aplica defaults: activo y color 'brand'", () => {
     const body = validBody();
     delete (body as Record<string, unknown>).active;
     delete (body as Record<string, unknown>).avatarColor;
-    delete (body as Record<string, unknown>).defaultDuration;
 
     const { input } = parseProfessionalWriteInput(body);
 
     assert.equal(input?.active, true);
     assert.equal(input?.avatarColor, "brand");
-    assert.equal(input?.defaultDuration, 45);
   });
 
   it("active: false desactiva al profesional", () => {
@@ -98,11 +90,15 @@ describe("parseProfessionalWriteInput: payload válido", () => {
     assert.equal(input?.active, false);
   });
 
-  it("convierte defaultDuration string a número", () => {
-    const { input } = parseProfessionalWriteInput(
-      validBody({ defaultDuration: "30" })
+  it("ignora horario y duración enviados por un cliente viejo", () => {
+    const { input, error } = parseProfessionalWriteInput(
+      validBody({ scheduleStart: "09:00", scheduleEnd: "13:00", defaultDuration: 45 })
     );
-    assert.equal(input?.defaultDuration, 30);
+
+    assert.equal(error, undefined);
+    for (const field of ["scheduleStart", "scheduleEnd", "defaultDuration"]) {
+      assert.equal(field in (input ?? {}), false, field);
+    }
   });
 
   it("ignora id y avatarColor que no sean string", () => {
@@ -153,24 +149,6 @@ describe("parseProfessionalWriteInput: validación", () => {
     }
   });
 
-  it("requiere horario de inicio y fin", () => {
-    assert.equal(
-      parseProfessionalWriteInput(validBody({ scheduleStart: "" })).error,
-      "La hora de inicio es obligatoria"
-    );
-    assert.equal(
-      parseProfessionalWriteInput(validBody({ scheduleEnd: "" })).error,
-      "La hora de fin es obligatoria"
-    );
-  });
-
-  it("la hora de fin debe ser posterior a la de inicio", () => {
-    for (const scheduleEnd of ["09:00", "08:00"]) {
-      const { error } = parseProfessionalWriteInput(validBody({ scheduleEnd }));
-      assert.equal(error, "La hora de fin debe ser posterior a la de inicio");
-    }
-  });
-
   it("rechaza email mal formado", () => {
     const { error } = parseProfessionalWriteInput(
       validBody({ email: "ana@sin-dominio" })
@@ -187,33 +165,6 @@ describe("parseProfessionalWriteInput: validaciones de formato (M7)", () => {
         parseProfessionalWriteInput(validBody({ days: ["Lunes", day] })),
         { error: `Día de atención inválido: ${day}`, field: "days" },
         day
-      );
-    }
-  });
-
-  it("rechaza horas mal formadas", () => {
-    for (const scheduleStart of ["25:99", "9", "abc", "24:00"]) {
-      assert.deepEqual(
-        parseProfessionalWriteInput(validBody({ scheduleStart })),
-        { error: "Hora de inicio inválida (usá HH:mm)", field: "scheduleStart" },
-        scheduleStart
-      );
-    }
-    assert.deepEqual(
-      parseProfessionalWriteInput(validBody({ scheduleEnd: "13:60" })),
-      { error: "Hora de fin inválida (usá HH:mm)", field: "scheduleEnd" }
-    );
-  });
-
-  it("rechaza defaultDuration que no sea un entero positivo", () => {
-    for (const defaultDuration of ["abc", 0, -30, 30.5]) {
-      assert.deepEqual(
-        parseProfessionalWriteInput(validBody({ defaultDuration })),
-        {
-          error: "La duración debe ser un número entero de minutos",
-          field: "defaultDuration",
-        },
-        String(defaultDuration)
       );
     }
   });

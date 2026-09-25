@@ -1,17 +1,15 @@
 import { areSameAppDay, getAppointmentDateTime } from "@/lib/date-utils";
 import {
-  getProfessionalScheduleLabel,
+  getClinicScheduleLabel,
   getWeekdayLabelFromAppDate,
-  isEndTimeAfterStart,
   professionalWorksOnDay,
   validateProfessionalAppointmentSlot,
 } from "@/lib/professional-schedule";
 import { Appointment, Professional, WeekDay } from "@/types";
 
 export {
-  getProfessionalScheduleLabel,
+  getClinicScheduleLabel,
   getWeekdayLabelFromAppDate,
-  isEndTimeAfterStart,
   professionalWorksOnDay,
   validateProfessionalAppointmentSlot,
 };
@@ -33,8 +31,6 @@ export const PROFESSIONAL_SPECIALTIES = [
   "Neurológica",
   "Rehabilitación general",
 ] as const;
-
-export const PROFESSIONAL_DURATION_OPTIONS = [30, 45, 60] as const;
 
 export const PROFESSIONAL_AVATAR_COLORS = [
   "bg-brand-500",
