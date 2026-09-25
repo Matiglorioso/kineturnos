@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const siteConfig = {
   name: "KineTurnos",
   tagline: "Gestión kinesiológica",
-  clinicName: "Centro Kine Norte",
+  clinicName: "SANMAR SALUD",
   supportEmail:
     process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "soporte@kineturnos.local",
   url: "https://kineturnos.vercel.app",
