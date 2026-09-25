@@ -9,12 +9,25 @@ El repositorio incluye un workflow de GitHub Actions (`.github/workflows/ci.yml`
 | **Lint** | `npm run lint` |
 | **Build** | `npm run build` (con `DATABASE_URL` y `AUTH_SECRET` de prueba) |
 | **Verify DB + API** | PostgreSQL efímero → `db:migrate:deploy` → `db:seed` → `dev` → `test:int` |
+| **E2E (Playwright)** | PostgreSQL efímero → `db:migrate:deploy` → `db:seed` → `test:e2e` (levanta `dev`). Si falla, sube el reporte HTML y los traces como artifact `playwright-report` |
 
 No hace falta configurar secrets en GitHub: el job **Verify** levanta Postgres 16 como servicio del workflow.
 
 El workflow usa `actions/checkout@v6` y `actions/setup-node@v6` con Node.js 24 (sin warnings de deprecación de Node 20).
 
 ---
+
+## Tests E2E (Playwright)
+
+`e2e/` recorre la UI real en Chromium: login por rol (incluido `callbackUrl` externo y rate limit), agendar turnos (horarios ocupados deshabilitados, paciente con dos turnos a la vez), cambios de estado y eliminación, permisos del rol profesional y la vista mobile (390 px).
+
+```powershell
+# Base migrada y sembrada con db:seed (usuarios demo), nunca la de producción
+npx playwright install chromium   # una sola vez
+npm.cmd run test:e2e
+```
+
+Playwright levanta `npm run dev` (o reutiliza el que esté corriendo en el puerto 3000). Las sesiones por rol se guardan en `e2e/.auth/` (ignorado por git) y al final se borran los datos `it-…` que crearon los tests.
 
 ## Verificación local
 
