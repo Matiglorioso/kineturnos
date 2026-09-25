@@ -90,11 +90,18 @@ export async function api<T = unknown>(
   };
 }
 
+/**
+ * Cookies de la respuesta como las guardaría un navegador: si el mismo nombre
+ * llega dos veces (el middleware y la ruta de Auth.js setean cada uno su
+ * `authjs.csrf-token`), gana la última.
+ */
 function cookieHeader(response: Response): string {
-  return response.headers
-    .getSetCookie()
-    .map((cookie) => cookie.split(";")[0])
-    .join("; ");
+  const jar = new Map<string, string>();
+  for (const cookie of response.headers.getSetCookie()) {
+    const pair = cookie.split(";")[0];
+    jar.set(pair.slice(0, pair.indexOf("=")), pair);
+  }
+  return [...jar.values()].join("; ");
 }
 
 /** Login real con Auth.js (credentials): devuelve la cookie de sesión. */
