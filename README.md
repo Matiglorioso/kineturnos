@@ -127,11 +127,15 @@ SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
 
 Crea admin, recepción y profesional (sin vincular) para **Centro Kine Norte**. Cambiá emails y contraseña antes de entregar al cliente.
 
+> Si la base ya tiene datos, el seed **aborta** sin tocar nada. Para restablecer la contraseña de los usuarios iniciales sobre una base en uso: `npm run db:seed:minimal -- --force` (nunca borra pacientes, profesionales ni turnos).
+
 **Desarrollo local** — datos de ejemplo completos:
 
 ```bash
 npm run db:seed
 ```
+
+Sobre una base con datos aborta; para borrar todo y recargar los mocks: `npx prisma db seed -- --force`.
 
 La sección **Ayuda** (`/proyecto`) está disponible una vez autenticado.
 
@@ -189,8 +193,8 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run clean` | Elimina caché de `.next` |
 | `npm run db:push` | Sincroniza schema → DB (solo desarrollo puntual) |
 | `npm run db:migrate:deploy` | Aplica migraciones en producción / CI |
-| `npm run db:seed` | Datos de desarrollo (mocks + usuarios; sin turnos; bloqueado en producción) |
-| `npm run db:seed:minimal` | Solo usuarios iniciales (go-live; requiere `SEED_INITIAL_PASSWORD`) |
+| `npm run db:seed` | Datos de desarrollo (mocks + usuarios; sin turnos; bloqueado en producción; aborta si la base tiene datos, salvo `--force`) |
+| `npm run db:seed:minimal` | Solo usuarios iniciales (go-live; requiere `SEED_INITIAL_PASSWORD`; nunca borra datos; con datos existentes aborta, salvo `--force`) |
 | `npm run db:purge-demo` | **Destructivo:** borra pacientes/profesionales mock (no solo turnos) |
 | `npm run db:restore-demo-people` | Vuelve a cargar pacientes/profesionales mock; no crea turnos |
 | `npm run db:clear-turnos` | Borra todos los turnos y limpia `ultimoTurno` |
