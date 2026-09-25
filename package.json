@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx --test 'src/lib/**/*.test.ts'",
+    "test": "tsx --test \"src/lib/**/*.test.ts\"",
     "clean": "node scripts/clean-cache.js",
     "dev:clean": "node scripts/kill-port.js && node scripts/clean-cache.js && next dev -p 3000",
     "postinstall": "prisma generate",
