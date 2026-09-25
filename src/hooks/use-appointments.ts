@@ -12,6 +12,7 @@ import { formatAppDate, formatTimeShort } from "@/lib/datetime-format";
 import { getLoadErrorMessage } from "@/lib/api-error-message";
 import { appToasts, showSuccessToast } from "@/lib/toast";
 import { getAppointmentStatusLabel } from "@/lib/appointment-status";
+import { sortAppointmentsByDateTime } from "@/lib/appointment-sort";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
@@ -40,17 +41,10 @@ export function useAppointments() {
     void refresh();
   }, [refresh]);
 
-  const sortAppointments = (items: Appointment[]) =>
-    [...items].sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.time.localeCompare(b.time);
-    });
-
   const createAppointment = useCallback(async (appointment: Appointment) => {
     try {
       const created = await createAppointmentRequest(appointment);
-      setAppointments((prev) => sortAppointments([...prev, created]));
+      setAppointments((prev) => sortAppointmentsByDateTime([...prev, created]));
       appToasts.appointment.created(
         created.patientName,
         formatAppDate(created.date),
@@ -69,7 +63,7 @@ export function useAppointments() {
     try {
       const updated = await updateAppointmentRequest(appointment);
       setAppointments((prev) =>
-        sortAppointments(
+        sortAppointmentsByDateTime(
           prev.map((item) => (item.id === updated.id ? updated : item))
         )
       );
@@ -91,7 +85,7 @@ export function useAppointments() {
           status
         );
         setAppointments((prev) =>
-          sortAppointments(
+          sortAppointmentsByDateTime(
             prev.map((item) => (item.id === updated.id ? updated : item))
           )
         );
