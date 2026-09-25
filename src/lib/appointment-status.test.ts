@@ -29,6 +29,12 @@ describe("estados de turno: clasificación", () => {
     }
   });
 
+  it("solo los estados finales habilitan eliminar un turno", () => {
+    // db/appointments.ts rechaza el delete si !isFinalAppointmentStatus.
+    const deletable = ALL_STATUSES.filter(isFinalAppointmentStatus);
+    assert.deepEqual(deletable.sort(), ["atendido", "ausente", "cancelado"]);
+  });
+
   it("activos y finales particionan todos los estados", () => {
     const union = [...ACTIVE_APPOINTMENT_STATUSES, ...FINAL_APPOINTMENT_STATUSES];
 

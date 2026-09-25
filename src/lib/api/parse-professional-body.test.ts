@@ -180,6 +180,12 @@ describe("parseProfessionalWriteInput: validación", () => {
     assert.equal(error, "Ingresá un email válido");
   });
 
+  // Brechas M7 (plan de testing, paso 2): hoy el parser las acepta.
+  it.todo("rechaza días fuera de WeekDay (\"Domingo\", \"foo\")");
+  it.todo("rechaza horas mal formadas (\"25:99\")");
+  it.todo("rechaza defaultDuration no numérico (hoy queda NaN)");
+  it.todo("el error indica el campo inválido (field) para responder 400");
+
   it("con varios errores devuelve solo el primero", () => {
     const { error, input } = parseProfessionalWriteInput(
       validBody({ lastName: "", email: "mal" })

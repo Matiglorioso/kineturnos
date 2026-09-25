@@ -59,6 +59,12 @@ describe("slots: bloques de 1 h", () => {
     ]);
   });
 
+  it("horario no alineado a la hora (08:30) arranca los bloques desde ahí", () => {
+    const pro = { ...professional, scheduleStart: "08:30", scheduleEnd: "11:30" };
+    assert.deepEqual(getProfessionalHourlySlotStarts(pro), ["08:30", "09:30", "10:30"]);
+    assert.equal(isValidHourlySlotStart(pro, "09:00"), false);
+  });
+
   it("descarta el bloque final si no entra completo", () => {
     const pro = { ...professional, scheduleStart: "09:30", scheduleEnd: "12:00" };
     assert.deepEqual(getProfessionalHourlySlotStarts(pro), ["09:30", "10:30"]);
