@@ -8,6 +8,7 @@ import {
   createAppointmentInDb,
   createPatient,
   createProfessional,
+  createUser,
   futureWorkday,
   login,
   prisma,
@@ -40,6 +41,43 @@ describe("autenticación de la API", () => {
       assert.equal(res.status, 200, res.error);
     });
   }
+});
+
+describe("sesión con el usuario modificado (A3)", () => {
+  it("un usuario desactivado con sesión abierta recibe 401 en la siguiente llamada", async () => {
+    const user = await createUser({ rol: "recepcion" });
+    const session = await login(user.email);
+    assert.equal((await api("/api/patients", { auth: session })).status, 200);
+
+    await prisma.usuario.update({ where: { id: user.id }, data: { activo: false } });
+
+    const res = await api("/api/patients", { auth: session });
+    assert.equal(res.status, 401);
+  });
+
+  it("un cambio de rol se aplica sin volver a loguearse", async () => {
+    const user = await createUser({ rol: "recepcion" });
+    const session = await login(user.email);
+    const patient = await createPatient();
+
+    await prisma.usuario.update({ where: { id: user.id }, data: { rol: "profesional" } });
+
+    // Como profesional (sin ficha vinculada) ya no puede borrar pacientes.
+    const res = await api(`/api/patients/${patient.id}`, {
+      method: "DELETE",
+      auth: session,
+    });
+    assert.equal(res.status, 403);
+  });
+
+  it("un usuario borrado recibe 401", async () => {
+    const user = await createUser({ rol: "admin" });
+    const session = await login(user.email);
+
+    await prisma.usuario.delete({ where: { id: user.id } });
+
+    assert.equal((await api("/api/patients", { auth: session })).status, 401);
+  });
 });
 
 describe("permisos por rol", () => {
