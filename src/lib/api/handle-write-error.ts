@@ -1,4 +1,10 @@
-import { DuplicateFieldError, DeleteBlockedError, ValidationError, NotFoundError } from "@/lib/db/errors";
+import {
+  ConflictError,
+  DuplicateFieldError,
+  DeleteBlockedError,
+  ValidationError,
+  NotFoundError,
+} from "@/lib/db/errors";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
@@ -8,6 +14,13 @@ export function handleWriteError(
 ): NextResponse {
   if (error instanceof NotFoundError) {
     return NextResponse.json({ error: error.message }, { status: 404 });
+  }
+
+  if (error instanceof ConflictError) {
+    return NextResponse.json(
+      { error: error.message, field: error.field },
+      { status: 409 }
+    );
   }
 
   if (error instanceof ValidationError) {
