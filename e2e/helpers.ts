@@ -25,6 +25,15 @@ export type Role = keyof typeof USERS;
 /** Sesión guardada por auth.setup.ts para cada rol. */
 export const storageStateFor = (role: Role) => `e2e/.auth/${role}.json`;
 
+/**
+ * Espera a que el formulario de login esté hidratado. Antes de eso, un click en
+ * "Ingresar" hace un submit nativo (GET /login?) en vez del login: pasa en CI
+ * cuando next dev compila la página en frío. El form enfoca el email al montar.
+ */
+export async function waitForLoginForm(page: Page) {
+  await expect(page.getByLabel("Email")).toBeFocused({ timeout: 60_000 });
+}
+
 export async function loginViaUi(page: Page, email: string, password: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(password);
