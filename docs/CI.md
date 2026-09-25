@@ -8,7 +8,7 @@ El repositorio incluye un workflow de GitHub Actions (`.github/workflows/ci.yml`
 |-----|------------|
 | **Lint** | `npm run lint` |
 | **Build** | `npm run build` (con `DATABASE_URL` y `AUTH_SECRET` de prueba) |
-| **Verify DB + API** | PostgreSQL efímero → `db:migrate:deploy` → `db:seed` → `dev` → `verify:migration` |
+| **Verify DB + API** | PostgreSQL efímero → `db:migrate:deploy` → `db:seed` → `dev` → `test:int` |
 
 No hace falta configurar secrets en GitHub: el job **Verify** levanta Postgres 16 como servicio del workflow.
 
@@ -28,16 +28,21 @@ npm.cmd run dev
 En otra terminal:
 
 ```powershell
-npm.cmd run verify:migration
+npm.cmd run test:int
 ```
 
-### Qué prueba el script
+> **Nunca contra producción.** `test:int` crea y borra datos (con ids `it-…`) y usuarios de prueba. Usalo solo con Postgres local, el de CI o un branch de Neon aparte.
+
+### Qué prueban los tests de integración (`tests/integration/`)
 
 - Integridad de DB (pacientes, profesionales, turnos, usuarios, DNI/matrícula)
 - CRUD API de pacientes, profesionales y turnos
-- Validaciones (DNI duplicado, solapamiento de horarios)
-- Sync de dominio (`ultimo_turno`, `paciente_nombre`)
+- Validaciones (DNI y matrícula duplicados, solapamiento de horarios)
+- Sync de dominio (`ultimo_turno`, nombres en turnos)
+- Autenticación con login real por rol, permisos y scope del rol profesional
 - Protección de API sin sesión (401)
+
+Corren con `node:test` de a un archivo por vez (`--test-concurrency=1`), porque comparten la base. Cada archivo limpia lo que creó.
 
 Si `VERIFY_SECRET` no está en `.env`, las pruebas API pueden fallar por auth. Ver `env.example`.
 

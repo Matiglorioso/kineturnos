@@ -108,6 +108,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       excludeId: id,
       previousDate: existing.date,
       previousTime: existing.time,
+      previousProfessionalId: existing.professionalId,
     });
     if (!parsed.input) {
       return NextResponse.json(

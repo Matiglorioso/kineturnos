@@ -12,14 +12,16 @@ import {
   DUPLICATE_LICENSE_MESSAGE,
   normalizeLicense,
 } from "@/lib/document-validation";
-import { prisma } from "@/lib/prisma";
+import { prisma, type DbClient } from "@/lib/prisma";
 import type { Professional } from "@/types";
 
 export type { ProfessionalWriteInput } from "@/lib/db/professional-write";
 export { professionalToWriteInput } from "@/lib/db/professional-write";
 
-export async function getProfessionalsFromDb(): Promise<Professional[]> {
-  const records = await prisma.profesional.findMany({
+export async function getProfessionalsFromDb(
+  db: DbClient = prisma
+): Promise<Professional[]> {
+  const records = await db.profesional.findMany({
     orderBy: { nombre: "asc" },
   });
 

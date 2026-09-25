@@ -95,4 +95,4 @@ jobs:
           done
           echo "Dev server did not become ready in time"
           exit 1
-      - run: npm run verify:migration
+      - run: npm run test:int

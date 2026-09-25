@@ -16,7 +16,7 @@ Para **producción en Vercel**, seguí [`TU-PARTE-VERCEL.md`](./TU-PARTE-VERCEL.
 5. Ejecutar **`npm run db:seed`** (carga datos de demo)
 6. Probar **`http://localhost:3000/api/health/db`**
 7. Agregar `DATABASE_URL` en **Vercel** → [`TU-PARTE-VERCEL.md`](./TU-PARTE-VERCEL.md)
-8. (Opcional) `npm run verify:migration` con el dev server activo
+8. (Opcional) `npm run test:int` con el dev server activo
 
 ---
 
@@ -192,8 +192,8 @@ Por ahora, con `db:push` local alcanza para desarrollo. En producción podés co
 prisma/
   schema.prisma    # Modelos TS; tablas/columnas en español vía @map / @@map
   seed.ts          # Datos iniciales desde mocks
-scripts/
-  verify-migration.ts   # Pruebas automáticas DB + API
+tests/
+  integration/     # Tests de integración DB + API (npm run test:int)
 src/
   lib/
     prisma.ts      # Cliente Prisma (singleton)
@@ -218,7 +218,7 @@ Posibles mejoras:
 1. **Autenticación** y permisos por rol
 2. **Migraciones formales** (`db:migrate`) en lugar de solo `db:push`
 3. **Actualizar `ultimo_turno`** del paciente al marcar sesiones atendidas
-4. **CI** con `npm run verify:migration` en pull requests
+4. **CI** con `npm run test:int` en pull requests
 
 ---
 

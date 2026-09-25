@@ -131,6 +131,7 @@ export type AppointmentFormErrors = Partial<
 export type ValidateAppointmentFormOptions = {
   previousDate?: string;
   previousTime?: string;
+  previousProfessionalId?: string;
   /** Momento de referencia para "hoy" (inyectable en tests). */
   now?: Date;
 };
@@ -256,9 +257,21 @@ export function validateAppointmentForm(
     }
   }
 
+  // Editar sin mover el turno (mismo profesional, día y hora) no lo revalida
+  // contra la agenda actual: el profesional pudo cambiar días u horario después.
+  const keepsExistingSlot =
+    isEditing &&
+    options?.previousProfessionalId === values.professionalId &&
+    previousDate !== undefined &&
+    options?.previousTime !== undefined &&
+    values.time !== "" &&
+    areSameAppDay(values.date, previousDate) &&
+    normalizeTime(values.time) === normalizeTime(options.previousTime);
+
   if (!values.time) {
     errors.time = "Elegí un horario";
   } else if (
+    !keepsExistingSlot &&
     professional &&
     values.date &&
     isValidAppDate(values.date) &&
@@ -346,12 +359,14 @@ export function validateAppointmentForm(
       errors.overlap = APPOINTMENT_PATIENT_OVERLAP_ERROR;
     }
 
-    const scheduleErrors = validateProfessionalAppointmentSlot(
-      professional,
-      values.date,
-      normalizeTime(values.time),
-      slotDuration
-    );
+    const scheduleErrors = keepsExistingSlot
+      ? {}
+      : validateProfessionalAppointmentSlot(
+          professional,
+          values.date,
+          normalizeTime(values.time),
+          slotDuration
+        );
 
     if (scheduleErrors.day) {
       errors.date = scheduleErrors.day;

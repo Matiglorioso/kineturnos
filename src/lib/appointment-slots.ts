@@ -1,5 +1,5 @@
 import { APPOINTMENT_SLOT_DURATION_MINUTES } from "@/lib/appointment-constants";
-import { areSameAppDay } from "@/lib/date-utils";
+import { areSameAppDay, getNowAppMinutes, isTodayAppDate } from "@/lib/date-utils";
 import { formatAppointmentTimeRange } from "@/lib/datetime-format";
 import { professionalWorksOnDay } from "@/lib/professional-schedule";
 import { minutesToTime, normalizeTime, timeToMinutes } from "@/lib/time-utils";
@@ -75,16 +75,24 @@ export function formatHourlySlotLabel(startTime: string): string {
   );
 }
 
-/** Bloques hora a hora para un profesional en una fecha, marcando ocupados. */
+/**
+ * Bloques hora a hora para un profesional en una fecha, marcando ocupados y,
+ * si la fecha es hoy, los que ya empezaron (salvo `keepStartTime`, el horario
+ * actual de un turno que se está editando).
+ */
 export function listHourlySlotOptions(
   professional: Professional | undefined,
   date: string,
   existingAppointments: Appointment[],
-  excludeId?: string
+  excludeId?: string,
+  options?: { now?: Date; keepStartTime?: string }
 ): HourlySlotOption[] {
   if (!professional || !date || !professionalWorksOnDay(professional, date)) {
     return [];
   }
+
+  const now = options?.now ?? new Date();
+  const nowMinutes = isTodayAppDate(date, now) ? getNowAppMinutes(now) : null;
 
   return getProfessionalHourlySlotStarts(professional).map((startTime) => {
     const occupied = slotIsOccupied(
@@ -94,11 +102,15 @@ export function listHourlySlotOptions(
       startTime,
       excludeId
     );
+    const alreadyStarted =
+      nowMinutes !== null &&
+      startTime !== options?.keepStartTime &&
+      timeToMinutes(startTime) < nowMinutes;
 
     return {
       startTime,
       label: formatHourlySlotLabel(startTime),
-      available: !occupied,
+      available: !occupied && !alreadyStarted,
     };
   });
 }
@@ -112,18 +124,20 @@ export function listHourlySlotOptionsForForm(
     excludeId?: string;
     currentTime?: string;
     currentDuration?: number;
+    now?: Date;
   }
 ): HourlySlotOption[] {
+  const currentTime = options?.currentTime
+    ? normalizeTime(options.currentTime)
+    : null;
+
   const base = listHourlySlotOptions(
     professional,
     date,
     existingAppointments,
-    options?.excludeId
+    options?.excludeId,
+    { now: options?.now, keepStartTime: currentTime ?? undefined }
   );
-
-  const currentTime = options?.currentTime
-    ? normalizeTime(options.currentTime)
-    : null;
 
   if (!currentTime) return base;
 
