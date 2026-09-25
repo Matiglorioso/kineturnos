@@ -69,6 +69,9 @@ export const APPOINTMENT_DURATION_INVALID_ERROR =
 export const APPOINTMENT_FUTURE_STATUS_ERROR =
   "Un turno futuro no puede marcarse como atendido o ausente.";
 
+export const APPOINTMENT_PAST_TIME_ERROR =
+  "Ese horario ya pasó. Elegí un horario posterior a la hora actual.";
+
 export type AppointmentFormInput = {
   patientId: string;
   professionalId: string;
@@ -85,6 +88,7 @@ export type AppointmentFormErrors = Partial<
 
 export type ValidateAppointmentFormOptions = {
   previousDate?: string;
+  previousTime?: string;
   /** Momento de referencia para "hoy" (inyectable en tests). */
   now?: Date;
 };
