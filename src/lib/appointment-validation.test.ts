@@ -6,6 +6,7 @@ import {
   APPOINTMENT_OVERLAP_ERROR,
   APPOINTMENT_PAST_TIME_ERROR,
   APPOINTMENT_PATIENT_OVERLAP_ERROR,
+  getAppointmentTransitionError,
   hasProfessionalOverlap,
   validateAppointmentForm,
   validateAppointmentStatusChange,
@@ -186,7 +187,6 @@ describe("cambio de solo estado (A2)", () => {
     const errors = validateAppointmentStatusChange(
       slot({ time: "10:15", status: "confirmado" }),
       "cancelado",
-      [],
       now
     );
     assert.deepEqual(errors, {});
@@ -196,7 +196,6 @@ describe("cambio de solo estado (A2)", () => {
     const errors = validateAppointmentStatusChange(
       slot({ date: "10-09-2026", status: "confirmado" }),
       "atendido",
-      [],
       now
     );
     assert.deepEqual(errors, {});
@@ -204,55 +203,40 @@ describe("cambio de solo estado (A2)", () => {
 
   it("rechaza atendido o ausente en un turno futuro", () => {
     for (const status of ["atendido", "ausente"] as const) {
-      const errors = validateAppointmentStatusChange(slot(), status, [], now);
+      const errors = validateAppointmentStatusChange(slot(), status, now);
       assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR, status);
     }
   });
 
-  it("al reactivar un cancelado, chequea que el horario del profesional siga libre", () => {
-    const taken = slot({ id: "a-2", patientId: "p-9", status: "confirmado" });
+  it("un turno final no cambia de estado: solo se elimina", () => {
+    for (const [from, to] of [
+      ["cancelado", "pendiente"],
+      ["cancelado", "confirmado"],
+      ["ausente", "atendido"],
+      ["atendido", "ausente"],
+    ] as const) {
+      const errors = validateAppointmentStatusChange(
+        slot({ date: "10-09-2026", status: from }),
+        to,
+        now
+      );
+      assert.equal(errors.status, getAppointmentTransitionError(from, to), `${from} → ${to}`);
+    }
+  });
+
+  it("un turno confirmado no vuelve a pendiente", () => {
     const errors = validateAppointmentStatusChange(
-      slot({ status: "cancelado" }),
+      slot({ status: "confirmado" }),
       "pendiente",
-      [taken],
       now
     );
-    assert.equal(errors.overlap, APPOINTMENT_OVERLAP_ERROR);
+    assert.equal(errors.status, getAppointmentTransitionError("confirmado", "pendiente"));
   });
 
-  it("al reactivar un ausente, chequea que el paciente no tenga otro turno", () => {
-    const patientBusy = slot({
-      id: "a-2",
-      professionalId: "pro-2",
-      status: "pendiente",
-    });
-    const errors = validateAppointmentStatusChange(
-      slot({ date: "10-09-2026", status: "ausente" }),
-      "atendido",
-      [{ ...patientBusy, date: "10-09-2026" }],
-      now
-    );
-    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
-  });
-
-  it("reactivar con el horario libre funciona", () => {
-    const freed = slot({ id: "a-2", patientId: "p-9", status: "cancelado" });
-    const errors = validateAppointmentStatusChange(
-      slot({ status: "cancelado" }),
-      "confirmado",
-      [freed],
-      now
-    );
-    assert.deepEqual(errors, {});
-  });
-
-  it("entre estados activos no vuelve a chequear solapamiento", () => {
-    // Un solapamiento heredado no debe impedir confirmar.
-    const legacy = slot({ id: "a-2", patientId: "p-9", status: "pendiente" });
+  it("pendiente → confirmado está permitido", () => {
     const errors = validateAppointmentStatusChange(
       slot({ status: "pendiente" }),
       "confirmado",
-      [legacy],
       now
     );
     assert.deepEqual(errors, {});
@@ -511,5 +495,72 @@ describe("validación de agendado: fechas pasadas al editar", () => {
     );
 
     assert.match(errors.date!, /fecha pasada/i);
+  });
+});
+
+describe("edición de turnos en estado final (diagrama de estados)", () => {
+  const pastDate = pastMondayAppDate();
+  const finalSlot = (status: "atendido" | "cancelado") => ({
+    options: {
+      previousDate: pastDate,
+      previousTime: "10:00",
+      previousProfessionalId: professional.id,
+      previousStatus: status,
+    },
+    values: { ...baseValues(), date: pastDate, time: "10:00", status },
+  });
+
+  it("permite editar tipo de sesión u observaciones sin moverlo ni cambiar el estado", () => {
+    const { options, values } = finalSlot("atendido");
+    const errors = validateAppointmentForm(
+      { ...values, sessionType: "Control" },
+      [],
+      [professional],
+      "a-1",
+      options
+    );
+    assert.deepEqual(errors, {});
+  });
+
+  it("no se puede reprogramar (otra fecha, hora o profesional)", () => {
+    const { options, values } = finalSlot("cancelado");
+    const future = nextMondayAppDate();
+
+    for (const changed of [
+      { ...values, date: future },
+      { ...values, time: "11:00" },
+      { ...values, professionalId: "pro-2" },
+    ]) {
+      const errors = validateAppointmentForm(changed, [], [professional], "a-1", options);
+      assert.match(errors.date ?? "", /no se puede reprogramar/, JSON.stringify(changed));
+    }
+  });
+
+  it("desde el formulario tampoco puede cambiar de estado", () => {
+    const { options, values } = finalSlot("atendido");
+    const errors = validateAppointmentForm(
+      { ...values, status: "ausente" },
+      [],
+      [professional],
+      "a-1",
+      options
+    );
+    assert.equal(errors.status, getAppointmentTransitionError("atendido", "ausente"));
+  });
+
+  it("un turno confirmado no vuelve a pendiente desde el formulario", () => {
+    const errors = validateAppointmentForm(
+      { ...baseValues(), status: "pendiente" },
+      [],
+      [professional],
+      "a-1",
+      {
+        previousDate: baseValues().date,
+        previousTime: "10:00",
+        previousProfessionalId: professional.id,
+        previousStatus: "confirmado",
+      }
+    );
+    assert.equal(errors.status, getAppointmentTransitionError("confirmado", "pendiente"));
   });
 });

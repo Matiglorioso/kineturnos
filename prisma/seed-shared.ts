@@ -10,8 +10,8 @@ export type SeedUserInput = {
 };
 
 /**
- * Usuarios iniciales (go-live o desarrollo): Superadmin del equipo de
- * desarrollo, dos Administradores (dueño y recepción) y un Profesional.
+ * Usuarios iniciales para SANMAR SALUD (go-live o desarrollo): Superadmin del
+ * equipo de desarrollo, dos Administradores (dueño y recepción) y un Profesional.
  */
 export function getDefaultUsers(professionalId?: string | null): SeedUserInput[] {
   return [

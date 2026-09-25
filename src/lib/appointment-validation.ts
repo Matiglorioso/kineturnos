@@ -12,6 +12,11 @@ import {
   isTodayAppDate,
   isValidAppDate,
 } from "@/lib/date-utils";
+import {
+  canTransitionAppointmentStatus,
+  getAppointmentStatusLabel,
+  isFinalAppointmentStatus,
+} from "@/lib/appointment-status";
 import { validateProfessionalAppointmentSlot } from "@/lib/professional-schedule";
 import { normalizeTime } from "@/lib/time-utils";
 import { timeToMinutes } from "@/lib/time-utils";
@@ -98,6 +103,21 @@ export const APPOINTMENT_PATIENT_OVERLAP_ERROR =
 export const APPOINTMENT_FUTURE_STATUS_ERROR =
   "Un turno futuro no puede marcarse como atendido o ausente.";
 
+export function getAppointmentTransitionError(
+  from: AppointmentStatus,
+  to: AppointmentStatus
+): string {
+  const fromLabel = getAppointmentStatusLabel(from).toLowerCase();
+  const toLabel = getAppointmentStatusLabel(to).toLowerCase();
+  return isFinalAppointmentStatus(from)
+    ? `Un turno ${fromLabel} no puede pasar a ${toLabel}: es un estado final y solo se puede eliminar.`
+    : `Un turno ${fromLabel} no puede pasar a ${toLabel}.`;
+}
+
+export function getAppointmentRescheduleError(status: AppointmentStatus): string {
+  return `Un turno ${getAppointmentStatusLabel(status).toLowerCase()} no se puede reprogramar.`;
+}
+
 export const APPOINTMENT_PAST_TIME_ERROR =
   "Ese horario ya pasó. Elegí un horario posterior a la hora actual.";
 
@@ -118,6 +138,7 @@ export type ValidateAppointmentFormOptions = {
   previousDate?: string;
   previousTime?: string;
   previousProfessionalId?: string;
+  previousStatus?: AppointmentStatus;
   /** Momento de referencia para "hoy" (inyectable en tests). */
   now?: Date;
 };
@@ -135,53 +156,29 @@ export function getStatusOptionsForAppointmentDate(
 }
 
 /**
- * Reglas de un cambio de solo estado (sin tocar fecha, hora ni profesional).
- * No revalida la agenda del profesional: el turno ya existe aunque su día u
- * horario hayan cambiado después. Solo al reactivar un cancelado/ausente se
- * vuelve a ocupar el horario, y ahí sí se chequea solapamiento.
+ * Reglas de un cambio de solo estado (sin tocar fecha, hora ni profesional):
+ * la transición tiene que estar permitida por la máquina de estados y la
+ * asistencia no se registra en fechas futuras. No revalida la agenda del
+ * profesional: el turno ya existe aunque su día u horario hayan cambiado.
+ * Como un estado final no vuelve a activo, nunca se vuelve a ocupar un horario.
  */
 export function validateAppointmentStatusChange(
   existing: Appointment,
   status: AppointmentStatus,
-  appointments: Appointment[],
   now: Date = new Date()
 ): AppointmentFormErrors {
   const errors: AppointmentFormErrors = {};
+
+  if (!canTransitionAppointmentStatus(existing.status, status)) {
+    errors.status = getAppointmentTransitionError(existing.status, status);
+    return errors;
+  }
 
   if (
     (status === "atendido" || status === "ausente") &&
     isFutureAppDate(existing.date, now)
   ) {
     errors.status = APPOINTMENT_FUTURE_STATUS_ERROR;
-    return errors;
-  }
-
-  const reactivates =
-    !BLOCKING_STATUSES.has(existing.status) && BLOCKING_STATUSES.has(status);
-  if (!reactivates) return errors;
-
-  const time = normalizeTime(existing.time);
-
-  if (
-    hasProfessionalOverlap(
-      appointments,
-      existing.professionalId,
-      existing.date,
-      time,
-      existing.id
-    )
-  ) {
-    errors.overlap = APPOINTMENT_OVERLAP_ERROR;
-  } else if (
-    hasPatientOverlap(
-      appointments,
-      existing.patientId,
-      existing.date,
-      time,
-      existing.id
-    )
-  ) {
-    errors.overlap = APPOINTMENT_PATIENT_OVERLAP_ERROR;
   }
 
   return errors;
@@ -230,6 +227,33 @@ export function validateAppointmentForm(
       errors.date = "No se pueden crear turnos en fechas pasadas";
     } else if (dateChanged) {
       errors.date = "No se puede mover un turno a una fecha pasada";
+    }
+  }
+
+  // Máquina de estados: un turno final no se reprograma (fecha, hora o
+  // profesional) y el estado solo cambia por transiciones permitidas.
+  const previousStatus = isEditing ? options?.previousStatus : undefined;
+  if (previousStatus) {
+    const rescheduled =
+      Boolean(dateChanged) ||
+      (options?.previousTime !== undefined &&
+        values.time !== "" &&
+        normalizeTime(values.time) !== normalizeTime(options.previousTime)) ||
+      (options?.previousProfessionalId !== undefined &&
+        values.professionalId !== options.previousProfessionalId);
+
+    if (isFinalAppointmentStatus(previousStatus) && rescheduled) {
+      errors.date = getAppointmentRescheduleError(previousStatus);
+    }
+
+    if (
+      values.status &&
+      !canTransitionAppointmentStatus(previousStatus, values.status as AppointmentStatus)
+    ) {
+      errors.status = getAppointmentTransitionError(
+        previousStatus,
+        values.status as AppointmentStatus
+      );
     }
   }
 
@@ -284,6 +308,7 @@ export function validateAppointmentForm(
   if (!values.status) {
     errors.status = "Seleccioná un estado";
   } else if (
+    !errors.status &&
     values.date &&
     isValidAppDate(values.date) &&
     !errors.date &&

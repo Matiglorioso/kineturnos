@@ -125,7 +125,7 @@ Bash / macOS / Linux:
 SEED_INITIAL_PASSWORD="tu-contraseña-segura" npm run db:seed:minimal
 ```
 
-Crea los perfiles de la app: **Superadmin** (equipo de desarrollo), dos **Administradores** (dueño y recepción) y un **Profesional** (sin vincular). Cambiá emails y contraseña antes de entregar al cliente.
+Crea los perfiles de la app para **SANMAR SALUD**: **Superadmin** (equipo de desarrollo), dos **Administradores** (dueño y recepción) y un **Profesional** (sin vincular). Cambiá emails y contraseña antes de entregar al cliente.
 
 | Perfil | Quiénes | Puede |
 |---|---|---|
@@ -206,6 +206,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run db:clear-turnos` | Borra todos los turnos y limpia `ultimoTurno` |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
 | `npm run test:int` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
+| `npm run test:coverage` | Cobertura de los unitarios (c8); reporte HTML en `coverage/`. Resultados: [docs/TESTING.md](docs/TESTING.md) |
 | `npm run test:e2e` | Tests E2E con Playwright (levanta `npm run dev`; base sembrada con `db:seed`, nunca producción) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
 
