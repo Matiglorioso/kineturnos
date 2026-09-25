@@ -195,7 +195,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run db:restore-demo-people` | Vuelve a cargar pacientes/profesionales mock; no crea turnos |
 | `npm run db:clear-turnos` | Borra todos los turnos y limpia `ultimoTurno` |
 | `npm run db:studio` | Prisma Studio (UI de la DB) |
-| `npm run verify:migration` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
+| `npm run test:int` | Prueba automática DB + API (requiere `npm run dev` y `VERIFY_SECRET`) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
 
 ### Variables de entorno
@@ -203,7 +203,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 ```env
 DATABASE_URL="postgresql://..."   # Neon (requerido)
 AUTH_SECRET="..."                 # Auth.js (requerido para login)
-VERIFY_SECRET="..."               # Bypass auth en verify:migration (local/CI)
+VERIFY_SECRET="..."               # Bypass auth en test:int (local/CI)
 NEXT_PUBLIC_SITE_URL=https://kineturnos.vercel.app
 ```
 
@@ -219,7 +219,7 @@ npm run db:push    # Crear tablas en Neon
 npm run db:seed          # Datos completos de desarrollo
 npm run db:seed:minimal  # Go-live: solo usuarios (requiere SEED_INITIAL_PASSWORD)
 npm run db:studio  # Ver la DB en el navegador
-npm run verify:migration   # Verificar migración (con dev server activo)
+npm run test:int   # Verificar migración (con dev server activo)
 ```
 
 ---
