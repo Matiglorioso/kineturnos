@@ -96,9 +96,7 @@ describe("parseAppointmentWriteInput: payload válido", () => {
 
 describe("parseAppointmentWriteInput: validación", () => {
   it("objeto vacío informa primero el paciente", () => {
-    assert.deepEqual(parseAppointmentWriteInput({}), {
-      error: "Seleccioná un paciente",
-    });
+    assert.equal(parseAppointmentWriteInput({}).error, "Seleccioná un paciente");
   });
 
   it("requiere profesional, horario y tipo de sesión", () => {
@@ -155,10 +153,39 @@ describe("parseAppointmentWriteInput: validación", () => {
     }
   });
 
-  // Brechas M7 (plan de testing, paso 2): hoy el parser las acepta.
-  it.todo("rechaza un status fuera de AppointmentStatus (\"foo\")");
-  it.todo("rechaza un sessionType fuera de SESSION_TYPES");
-  it.todo("rechaza horas mal formadas (\"25:99\", \"abc\")");
+});
+
+describe("parseAppointmentWriteInput: validaciones de formato (M7)", () => {
+  it("rechaza un estado desconocido", () => {
+    assert.deepEqual(parseAppointmentWriteInput(validBody({ status: "foo" })), {
+      error: "Estado de turno inválido",
+      field: "status",
+    });
+  });
+
+  it("rechaza un tipo de sesión fuera de la lista", () => {
+    assert.deepEqual(
+      parseAppointmentWriteInput(validBody({ sessionType: "Yoga" })),
+      { error: "Tipo de sesión inválido", field: "sessionType" }
+    );
+  });
+
+  it("rechaza horas mal formadas", () => {
+    for (const time of ["25:99", "abc", "10"]) {
+      assert.deepEqual(
+        parseAppointmentWriteInput(validBody({ time })),
+        { error: "Horario inválido (usá HH:mm)", field: "time" },
+        time
+      );
+    }
+  });
+
+  it("los errores de validación indican el campo", () => {
+    assert.deepEqual(parseAppointmentWriteInput(validBody({ patientId: "" })), {
+      error: "Seleccioná un paciente",
+      field: "patientId",
+    });
+  });
 });
 
 describe("parseAppointmentWriteInput: edición de turnos pasados", () => {

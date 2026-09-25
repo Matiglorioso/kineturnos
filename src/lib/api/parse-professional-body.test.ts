@@ -117,9 +117,7 @@ describe("parseProfessionalWriteInput: payload válido", () => {
 
 describe("parseProfessionalWriteInput: validación", () => {
   it("objeto vacío informa primero el nombre obligatorio", () => {
-    assert.deepEqual(parseProfessionalWriteInput({}), {
-      error: "El nombre es obligatorio",
-    });
+    assert.equal(parseProfessionalWriteInput({}).error, "El nombre es obligatorio");
   });
 
   it("nombre solo con espacios es inválido", () => {
@@ -180,12 +178,55 @@ describe("parseProfessionalWriteInput: validación", () => {
     assert.equal(error, "Ingresá un email válido");
   });
 
-  // Brechas M7 (plan de testing, paso 2): hoy el parser las acepta.
-  it.todo("rechaza días fuera de WeekDay (\"Domingo\", \"foo\")");
-  it.todo("rechaza horas mal formadas (\"25:99\")");
-  it.todo("rechaza defaultDuration no numérico (hoy queda NaN)");
-  it.todo("el error indica el campo inválido (field) para responder 400");
+});
 
+describe("parseProfessionalWriteInput: validaciones de formato (M7)", () => {
+  it("rechaza días fuera de lunes a sábado", () => {
+    for (const day of ["Domingo", "foo", "lunes"]) {
+      assert.deepEqual(
+        parseProfessionalWriteInput(validBody({ days: ["Lunes", day] })),
+        { error: `Día de atención inválido: ${day}`, field: "days" },
+        day
+      );
+    }
+  });
+
+  it("rechaza horas mal formadas", () => {
+    for (const scheduleStart of ["25:99", "9", "abc", "24:00"]) {
+      assert.deepEqual(
+        parseProfessionalWriteInput(validBody({ scheduleStart })),
+        { error: "Hora de inicio inválida (usá HH:mm)", field: "scheduleStart" },
+        scheduleStart
+      );
+    }
+    assert.deepEqual(
+      parseProfessionalWriteInput(validBody({ scheduleEnd: "13:60" })),
+      { error: "Hora de fin inválida (usá HH:mm)", field: "scheduleEnd" }
+    );
+  });
+
+  it("rechaza defaultDuration que no sea un entero positivo", () => {
+    for (const defaultDuration of ["abc", 0, -30, 30.5]) {
+      assert.deepEqual(
+        parseProfessionalWriteInput(validBody({ defaultDuration })),
+        {
+          error: "La duración debe ser un número entero de minutos",
+          field: "defaultDuration",
+        },
+        String(defaultDuration)
+      );
+    }
+  });
+
+  it("los errores de validación indican el campo", () => {
+    assert.deepEqual(parseProfessionalWriteInput(validBody({ lastName: "" })), {
+      error: "El apellido es obligatorio",
+      field: "lastName",
+    });
+  });
+});
+
+describe("parseProfessionalWriteInput: prioridad de errores", () => {
   it("con varios errores devuelve solo el primero", () => {
     const { error, input } = parseProfessionalWriteInput(
       validBody({ lastName: "", email: "mal" })
