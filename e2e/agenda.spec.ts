@@ -112,8 +112,10 @@ test.describe("agendar turnos (recepción)", () => {
     await expect(page.getByText("Sesión atendida")).toBeVisible();
     await expect(row).toContainText("Atendido");
 
-    // Estado final: ahora sí se puede eliminar.
+    // Estado final: no ofrece otros cambios de estado, pero sí eliminar.
     await openActions();
+    await expect(page.getByRole("menuitem", { name: "Marcar como ausente" })).toBeDisabled();
+    await expect(page.getByRole("menuitem", { name: "Cancelar turno" })).toHaveCount(0);
     await page.getByRole("menuitem", { name: "Eliminar turno" }).click();
     await page.getByRole("button", { name: "Sí, eliminar turno" }).click();
     await expect(page.getByText("Turno eliminado")).toBeVisible();

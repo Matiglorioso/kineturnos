@@ -5,8 +5,10 @@ import {
   APPOINTMENT_STATUS_FILTERS,
   APPOINTMENT_STATUS_FORM_OPTIONS,
   APPOINTMENT_STATUS_LABELS,
+  canTransitionAppointmentStatus,
   FINAL_APPOINTMENT_STATUSES,
   getAppointmentStatusLabel,
+  getNextAppointmentStatuses,
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
@@ -69,4 +71,29 @@ describe("estados de turno: etiquetas y opciones", () => {
       ALL_STATUSES
     );
   });
+});
+
+describe("máquina de estados (diagrama de estados de la tesis)", () => {
+  // Activo (pendiente, confirmado) → confirmar / cancelar / registrar asistencia.
+  // Cancelado, atendido y ausente son finales: solo se eliminan.
+  const NEXT: Record<AppointmentStatus, AppointmentStatus[]> = {
+    pendiente: ["confirmado", "cancelado", "atendido", "ausente"],
+    confirmado: ["cancelado", "atendido", "ausente"],
+    atendido: [],
+    cancelado: [],
+    ausente: [],
+  };
+
+  for (const from of ALL_STATUSES) {
+    it(`desde ${from}: ${NEXT[from].join(", ") || "ninguna transición"}`, () => {
+      assert.deepEqual(getNextAppointmentStatuses(from), NEXT[from]);
+      for (const to of ALL_STATUSES) {
+        assert.equal(
+          canTransitionAppointmentStatus(from, to),
+          from === to || NEXT[from].includes(to),
+          `${from} → ${to}`
+        );
+      }
+    });
+  }
 });
