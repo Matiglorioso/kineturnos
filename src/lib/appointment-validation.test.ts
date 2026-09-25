@@ -6,6 +6,7 @@ import {
   APPOINTMENT_FUTURE_STATUS_ERROR,
   APPOINTMENT_OVERLAP_ERROR,
   APPOINTMENT_PAST_TIME_ERROR,
+  APPOINTMENT_PATIENT_OVERLAP_ERROR,
   hasProfessionalOverlap,
   validateAppointmentForm,
   type AppointmentFormInput,
@@ -192,6 +193,75 @@ describe("validación de agendado: estado vs fecha", () => {
     );
 
     assert.equal(errors.status, APPOINTMENT_FUTURE_STATUS_ERROR);
+  });
+});
+
+describe("validación de agendado: paciente con dos turnos a la vez (M2)", () => {
+  const otherProfessional: Professional = {
+    ...professional,
+    id: "pro-2",
+    name: "Luis Díaz",
+  };
+  const professionals = [professional, otherProfessional];
+  const patientSlot = (overrides: Partial<Appointment> = {}) =>
+    existingSlot({
+      patientId: "p-1",
+      professionalId: otherProfessional.id,
+      professionalName: otherProfessional.name,
+      ...overrides,
+    });
+
+  it("rechaza un turno del mismo paciente, a la misma hora, con otro profesional", () => {
+    const errors = validateAppointmentForm(
+      baseValues(),
+      [patientSlot()],
+      professionals
+    );
+
+    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
+  });
+
+  it("detecta solapamiento parcial", () => {
+    const errors = validateAppointmentForm(
+      baseValues(), // 10:00–11:00
+      [patientSlot({ time: "10:30", duration: 45 })],
+      professionals
+    );
+
+    assert.equal(errors.overlap, APPOINTMENT_PATIENT_OVERLAP_ERROR);
+  });
+
+  it("un turno cancelado o ausente del paciente no bloquea", () => {
+    for (const status of ["cancelado", "ausente"] as const) {
+      const errors = validateAppointmentForm(
+        baseValues(),
+        [patientSlot({ status })],
+        professionals
+      );
+      assert.equal(errors.overlap, undefined, status);
+    }
+  });
+
+  it("a otra hora el paciente puede tener otro turno", () => {
+    const errors = validateAppointmentForm(
+      baseValues(),
+      [patientSlot({ time: "11:00" })],
+      professionals
+    );
+
+    assert.equal(errors.overlap, undefined);
+  });
+
+  it("al editar, no choca consigo mismo", () => {
+    const own = patientSlot({ id: "a-own", professionalId: professional.id });
+    const errors = validateAppointmentForm(
+      baseValues(),
+      [own],
+      professionals,
+      "a-own"
+    );
+
+    assert.equal(errors.overlap, undefined);
   });
 });
 
