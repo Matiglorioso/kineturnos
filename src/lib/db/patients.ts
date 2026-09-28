@@ -149,6 +149,13 @@ export async function deletePatientFromDb(id: string): Promise<void> {
     );
   }
 
+  const clinicalCount = await prisma.historiaClinica.count({ where: { pacienteId: id } });
+  if (clinicalCount > 0) {
+    throw new DeleteBlockedError(
+      "No se puede eliminar el paciente porque tiene historia clínica registrada. Marcalo como inactivo para conservar su historia."
+    );
+  }
+
   await prisma.paciente.delete({ where: { id } });
 }
 

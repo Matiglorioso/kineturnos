@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { RolUsuario } from "@prisma/client";
 import {
+  canAccessClinicalHistory,
   canAccessPage,
   canManagePatients,
   canManageProfessionals,
@@ -25,6 +26,10 @@ const EXPECTED: Record<Permission, Record<RolUsuario, boolean>> = {
   "professionals:read": { superadmin: true, admin: true, profesional: true },
   "professionals:write": { superadmin: true, admin: true, profesional: false },
   "professionals:delete": { superadmin: true, admin: true, profesional: false },
+  // El profesional, solo de pacientes con turno (canAccessClinicalHistory).
+  "clinical:read": { superadmin: true, admin: true, profesional: true },
+  "clinical:write": { superadmin: true, admin: true, profesional: true },
+  "clinical:audit": { superadmin: true, admin: true, profesional: false },
 };
 
 describe("permisos: matriz rol × permiso", () => {
@@ -38,6 +43,19 @@ describe("permisos: matriz rol × permiso", () => {
       });
     }
   }
+});
+
+describe("historia clínica: acceso por perfil (RNF06)", () => {
+  it("administración y superadmin acceden a cualquier historia", () => {
+    for (const role of ["superadmin", "admin"] as const) {
+      assert.equal(canAccessClinicalHistory(role, false), true, role);
+    }
+  });
+
+  it("el profesional solo accede si tiene o tuvo un turno con el paciente", () => {
+    assert.equal(canAccessClinicalHistory("profesional", true), true);
+    assert.equal(canAccessClinicalHistory("profesional", false), false);
+  });
 });
 
 describe("permisos: helpers por capacidad", () => {
