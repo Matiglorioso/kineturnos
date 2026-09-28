@@ -17,7 +17,8 @@ Marcar un turno como atendido o ausente, o cambiar solo el tipo de sesión o las
 1. Cada escritura de turno guarda en la tabla `notificaciones`, **en la misma transacción**, los correos que corresponden. Si la escritura falla, no queda ningún aviso.
 2. Después de responder a la pantalla, el servidor los envía con la API de [Brevo](https://www.brevo.com/). El envío nunca demora ni rompe el alta del turno.
 3. Cada hora, un workflow de GitHub Actions (`.github/workflows/recordatorios.yml`) llama a `/api/cron/notificaciones`, que:
-   - encola un recordatorio para cada turno pendiente o confirmado que empieza **entre 2 y 24 horas después**. Con la corrida horaria, el recordatorio sale entre 23 y 24 h antes; si el turno se agendó con menos de 24 h de anticipación, sale en la siguiente corrida (salvo que falten menos de 2 h);
+   - encola un recordatorio para cada turno pendiente o confirmado que empieza **entre 2 y 24 horas después**. Con la corrida horaria, el recordatorio sale entre 23 y 24 h antes;
+   - **no** manda recordatorio si el turno se agendó o se reprogramó con menos de 24 h de anticipación: el paciente acaba de recibir el correo con los datos;
    - reintenta los correos que fallaron (hasta 3 intentos).
 4. Un turno recibe un solo recordatorio por horario. Si se reprograma, recibe otro para el horario nuevo.
 
