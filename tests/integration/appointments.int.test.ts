@@ -134,10 +134,12 @@ describe("concurrencia", () => {
     const patients = [await createPatient(), await createPatient()];
 
     // Varias rondas para que una carrera real tenga chance de aparecer.
+    // De a 2 días: futureWorkday corre el domingo al lunes y dos rondas seguidas
+    // podían caer en la misma fecha (el slot ya ocupado daba 409 y 409).
     for (let round = 0; round < 3; round++) {
       const slot = {
         professionalId: professional.id,
-        date: futureWorkday(20 + round),
+        date: futureWorkday(20 + round * 2),
         time: "10:00",
       };
       const statuses = await racePosts(
@@ -152,7 +154,7 @@ describe("concurrencia", () => {
     const patient = await createPatient();
 
     for (let round = 0; round < 3; round++) {
-      const date = futureWorkday(25 + round);
+      const date = futureWorkday(27 + round * 2);
       const statuses = await racePosts(
         professionals.map((professional) =>
           appointmentBody({
