@@ -10,6 +10,7 @@ import {
   toTurnoWriteData,
   type AppointmentWriteInput,
 } from "@/lib/db/appointment-write";
+import { enqueueAppointmentNotifications } from "@/lib/db/notifications";
 import { getProfessionalsFromDb } from "@/lib/db/professionals";
 import { recomputePatientLastAppointment } from "@/lib/db/sync";
 import { isFinalAppointmentStatus } from "@/lib/appointment-status";
@@ -18,6 +19,7 @@ import {
   validateAppointmentForm,
   validateAppointmentStatusChange,
 } from "@/lib/appointment-validation";
+import { scheduleNotificationDispatch } from "@/lib/notifications/schedule";
 import { prisma, type DbClient } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { Prisma } from "@prisma/client";
@@ -93,9 +95,20 @@ async function resolveAppointmentNames(
   }
 
   return {
-    pacienteNombre: paciente.nombre,
-    profesionalNombre: profesional.nombre,
+    names: {
+      pacienteNombre: paciente.nombre,
+      profesionalNombre: profesional.nombre,
+    },
+    patientEmail: paciente.email,
   };
+}
+
+async function getPatientEmail(patientId: string, db: DbClient): Promise<string | null> {
+  const paciente = await db.paciente.findUnique({
+    where: { id: patientId },
+    select: { email: true },
+  });
+  return paciente?.email ?? null;
 }
 
 function isTurnoProfessionalSlotViolation(
@@ -170,19 +183,20 @@ export async function assertAppointmentInputValid(
 export async function createAppointmentInDb(
   input: AppointmentWriteInput
 ): Promise<Appointment> {
-  const record = await withAppointmentLocks(
+  const { record, notificationIds } = await withAppointmentLocks(
     [input.patientId],
     [input.professionalId],
     async (tx) => {
       await assertAppointmentInputValid(input, undefined, tx);
-      const names = await resolveAppointmentNames(
+      const { names, patientEmail } = await resolveAppointmentNames(
         input.patientId,
         input.professionalId,
         tx
       );
 
+      let created;
       try {
-        return await tx.turno.create({
+        created = await tx.turno.create({
           data: {
             id: resolveAppointmentId(input),
             ...toTurnoWriteData(input, names),
@@ -191,8 +205,16 @@ export async function createAppointmentInDb(
       } catch (error) {
         rethrowTurnoSlotUniqueViolation(error);
       }
+
+      const notificationIds = await enqueueAppointmentNotifications(tx, null, {
+        appointment: mapAppointment(created),
+        patientEmail,
+      });
+      return { record: created, notificationIds };
     }
   );
+
+  scheduleNotificationDispatch(notificationIds);
 
   if (input.status === "atendido") {
     await recomputePatientLastAppointment(input.patientId);
@@ -210,27 +232,41 @@ export async function updateAppointmentInDb(
     throw new NotFoundError("Turno no encontrado.");
   }
 
-  const record = await withAppointmentLocks(
+  const { record, notificationIds } = await withAppointmentLocks(
     [existing.patientId, input.patientId],
     [existing.professionalId, input.professionalId],
     async (tx) => {
       await assertAppointmentInputValid(input, id, tx);
-      const names = await resolveAppointmentNames(
+      const { names, patientEmail } = await resolveAppointmentNames(
         input.patientId,
         input.professionalId,
         tx
       );
 
+      let updated;
       try {
-        return await tx.turno.update({
+        updated = await tx.turno.update({
           where: { id },
           data: toTurnoWriteData(input, names),
         });
       } catch (error) {
         rethrowTurnoSlotUniqueViolation(error);
       }
+
+      const previousEmail =
+        existing.patientId === input.patientId
+          ? patientEmail
+          : await getPatientEmail(existing.patientId, tx);
+      const notificationIds = await enqueueAppointmentNotifications(
+        tx,
+        { appointment: existing, patientEmail: previousEmail },
+        { appointment: mapAppointment(updated), patientEmail }
+      );
+      return { record: updated, notificationIds };
     }
   );
+
+  scheduleNotificationDispatch(notificationIds);
 
   const statusChanged = existing.status !== input.status;
   const patientChanged = existing.patientId !== input.patientId;
@@ -259,7 +295,7 @@ export async function updateAppointmentStatusInDb(
     throw new NotFoundError("Turno no encontrado.");
   }
 
-  const record = await withAppointmentLocks(
+  const { record, notificationIds } = await withAppointmentLocks(
     [existing.patientId],
     [existing.professionalId],
     async (tx) => {
@@ -267,16 +303,27 @@ export async function updateAppointmentStatusInDb(
       const errors = validateAppointmentStatusChange(existing, status);
       throwFirstValidationError(errors);
 
+      let updated;
       try {
-        return await tx.turno.update({
+        updated = await tx.turno.update({
           where: { id },
           data: { estado: status },
         });
       } catch (error) {
         rethrowTurnoSlotUniqueViolation(error);
       }
+
+      const patientEmail = await getPatientEmail(existing.patientId, tx);
+      const notificationIds = await enqueueAppointmentNotifications(
+        tx,
+        { appointment: existing, patientEmail },
+        { appointment: mapAppointment(updated), patientEmail }
+      );
+      return { record: updated, notificationIds };
     }
   );
+
+  scheduleNotificationDispatch(notificationIds);
 
   if (existing.status === "atendido" || status === "atendido") {
     await recomputePatientLastAppointment(existing.patientId);
