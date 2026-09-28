@@ -209,4 +209,47 @@ describe("cron de recordatorios", () => {
     assert.equal(reminders[0].turnoId, soon.id);
     assert.equal(reminders[0].estado, "omitida");
   });
+
+  it("no recuerda un turno agendado o reprogramado con menos de 24 h de anticipación", async () => {
+    const secret = process.env.CRON_SECRET;
+    assert.ok(secret, "CRON_SECRET tiene que estar definido (como en el dev server)");
+
+    const professional = await createProfessional();
+    const patient = await patientWithEmail();
+    const bookedEarly = await createAppointmentInDb({ patient, professional, ...clinicSlotIn(14) });
+    const bookedLate = await createAppointmentInDb({ patient, professional, ...clinicSlotIn(15) });
+    const movedLate = await createAppointmentInDb({ patient, professional, ...clinicSlotIn(16) });
+
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const notice = (turnoId: string, tipo: "creacion" | "reprogramacion", creadaEn: Date) => ({
+      id: `ntf_it-${turnoId}-${tipo}`,
+      turnoId,
+      tipo,
+      estado: "enviada" as const,
+      datos: {},
+      creadaEn,
+    });
+    await prisma.notificacion.createMany({
+      data: [
+        notice(bookedEarly.id, "creacion", threeDaysAgo),
+        notice(bookedLate.id, "creacion", new Date()),
+        notice(movedLate.id, "creacion", threeDaysAgo),
+        notice(movedLate.id, "reprogramacion", new Date()),
+      ],
+    });
+
+    assert.equal((await callCron(secret)).status, 200);
+
+    const reminded = await prisma.notificacion.findMany({
+      where: {
+        tipo: "recordatorio",
+        turnoId: { in: [bookedEarly.id, bookedLate.id, movedLate.id] },
+      },
+    });
+    assert.deepEqual(
+      reminded.map((row) => row.turnoId),
+      [bookedEarly.id],
+      "solo el turno agendado con días de anticipación"
+    );
+  });
 });
