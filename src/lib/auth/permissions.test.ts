@@ -93,20 +93,21 @@ describe("permisos: acceso a páginas", () => {
 });
 
 describe("route-access", () => {
-  it("login, ayuda, auth y health son públicas", () => {
+  it("login, ayuda, auth, health y cron son públicas (cron valida su propio secreto)", () => {
     for (const path of [
       "/login",
       "/ayuda",
       "/ayuda/turnos",
       "/api/auth/session",
       "/api/health/db",
+      "/api/cron/notificaciones",
     ]) {
       assert.equal(isPublicPath(path), true, path);
     }
   });
 
   it("el resto de las rutas requieren sesión", () => {
-    for (const path of ["/", "/agenda", "/loginx", "/api/patients"]) {
+    for (const path of ["/", "/agenda", "/loginx", "/api/patients", "/api/cronx"]) {
       assert.equal(isPublicPath(path), false, path);
     }
   });

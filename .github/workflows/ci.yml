@@ -70,6 +70,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kineturnos
       AUTH_SECRET: ci-verify-auth-secret-minimum-32-characters
       VERIFY_SECRET: ci-verify-secret-for-api-bypass
+      CRON_SECRET: ci-cron-secret-for-notifications
       VERIFY_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
     steps:

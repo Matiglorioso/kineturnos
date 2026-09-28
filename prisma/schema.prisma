@@ -35,20 +35,20 @@ enum RolUsuario {
 }
 
 model Paciente {
-  id               String         @id
-  nombre           String
-  nombrePila       String?        @map("nombre_pila")
-  apellido         String?
-  dni              String
-  dniNormalizado   String         @unique @map("dni_normalizado")
-  telefono         String
-  obraSocial       String         @default("Particular") @map("obra_social")
-  email            String?
-  observaciones    String?
-  estado           EstadoPaciente @default(activo)
-  ultimoTurno      DateTime?      @map("ultimo_turno") @db.Date
-  fechaAlta        DateTime?      @map("fecha_alta") @db.Date
-  turnos           Turno[]
+  id             String         @id
+  nombre         String
+  nombrePila     String?        @map("nombre_pila")
+  apellido       String?
+  dni            String
+  dniNormalizado String         @unique @map("dni_normalizado")
+  telefono       String
+  obraSocial     String         @default("Particular") @map("obra_social")
+  email          String?
+  observaciones  String?
+  estado         EstadoPaciente @default(activo)
+  ultimoTurno    DateTime?      @map("ultimo_turno") @db.Date
+  fechaAlta      DateTime?      @map("fecha_alta") @db.Date
+  turnos         Turno[]
 
   @@index([estado])
   @@map("pacientes")
@@ -89,18 +89,19 @@ model Usuario {
 }
 
 model Turno {
-  id                 String      @id
-  pacienteId         String      @map("paciente_id")
-  profesionalId      String      @map("profesional_id")
-  pacienteNombre     String      @map("paciente_nombre")
-  profesionalNombre  String      @map("profesional_nombre")
-  fecha              DateTime    @db.Date
-  hora               DateTime    @db.Time(0)
-  estado             EstadoTurno @default(pendiente)
-  tipoSesion         String      @map("tipo_sesion")
-  observaciones      String?
-  paciente           Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
-  profesional        Profesional @relation(fields: [profesionalId], references: [id], onDelete: Cascade)
+  id                String         @id
+  pacienteId        String         @map("paciente_id")
+  profesionalId     String         @map("profesional_id")
+  pacienteNombre    String         @map("paciente_nombre")
+  profesionalNombre String         @map("profesional_nombre")
+  fecha             DateTime       @db.Date
+  hora              DateTime       @db.Time(0)
+  estado            EstadoTurno    @default(pendiente)
+  tipoSesion        String         @map("tipo_sesion")
+  observaciones     String?
+  paciente          Paciente       @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  profesional       Profesional    @relation(fields: [profesionalId], references: [id], onDelete: Cascade)
+  notificaciones    Notificacion[]
 
   // Unique parcial "turno_profesional_slot_activo" (excluye cancelado/ausente):
   // Prisma no soporta índices parciales; se define en migración SQL.
@@ -119,4 +120,48 @@ model LoginIntento {
   bloqueadoHasta DateTime? @map("bloqueado_hasta") @db.Timestamptz(6)
 
   @@map("login_intentos")
+}
+
+enum TipoNotificacion {
+  creacion
+  confirmacion
+  reprogramacion
+  cancelacion
+  recordatorio
+
+  @@map("tipo_notificacion")
+}
+
+enum EstadoNotificacion {
+  pendiente
+  enviando
+  enviada
+  fallida
+  omitida
+
+  @@map("estado_notificacion")
+}
+
+/// Correos al paciente (RF05). Se encolan en la misma transacción que la
+/// escritura del turno y se envían después. Ver src/lib/notifications.
+model Notificacion {
+  id            String             @id
+  turnoId       String             @map("turno_id")
+  tipo          TipoNotificacion
+  estado        EstadoNotificacion @default(pendiente)
+  destinatario  String?
+  /// Datos del turno al momento del evento (el correo se arma con esto).
+  datos         Json
+  /// Evita duplicados (p. ej. un solo recordatorio por turno y horario).
+  clave         String?            @unique
+  intentos      Int                @default(0)
+  error         String?
+  creadaEn      DateTime           @default(now()) @map("creada_en") @db.Timestamptz(6)
+  actualizadaEn DateTime           @default(now()) @updatedAt @map("actualizada_en") @db.Timestamptz(6)
+  enviadaEn     DateTime?          @map("enviada_en") @db.Timestamptz(6)
+  turno         Turno              @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+
+  @@index([turnoId])
+  @@index([estado])
+  @@map("notificaciones")
 }

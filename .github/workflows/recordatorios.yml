@@ -1,0 +1,29 @@
+name: Recordatorios de turnos
+
+# Cada hora llama al endpoint que encola los recordatorios (turnos que empiezan
+# en las próximas 24 h) y envía los correos pendientes o fallidos.
+# Requiere el secret CRON_SECRET (el mismo que en Vercel) y la variable APP_URL.
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  recordatorios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Llamar al cron de notificaciones
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ] || [ -z "$APP_URL" ]; then
+            echo "Falta el secret CRON_SECRET o la variable APP_URL: no se envían recordatorios."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error --max-time 120 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/notificaciones"

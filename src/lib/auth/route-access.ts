@@ -9,7 +9,9 @@ export function isPublicPath(pathname: string): boolean {
       (path) => pathname === path || pathname.startsWith(`${path}/`)
     ) ||
     pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/health")
+    pathname.startsWith("/api/health") ||
+    // Se autentica con CRON_SECRET en el propio endpoint.
+    pathname.startsWith("/api/cron/")
   );
 }
 

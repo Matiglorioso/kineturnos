@@ -54,6 +54,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Filtros por estado y profesional
 - Creación, edición y cambio de estado de turnos
 - Validación de solapamientos y horarios del profesional
+- **Correos al paciente** al crear, confirmar, reprogramar o cancelar un turno, y recordatorio 24 h antes ([`docs/NOTIFICACIONES.md`](docs/NOTIFICACIONES.md))
 - Tabla en desktop y **cards apiladas** en mobile
 
 ### Pacientes
@@ -63,7 +64,6 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 ### Profesionales
 - CRUD de kinesiólogos con especialidad y días de atención (turnos de 1 hora, horario del consultorio 08:00 a 18:00)
-- Duración estándar por sesión
 - Turnos asignados y contador del día
 
 ### Experiencia de producto
@@ -216,6 +216,9 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 DATABASE_URL="postgresql://..."   # Neon (requerido)
 AUTH_SECRET="..."                 # Auth.js (requerido para login)
 VERIFY_SECRET="..."               # Bypass auth en test:int (local/CI)
+CRON_SECRET="..."                 # Cron de recordatorios (Vercel + GitHub Actions)
+BREVO_API_KEY="..."               # Envío de correos (solo producción)
+MAIL_FROM_EMAIL="..."             # Remitente verificado en Brevo
 NEXT_PUBLIC_SITE_URL=https://kineturnos.vercel.app
 ```
 
@@ -304,7 +307,8 @@ kineturnos/
 | Migraciones Prisma formales | ✅ Completo |
 | Deploy Vercel con `DATABASE_URL` + `AUTH_SECRET` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
-| Notificaciones externas (email / WhatsApp) | ❌ No incluido |
+| Notificaciones por email (RF05) | ✅ Completo ([config](docs/NOTIFICACIONES.md)) |
+| Notificaciones por WhatsApp | ❌ No incluido |
 
 ---
 
