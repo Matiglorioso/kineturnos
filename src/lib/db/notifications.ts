@@ -4,6 +4,7 @@ import {
   getAppointmentNotificationEvents,
   getReminderKey,
   getReminderWindow,
+  REMINDER_HOURS_BEFORE,
   type AppointmentNotificationType,
 } from "@/lib/notifications/events";
 import { sendEmail, type MailerConfig, getMailerConfig } from "@/lib/notifications/mailer";
@@ -100,6 +101,8 @@ export async function enqueueAppointmentNotifications(
 /**
  * Encola un recordatorio para cada turno activo que empieza dentro de la
  * ventana (entre 2 y 24 h desde `now`). La clave única evita repetirlo.
+ * No recuerda un turno agendado o reprogramado con menos de 24 h de
+ * anticipación: el correo de creación o reprogramación ya tiene los datos.
  * La fecha y hora del turno son del consultorio (hora argentina).
  */
 export async function enqueueDueReminders(now: Date = new Date()): Promise<number> {
@@ -107,9 +110,19 @@ export async function enqueueDueReminders(now: Date = new Date()): Promise<numbe
   const due = await prisma.$queryRaw<{ id: string }[]>`
     SELECT t.id
     FROM turnos t
+    CROSS JOIN LATERAL (
+      SELECT (t.fecha + t.hora) AT TIME ZONE 'America/Argentina/Buenos_Aires' AS inicio
+    ) turno
     WHERE t.estado IN ('pendiente', 'confirmado')
-      AND ((t.fecha + t.hora) AT TIME ZONE 'America/Argentina/Buenos_Aires') > ${from.toISOString()}::timestamptz
-      AND ((t.fecha + t.hora) AT TIME ZONE 'America/Argentina/Buenos_Aires') <= ${to.toISOString()}::timestamptz
+      AND turno.inicio > ${from.toISOString()}::timestamptz
+      AND turno.inicio <= ${to.toISOString()}::timestamptz
+      AND NOT EXISTS (
+        SELECT 1
+        FROM notificaciones n
+        WHERE n.turno_id = t.id
+          AND n.tipo IN ('creacion', 'reprogramacion')
+          AND n.creada_en > turno.inicio - make_interval(hours => ${REMINDER_HOURS_BEFORE}::int)
+      )
   `;
   if (due.length === 0) return 0;
 
