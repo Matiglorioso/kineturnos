@@ -12,6 +12,7 @@ import { useState } from "react";
 interface ClinicalEntryCardProps {
   entry: ClinicalEntry;
   sessionNumber: number;
+  className?: string;
   onUpdate: (entry: ClinicalEntry, body: ClinicalEntryRequest) => Promise<void>;
 }
 
@@ -41,14 +42,19 @@ function Section({ label, text }: { label: string; text: string }) {
   );
 }
 
-export function ClinicalEntryCard({ entry, sessionNumber, onUpdate }: ClinicalEntryCardProps) {
+export function ClinicalEntryCard({
+  entry,
+  sessionNumber,
+  className,
+  onUpdate,
+}: ClinicalEntryCardProps) {
   const [editing, setEditing] = useState(false);
   // creado_en lo pone la base y actualizado_en Prisma: difieren unos milisegundos al crear.
   const edited =
     new Date(entry.updatedAt).getTime() - new Date(entry.createdAt).getTime() > 1000;
 
   return (
-    <li className="relative pl-6 print:pl-0">
+    <li className={cn("relative pl-6 print:pl-0", className)}>
       <span
         aria-hidden="true"
         className={cn(

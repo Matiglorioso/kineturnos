@@ -39,6 +39,8 @@ import type { ClinicalEntry, ClinicalHistory, TreatmentGoal } from "@/types";
 import {
   AlertTriangle,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   FileHeart,
   Lock,
   Plus,
@@ -50,6 +52,8 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const ALL_PROFESSIONALS = "todos";
+/** Evoluciones por página en la línea de tiempo (al imprimir salen todas). */
+const ENTRIES_PER_PAGE = 3;
 
 export default function HistoriaClinicaPage() {
   return (
@@ -72,9 +76,12 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 function CurrentItem({
   label,
   value,
+  onAdd,
 }: {
   label: string;
   value: { text: string; date: string } | null;
+  /** Abre "Nueva evolución": el diagnóstico y el plan se cargan ahí. */
+  onAdd?: () => void;
 }) {
   return (
     <section className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 print:break-inside-avoid">
@@ -85,7 +92,21 @@ function CurrentItem({
           <p className="mt-2 text-xs text-muted-foreground">Desde el {formatAppDate(value.date)}</p>
         </>
       ) : (
-        <p className="mt-1.5 text-sm text-muted-foreground">Todavía no se cargó.</p>
+        <>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Todavía no se cargó. Se completa al registrar una evolución.
+          </p>
+          {onAdd && (
+            <Button
+              type="button"
+              variant="link"
+              className="mt-1 h-auto p-0 text-brand-700 print:hidden"
+              onClick={onAdd}
+            >
+              Cargarlo en una evolución
+            </Button>
+          )}
+        </>
       )}
     </section>
   );
@@ -103,6 +124,7 @@ function HistoriaClinicaContent() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerAppointmentId, setComposerAppointmentId] = useState<string | null>(null);
   const [professionalFilter, setProfessionalFilter] = useState(ALL_PROFESSIONALS);
+  const [page, setPage] = useState(0);
   const openedFromAppointment = useRef(false);
 
   const load = useCallback(async () => {
@@ -160,6 +182,7 @@ function HistoriaClinicaContent() {
     await createClinicalEntryRequest(id, body);
     showSuccessToast("Sesión registrada", "La evolución quedó en la historia clínica.");
     setComposerOpen(false);
+    setPage(0);
     await load();
   };
 
@@ -230,6 +253,8 @@ function HistoriaClinicaContent() {
   const alerts = splitClinicalAlerts(profile?.alerts);
   const lastEntry = entries[0];
   const achievedGoals = goals.filter((goal) => goal.achieved).length;
+  const pageCount = Math.max(1, Math.ceil(visibleEntries.length / ENTRIES_PER_PAGE));
+  const currentPage = Math.min(page, pageCount - 1);
 
   return (
     <div className="space-y-5">
@@ -301,7 +326,13 @@ function HistoriaClinicaContent() {
             </h2>
             {professionals.length > 1 && (
               <div className="w-full sm:w-60 print:hidden">
-                <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
+                <Select
+                  value={professionalFilter}
+                  onValueChange={(value) => {
+                    setProfessionalFilter(value);
+                    setPage(0);
+                  }}
+                >
                   <SelectTrigger aria-label="Filtrar por profesional" className="h-9">
                     <SelectValue />
                   </SelectTrigger>
@@ -327,16 +358,56 @@ function HistoriaClinicaContent() {
               onAction={canWrite ? openComposer : undefined}
             />
           ) : (
-            <ol className="relative ml-1.5 space-y-4 border-l-2 border-slate-200 print:ml-0 print:border-0">
-              {visibleEntries.map((entry) => (
-                <ClinicalEntryCard
-                  key={entry.id}
-                  entry={entry}
-                  sessionNumber={sessionNumbers.get(entry.id) ?? 0}
-                  onUpdate={handleUpdate}
-                />
-              ))}
-            </ol>
+            <>
+              <ol className="relative ml-1.5 space-y-4 border-l-2 border-slate-200 print:ml-0 print:border-0">
+                {visibleEntries.map((entry, index) => (
+                  <ClinicalEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    sessionNumber={sessionNumbers.get(entry.id) ?? 0}
+                    onUpdate={handleUpdate}
+                    // Fuera de la página actual se ocultan en pantalla, pero se imprimen.
+                    className={
+                      Math.floor(index / ENTRIES_PER_PAGE) === currentPage
+                        ? undefined
+                        : "hidden print:block"
+                    }
+                  />
+                ))}
+              </ol>
+              {pageCount > 1 && (
+                <nav
+                  aria-label="Páginas de la evolución"
+                  className="flex items-center justify-between gap-2 print:hidden"
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 0}
+                    onClick={() => setPage(currentPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Más recientes
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {currentPage * ENTRIES_PER_PAGE + 1}–
+                    {Math.min((currentPage + 1) * ENTRIES_PER_PAGE, visibleEntries.length)} de{" "}
+                    {visibleEntries.length}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= pageCount - 1}
+                    onClick={() => setPage(currentPage + 1)}
+                  >
+                    Más antiguas
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </nav>
+              )}
+            </>
           )}
 
           {can("clinical:audit") && (
@@ -353,8 +424,16 @@ function HistoriaClinicaContent() {
               Nueva evolución
             </Button>
           )}
-          <CurrentItem label="Diagnóstico vigente" value={summary.diagnosis} />
-          <CurrentItem label="Plan de tratamiento vigente" value={summary.treatment} />
+          <CurrentItem
+            label="Diagnóstico vigente"
+            value={summary.diagnosis}
+            onAdd={canWrite ? openComposer : undefined}
+          />
+          <CurrentItem
+            label="Plan de tratamiento vigente"
+            value={summary.treatment}
+            onAdd={canWrite ? openComposer : undefined}
+          />
           <TreatmentGoalsCard
             goals={goals}
             canEdit={canWrite}

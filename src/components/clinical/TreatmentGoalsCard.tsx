@@ -17,7 +17,13 @@ interface TreatmentGoalsCardProps {
   onRemove: (goal: TreatmentGoal) => Promise<void>;
 }
 
-export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }: TreatmentGoalsCardProps) {
+export function TreatmentGoalsCard({
+  goals,
+  canEdit,
+  onAdd,
+  onToggle,
+  onRemove,
+}: TreatmentGoalsCardProps) {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,7 +35,11 @@ export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }
     try {
       await action();
     } catch (actionError) {
-      setError(actionError instanceof ApiError ? actionError.message : "No se pudo guardar.");
+      setError(
+        actionError instanceof ApiError
+          ? actionError.message
+          : "No se pudo guardar.",
+      );
     } finally {
       setBusy(false);
     }
@@ -37,10 +47,7 @@ export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }
 
   const add = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!draft.trim()) {
-      setError("Escribí el objetivo.");
-      return;
-    }
+    if (!draft.trim()) return;
     void run(async () => {
       await onAdd(draft);
       setDraft("");
@@ -53,7 +60,10 @@ export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }
       className="rounded-2xl border border-slate-200 bg-white p-4 print:break-inside-avoid"
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 id="objetivos-titulo" className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+        <h2
+          id="objetivos-titulo"
+          className="flex items-center gap-2 text-sm font-semibold text-slate-900"
+        >
           <Target className="h-4 w-4 text-slate-500" />
           Objetivos del tratamiento
         </h2>
@@ -63,9 +73,14 @@ export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }
           </span>
         )}
       </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Qué se busca lograr con el tratamiento. Tildalo cuando se cumpla.
+      </p>
 
       {goals.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">Todavía no hay objetivos cargados.</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Todavía no hay objetivos.
+        </p>
       ) : (
         <ul className="mt-3 space-y-1.5">
           {goals.map((goal) => (
@@ -80,7 +95,12 @@ export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }
               />
               <label
                 htmlFor={`goal-${goal.id}`}
-                className={cn("flex-1", goal.achieved ? "text-muted-foreground line-through" : "text-slate-800")}
+                className={cn(
+                  "flex-1",
+                  goal.achieved
+                    ? "text-muted-foreground line-through"
+                    : "text-slate-800",
+                )}
               >
                 {goal.description}
               </label>
@@ -101,22 +121,39 @@ export function TreatmentGoalsCard({ goals, canEdit, onAdd, onToggle, onRemove }
       )}
 
       {canEdit && (
-        <form onSubmit={add} className="mt-3 flex gap-2 print:hidden">
-          <Input
-            aria-label="Nuevo objetivo"
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setError(null);
-            }}
-            placeholder="Volver a correr sin dolor"
-            maxLength={CLINICAL_GOAL_MAX_LENGTH}
-            className="h-9"
-          />
-          <Button type="submit" size="sm" variant="outline" disabled={busy} className="h-9 shrink-0">
-            <Plus className="h-4 w-4" />
-            Agregar
-          </Button>
+        <form
+          onSubmit={add}
+          className="mt-4 space-y-1.5 border-t border-slate-100 pt-3 print:hidden"
+        >
+          <label
+            htmlFor="nuevo-objetivo"
+            className="text-xs font-medium text-slate-700"
+          >
+            Agregar un objetivo
+          </label>
+          <div className="flex gap-2">
+            <Input
+              id="nuevo-objetivo"
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setError(null);
+              }}
+              placeholder="Por ejemplo: volver a correr sin dolor"
+              maxLength={CLINICAL_GOAL_MAX_LENGTH}
+              className="h-9 placeholder:text-slate-400"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              variant="outline"
+              disabled={busy || !draft.trim()}
+              className="h-9 shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              Agregar
+            </Button>
+          </div>
         </form>
       )}
       {error && (

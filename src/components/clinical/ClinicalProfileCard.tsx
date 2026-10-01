@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api/fetch-json";
-import { CLINICAL_TEXT_MAX_LENGTH } from "@/lib/clinical-history";
+import { CLINICAL_TEXT_MAX_LENGTH, splitClinicalAlerts } from "@/lib/clinical-history";
 import type { ClinicalProfile } from "@/types";
-import { ClipboardList, Pencil } from "lucide-react";
+import { AlertTriangle, ClipboardList, Pencil } from "lucide-react";
 import { useState } from "react";
 import { formatClinicalTimestamp } from "./ClinicalEntryCard";
 
@@ -23,6 +23,7 @@ export function ClinicalProfileCard({ profile, canEdit, onSave }: ClinicalProfil
   const [background, setBackground] = useState(profile?.background ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const alertList = splitClinicalAlerts(profile?.alerts);
 
   const startEditing = () => {
     setAlerts(profile?.alerts ?? "");
@@ -62,6 +63,11 @@ export function ClinicalProfileCard({ profile, canEdit, onSave }: ClinicalProfil
         )}
       </div>
 
+      <p className="mt-1 text-xs text-muted-foreground">
+        Alergias y contraindicaciones (se muestran en rojo arriba de todo) y enfermedades o
+        cirugías previas.
+      </p>
+
       {editing ? (
         <form onSubmit={save} className="mt-3 space-y-3">
           <FormField id="ficha-alerts" label="Alertas clínicas (una por renglón)">
@@ -100,6 +106,21 @@ export function ClinicalProfileCard({ profile, canEdit, onSave }: ClinicalProfil
         </form>
       ) : (
         <div className="mt-3 space-y-3 text-sm">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Alertas</p>
+            {alertList.length > 0 ? (
+              <ul className="mt-1 space-y-0.5">
+                {alertList.map((alert) => (
+                  <li key={alert} className="flex items-center gap-1.5 font-medium text-red-700">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    {alert}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-muted-foreground">Sin alertas cargadas.</p>
+            )}
+          </div>
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Antecedentes</p>
             <p className="mt-1 whitespace-pre-wrap text-slate-800">
