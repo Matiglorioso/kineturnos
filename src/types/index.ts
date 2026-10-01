@@ -96,3 +96,81 @@ export interface StatMetric {
   change?: string;
   trend?: "up" | "down" | "neutral";
 }
+
+/** Registro de la historia clínica: una sesión (RF11). */
+export interface ClinicalEntry {
+  id: string;
+  patientId: string;
+  professionalId: string | null;
+  professionalName: string | null;
+  /** Turno de la sesión, si se registró desde un turno. */
+  appointmentId: string | null;
+  authorName: string;
+  /** Formato dd-MM-yyyy */
+  date: string;
+  diagnosis: string | null;
+  treatment: string | null;
+  evolution: string;
+  /** ISO 8601 */
+  createdAt: string;
+  updatedAt: string;
+  /** El usuario actual lo puede corregir (autor, dentro de las 24 h). */
+  editable: boolean;
+  /** Hasta cuándo se puede corregir (ISO 8601), si `editable`. */
+  editableUntil: string | null;
+}
+
+/** Alertas (alergias, contraindicaciones) y antecedentes del paciente. */
+export interface ClinicalProfile {
+  alerts: string | null;
+  background: string | null;
+  updatedByName: string;
+  /** ISO 8601 */
+  updatedAt: string;
+}
+
+/** Objetivo del plan de tratamiento. */
+export interface TreatmentGoal {
+  id: string;
+  description: string;
+  achieved: boolean;
+  /** ISO 8601 */
+  achievedAt: string | null;
+  createdByName: string;
+}
+
+/** Diagnóstico y plan vigentes: los del último registro que los cargó. */
+export interface ClinicalSummary {
+  diagnosis: { text: string; date: string } | null;
+  treatment: { text: string; date: string } | null;
+}
+
+/** Turno del paciente que puede asociarse a un registro nuevo. */
+export interface ClinicalSessionOption {
+  id: string;
+  date: string;
+  time: string;
+  professionalName: string;
+  status: AppointmentStatus;
+}
+
+export interface ClinicalHistory {
+  patient: { id: string; name: string; dni: string; insurance: string; phone: string };
+  entries: ClinicalEntry[];
+  summary: ClinicalSummary;
+  sessionOptions: ClinicalSessionOption[];
+  profile: ClinicalProfile | null;
+  goals: TreatmentGoal[];
+  /** Próximo turno activo del paciente (para el encabezado). */
+  nextAppointment: { date: string; time: string; professionalName: string } | null;
+}
+
+export interface ClinicalAccessLogItem {
+  id: string;
+  userName: string;
+  userRole: string;
+  action: "lectura" | "alta" | "edicion";
+  entryId: string | null;
+  /** ISO 8601 */
+  at: string;
+}
