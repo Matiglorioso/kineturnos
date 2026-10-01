@@ -122,3 +122,36 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await expect(row).toHaveCount(0);
   });
 });
+
+test.describe("día y filtros de la agenda", () => {
+  test("la tira de días muestra cuántos turnos hay y el filtro por paciente se aplica y se quita", async ({ page }) => {
+    const professional = await createProfessional(uniqueName("Prof"));
+    const first = await createPatient(uniqueName("Uno"));
+    const second = await createPatient(uniqueName("Dos"));
+    const date = futureWorkday(26);
+    await createAppointmentInDb({ patient: first, professional, date, time: "09:00" });
+    await createAppointmentInDb({ patient: second, professional, date, time: "11:00" });
+
+    await page.goto("/agenda");
+    await goToAgendaDate(page, date);
+
+    // El día elegido queda marcado en la tira, con la cantidad de turnos (de todos los profesionales).
+    const day = page
+      .getByRole("group", { name: /^Días de / })
+      .getByRole("button", { pressed: true });
+    await expect(day).toHaveAccessibleName(/\d+ turnos?$/);
+
+    const rows = page.getByRole("row");
+    await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
+    await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
+
+    await page.getByRole("button", { name: "Filtros" }).click();
+    await selectOption(page, page, "Paciente", first.nombre);
+    await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
+    await expect(rows.filter({ hasText: second.nombre })).toHaveCount(0);
+
+    // El filtro activo se ve como etiqueta y se quita con la X.
+    await page.getByRole("button", { name: `Quitar filtro Paciente: ${first.nombre}` }).click();
+    await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
+  });
+});

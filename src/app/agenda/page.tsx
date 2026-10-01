@@ -1,6 +1,11 @@
 "use client";
 
-import { AgendaDatePicker } from "@/components/agenda/AgendaDatePicker";
+import { AgendaDayStrip } from "@/components/agenda/AgendaDayStrip";
+import {
+  AgendaFilters,
+  EMPTY_AGENDA_FILTERS,
+  type AgendaFilterValues,
+} from "@/components/agenda/AgendaFilters";
 import { AgendaListView } from "@/components/agenda/AgendaListView";
 import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
 import { AppointmentActions } from "@/components/appointments/AppointmentActions";
@@ -9,13 +14,6 @@ import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDi
 import { DataLoadError } from "@/components/shared/DataLoadError";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   areSameAppDay,
   getTodayAppDate,
@@ -34,9 +32,7 @@ import {
   shiftWeek,
   sortAppointmentsByTime,
 } from "@/lib/week-calendar";
-import {
-  APPOINTMENT_STATUS_FILTERS,
-} from "@/lib/appointment-status";
+import { countAppointmentsByDay } from "@/lib/agenda-calendar";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import type { EmptyStatePreset } from "@/lib/empty-states";
 import { Appointment, AppointmentStatus } from "@/types";
@@ -68,14 +64,11 @@ export default function AgendaPage() {
   const [viewMode, setViewMode] = useState<AgendaViewMode>("list");
   const [weekStart, setWeekStart] = useState(() => getWeekStartMonday(new Date()));
   const [listDate, setListDate] = useState(() => getTodayAppDate());
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "todos">(
-    "todos"
-  );
-  const [professionalFilter, setProfessionalFilter] = useState("todos");
+  const [filters, setFilters] = useState<AgendaFilterValues>(EMPTY_AGENDA_FILTERS);
 
   useEffect(() => {
     if (isScopedProfessional && sessionProfessionalId) {
-      setProfessionalFilter(sessionProfessionalId);
+      setFilters((current) => ({ ...current, professionalId: sessionProfessionalId }));
     }
   }, [isScopedProfessional, sessionProfessionalId]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -95,10 +88,16 @@ export default function AgendaPage() {
   const filteredByCommon = useMemo(
     () =>
       filterAgendaAppointments(appointments, {
-        statusFilter,
-        professionalFilter,
+        statusFilter: filters.status,
+        professionalFilter: filters.professionalId,
+        patientFilter: filters.patientId,
       }),
-    [appointments, statusFilter, professionalFilter]
+    [appointments, filters]
+  );
+
+  const dayCounts = useMemo(
+    () => countAppointmentsByDay(filteredByCommon),
+    [filteredByCommon]
   );
 
   const listAppointments = useMemo(
@@ -127,8 +126,9 @@ export default function AgendaPage() {
       : `Vista semanal — ${formatWeekRangeLabel(weekStart)}`;
 
   const hasActiveFilters =
-    statusFilter !== "todos" ||
-    (!isScopedProfessional && professionalFilter !== "todos");
+    filters.status !== "todos" ||
+    filters.patientId !== "todos" ||
+    (!isScopedProfessional && filters.professionalId !== "todos");
 
   const agendaEmptyPreset = useMemo((): EmptyStatePreset => {
     if (appointments.length === 0) {
@@ -143,10 +143,10 @@ export default function AgendaPage() {
   }, [appointments.length, hasActiveFilters, viewMode]);
 
   const clearAgendaFilters = () => {
-    setStatusFilter("todos");
-    if (!isScopedProfessional) {
-      setProfessionalFilter("todos");
-    }
+    setFilters((current) => ({
+      ...EMPTY_AGENDA_FILTERS,
+      professionalId: isScopedProfessional ? current.professionalId : "todos",
+    }));
   };
 
   const openCreateDialog = () => {
@@ -245,8 +245,8 @@ export default function AgendaPage() {
       />
 
       <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex w-full rounded-xl bg-muted p-1 sm:w-auto">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+          <div className="inline-flex w-full shrink-0 rounded-xl bg-muted p-1 sm:w-auto">
             <button
               type="button"
               onClick={() => setViewMode("list")}
@@ -275,56 +275,32 @@ export default function AgendaPage() {
             </button>
           </div>
 
-          {!isScopedProfessional && (
-            <div className="w-full sm:w-56">
-              <Select
-                value={professionalFilter}
-                onValueChange={setProfessionalFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los profesionales" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos los profesionales</SelectItem>
-                  {professionals.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                      {!p.active ? " (inactivo)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <AgendaFilters
+            value={filters}
+            onChange={setFilters}
+            patients={patients}
+            professionals={professionals}
+            showProfessional={!isScopedProfessional}
+          />
         </div>
 
         {viewMode === "list" && (
-          <AgendaDatePicker value={listDate} onChange={setListDate} />
+          <div className="border-t border-slate-100 pt-4">
+            <AgendaDayStrip
+              value={selectedListDate}
+              today={today}
+              counts={dayCounts}
+              onChange={setListDate}
+            />
+          </div>
         )}
-
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          {APPOINTMENT_STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setStatusFilter(filter.value)}
-              className={cn(
-                "rounded-xl px-3 py-2 text-xs font-medium transition-all sm:px-3.5 sm:text-sm",
-                statusFilter === filter.value
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              )}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {viewMode === "list" ? (
         <AgendaListView
           appointments={listAppointments}
           dateLabel={selectedListDateLabel}
+          isToday={selectedListDate === today}
           renderActions={renderActions}
           onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
