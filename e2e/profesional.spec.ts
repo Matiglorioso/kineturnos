@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { addDays } from "date-fns";
+import { getTodayAppDate, parseAppDate, toAppDate } from "../src/lib/date-utils";
 import {
   cleanupTestData,
   createAppointmentInDb,
@@ -44,4 +46,59 @@ test.describe("rol profesional", () => {
     await expect(page.getByRole("row").filter({ hasText: ownPatient.nombre })).toBeVisible();
     await expect(page.getByText(otherPatient.nombre)).toHaveCount(0);
   });
+
+  test("desde la agenda abre la historia clínica y registra la sesión del turno (RF11/RF12)", async ({ page }) => {
+    const user = await prisma.usuario.findUniqueOrThrow({ where: { id: "u-profe" } });
+    const own = await prisma.profesional.findUniqueOrThrow({
+      where: { id: user.profesionalId! },
+    });
+    const patient = await createPatient(uniqueName("Hc"));
+    const date = recentWorkdayBefore();
+    const turno = await createAppointmentInDb({
+      patient,
+      professional: own,
+      date,
+      time: "10:00",
+      status: "atendido",
+    });
+
+    await page.goto("/agenda");
+    await goToAgendaDate(page, date);
+    const row = page.getByRole("row").filter({ hasText: patient.nombre });
+    await row.getByRole("button", { name: "Acciones del turno" }).click();
+    await page.getByRole("menuitem", { name: "Historia clínica" }).click();
+
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === `/pacientes/${patient.id}/historia` &&
+        url.searchParams.get("turno") === turno.id
+    );
+    // Desde un turno, "Nueva evolución" se abre sola con ese turno elegido.
+    const composer = page.getByRole("dialog", { name: "Nueva evolución" });
+    await expect(composer).toBeVisible();
+    await expect(composer.getByRole("combobox", { name: "Sesión" })).toContainText("10:00");
+    await composer.getByRole("textbox", { name: "Evolución de la sesión *" }).fill("Buena tolerancia al ejercicio.");
+    await composer.getByRole("textbox", { name: "Diagnóstico" }).fill("Tendinitis rotuliana");
+    await composer.getByRole("button", { name: "Guardar en la historia" }).click();
+
+    await expect(page.getByText("Sesión registrada")).toBeVisible();
+    await expect(composer).toBeHidden();
+    await expect(page.getByRole("heading", { name: patient.nombre, level: 1 })).toBeVisible();
+    const entry = page.getByRole("article", { name: /Sesión 1/ });
+    await expect(entry).toContainText("Buena tolerancia al ejercicio.");
+    await expect(entry).toContainText("Turno de la agenda");
+    await expect(entry).toContainText("Editable");
+    await expect(entry.getByRole("button", { name: "Corregir" })).toBeVisible();
+    await expect(page.getByText("Diagnóstico vigente")).toBeVisible();
+    await expect(page.getByText("Tendinitis rotuliana").first()).toBeVisible();
+    // El registro de accesos es solo para Administración.
+    await expect(page.getByRole("heading", { name: "Registro de accesos" })).toHaveCount(0);
+  });
 });
+
+/** Día hábil anterior a hoy (dd-MM-yyyy), para un turno ya atendido. */
+function recentWorkdayBefore(): string {
+  let date = addDays(parseAppDate(getTodayAppDate())!, -1);
+  if (date.getDay() === 0) date = addDays(date, -1);
+  return toAppDate(date);
+}

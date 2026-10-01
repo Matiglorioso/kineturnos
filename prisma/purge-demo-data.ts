@@ -36,6 +36,10 @@ async function main() {
     },
   });
 
+  await prisma.historiaClinica.deleteMany({
+    where: { pacienteId: { in: mockPatientIds } },
+  });
+
   const pacientes = await prisma.paciente.deleteMany({
     where: { id: { in: mockPatientIds } },
   });

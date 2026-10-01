@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Patient } from "@/types";
 import { cn, getInitials } from "@/lib/utils";
 import { formatAppDate } from "@/lib/date-utils";
-import { Eye, UserX } from "lucide-react";
+import { usePermissions } from "@/hooks/use-permissions";
+import { Eye, FileHeart, UserX } from "lucide-react";
+import Link from "next/link";
 
 interface PatientCardProps {
   patient: Patient;
@@ -18,6 +20,8 @@ export function PatientCard({
   onToggleStatus,
   className,
 }: PatientCardProps) {
+  const { can } = usePermissions();
+
   return (
     <div
       className={cn(
@@ -59,6 +63,14 @@ export function PatientCard({
           <Eye className="h-4 w-4" />
           Ver detalle
         </Button>
+        {can("clinical:read") && (
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href={`/pacientes/${encodeURIComponent(patient.id)}/historia`}>
+              <FileHeart className="h-4 w-4" />
+              Historia clínica
+            </Link>
+          </Button>
+        )}
         {onToggleStatus && (
           <Button
             variant="ghost"

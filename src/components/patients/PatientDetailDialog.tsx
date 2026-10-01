@@ -6,6 +6,7 @@ import { InfoRow } from "@/components/shared/InfoRow";
 import { emptyStates } from "@/lib/empty-states";
 import { pluralize } from "@/lib/pluralize";
 import { useDisplayEntity } from "@/hooks/use-display-entity";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ import { formatAppDate } from "@/lib/date-utils";
 import {
   Calendar,
   CalendarClock,
+  FileHeart,
   History,
   Mail,
   Phone,
@@ -32,6 +34,7 @@ import {
   User,
   UserX,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo } from "react";
 
 interface PatientDetailDialogProps {
@@ -54,6 +57,7 @@ export function PatientDetailDialog({
   onEdit,
 }: PatientDetailDialogProps) {
   const { activeEntity: activePatient } = useDisplayEntity(patient, open);
+  const { can } = usePermissions();
 
   const { upcoming, past, totalAppointments } = useMemo(() => {
     if (!activePatient) {
@@ -90,10 +94,18 @@ export function PatientDetailDialog({
               <DialogDescription className="mt-1">
                 Ficha del paciente y historial de turnos
               </DialogDescription>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <PatientStatusBadge
                   active={activePatient.status === "activo"}
                 />
+                {can("clinical:read") && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/pacientes/${encodeURIComponent(activePatient.id)}/historia`}>
+                      <FileHeart className="h-4 w-4" />
+                      Historia clínica
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
