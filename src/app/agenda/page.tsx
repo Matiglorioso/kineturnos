@@ -245,7 +245,7 @@ export default function AgendaPage() {
       />
 
       <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="inline-flex w-full shrink-0 rounded-xl bg-muted p-1 sm:w-auto">
             <button
               type="button"
