@@ -53,11 +53,11 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center">
         <div
           role="tablist"
           aria-label="Mes de la agenda"
-          className="inline-flex w-full rounded-xl bg-muted p-1 lg:w-auto"
+          className="inline-flex w-full rounded-xl bg-muted p-1 lg:col-start-2 lg:w-auto"
         >
           {tabs.map((tab) => {
             const active = isSameCalendarMonth(tab, selectedMonth);
@@ -85,7 +85,7 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
           })}
         </div>
 
-        <div className="flex gap-2 [&>button]:flex-1 lg:[&>button]:flex-none">
+        <div className="flex gap-2 lg:justify-self-end [&>button]:flex-1 lg:[&>button]:flex-none">
           <Button
             type="button"
             variant="outline"
