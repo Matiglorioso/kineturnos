@@ -3,6 +3,7 @@
 import { NewPatientDialog } from "@/components/patients/NewPatientDialog";
 import { PatientCard } from "@/components/patients/PatientCard";
 import { PatientDetailDialog } from "@/components/patients/PatientDetailDialog";
+import { PatientListControls } from "@/components/patients/PatientListControls";
 import { PatientTable } from "@/components/patients/PatientTable";
 import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import { DataLoadError } from "@/components/shared/DataLoadError";
@@ -19,6 +20,13 @@ import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
 import { countPatientAppointments } from "@/lib/patient-appointments";
 import { pluralize } from "@/lib/pluralize";
+import {
+  ALL_INSURANCES,
+  DEFAULT_PATIENT_LIST_OPTIONS,
+  filterAndSortPatients,
+  getInsuranceOptions,
+  type PatientSort,
+} from "@/lib/patient-list";
 import { showSuccessToast } from "@/lib/toast";
 import { Patient } from "@/types";
 import { Search, UserPlus } from "lucide-react";
@@ -54,6 +62,8 @@ function PacientesPageContent() {
   const { appointments } = useAppointments();
   const { canManagePatients } = usePermissions();
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<PatientSort>(DEFAULT_PATIENT_LIST_OPTIONS.sort);
+  const [insurance, setInsurance] = useState(ALL_INSURANCES);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -75,19 +85,16 @@ function PacientesPageContent() {
     return countPatientAppointments(appointments, patientToDelete.id);
   }, [patientToDelete, appointments]);
 
-  const filtered = useMemo(() => {
-    const query = search.toLowerCase().trim();
-    if (!query) return patients;
-
-    return patients.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.dni.includes(query) ||
-        p.phone.includes(query) ||
-        p.insurance.toLowerCase().includes(query) ||
-        (p.email?.toLowerCase().includes(query) ?? false)
-    );
-  }, [patients, search]);
+  const filtered = useMemo(
+    () => filterAndSortPatients(patients, { search, insurance, sort }),
+    [patients, search, insurance, sort]
+  );
+  const insuranceOptions = useMemo(() => getInsuranceOptions(patients), [patients]);
+  const isFiltering = search.trim() !== "" || insurance !== ALL_INSURANCES;
+  const clearFilters = () => {
+    setSearch("");
+    setInsurance(ALL_INSURANCES);
+  };
 
   const activeCount = patients.filter((p) => p.status === "activo").length;
 
@@ -234,8 +241,8 @@ function PacientesPageContent() {
         onAction={canManagePatients ? openDialog : undefined}
       />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-md">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-md">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-10"
@@ -245,32 +252,43 @@ function PacientesPageContent() {
             disabled={isSaving}
           />
         </div>
-        <p className="text-sm text-muted-foreground">
-          {pluralize(filtered.length, "resultado")}
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <PatientListControls
+            sort={sort}
+            onSortChange={setSort}
+            insurance={insurance}
+            onInsuranceChange={setInsurance}
+            insuranceOptions={insuranceOptions}
+          />
+          <p className="shrink-0 text-sm text-muted-foreground" aria-live="polite">
+            {pluralize(filtered.length, "resultado")}
+          </p>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
         <EmptyStateFromPreset
           preset={
-            search.trim()
+            isFiltering
               ? emptyStates.patients.noResults
               : emptyStates.patients.none
           }
           actionLabel={
-            search.trim() || !canManagePatients
+            isFiltering || !canManagePatients
               ? undefined
               : emptyStateActions.registerPatient
           }
           onAction={
-            search.trim() || !canManagePatients ? undefined : openDialog
+            isFiltering || !canManagePatients ? undefined : openDialog
           }
           secondaryActionLabel={
-            search.trim() ? emptyStateActions.clearSearch : undefined
+            !isFiltering
+              ? undefined
+              : insurance !== ALL_INSURANCES
+                ? "Limpiar filtros"
+                : emptyStateActions.clearSearch
           }
-          onSecondaryAction={
-            search.trim() ? () => setSearch("") : undefined
-          }
+          onSecondaryAction={isFiltering ? clearFilters : undefined}
         />
       ) : (
         <>
