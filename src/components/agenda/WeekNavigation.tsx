@@ -10,6 +10,7 @@ interface WeekNavigationProps {
   onCurrentWeek: () => void;
 }
 
+/** Semana mostrada entre flechas, con el mismo estilo que la tira de días de la vista Lista. */
 export function WeekNavigation({
   weekStart,
   isCurrentWeek,
@@ -18,46 +19,44 @@ export function WeekNavigation({
   onCurrentWeek,
 }: WeekNavigationProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm font-semibold capitalize text-slate-900">
-        {formatWeekRangeLabel(weekStart)}
-      </p>
-      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+    <div className="flex items-center justify-between gap-3 rounded-2xl border bg-card p-3 shadow-card sm:p-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <Button
           type="button"
           variant="outline"
-          size="sm"
-          className="px-2 sm:px-3"
+          size="icon"
+          className="h-9 w-9 shrink-0 rounded-full"
+          aria-label="Semana anterior"
           onClick={onPreviousWeek}
         >
           <ChevronLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Semana anterior</span>
-          <span className="sm:hidden">Ant.</span>
         </Button>
-        <Button
-          type="button"
-          variant={isCurrentWeek ? "default" : "outline"}
-          size="sm"
-          className="px-2 sm:px-3"
-          onClick={onCurrentWeek}
+        <p
+          className="min-w-0 truncate text-center text-sm font-semibold capitalize text-slate-900 sm:min-w-[14rem] sm:text-base"
+          aria-live="polite"
         >
-          <span className="truncate text-xs sm:text-sm">
-            <span className="sm:hidden">Actual</span>
-            <span className="hidden sm:inline">Semana actual</span>
-          </span>
-        </Button>
+          {formatWeekRangeLabel(weekStart)}
+        </p>
         <Button
           type="button"
           variant="outline"
-          size="sm"
-          className="px-2 sm:px-3"
+          size="icon"
+          className="h-9 w-9 shrink-0 rounded-full"
+          aria-label="Semana siguiente"
           onClick={onNextWeek}
         >
-          <span className="hidden sm:inline">Semana siguiente</span>
-          <span className="sm:hidden">Sig.</span>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={isCurrentWeek}
+        onClick={onCurrentWeek}
+      >
+        Hoy
+      </Button>
     </div>
   );
 }

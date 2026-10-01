@@ -145,13 +145,15 @@ test.describe("día y filtros de la agenda", () => {
     await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
     await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
 
-    await page.getByRole("button", { name: "Filtros" }).click();
-    await selectOption(page, page, "Paciente", first.nombre);
+    const filters = page.getByRole("group", { name: "Filtros de la agenda" });
+    await selectOption(filters, page, "Paciente", first.nombre);
     await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
     await expect(rows.filter({ hasText: second.nombre })).toHaveCount(0);
 
-    // El filtro activo se ve como etiqueta y se quita con la X.
-    await page.getByRole("button", { name: `Quitar filtro Paciente: ${first.nombre}` }).click();
+    // El filtro activo queda marcado en el selector y se quita con la X.
+    await expect(filters.getByRole("combobox", { name: "Paciente" })).toContainText(first.nombre);
+    await filters.getByRole("button", { name: "Limpiar filtros" }).click();
+    await expect(filters.getByRole("combobox", { name: "Paciente" })).toContainText("Todos los pacientes");
     await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
   });
 });
