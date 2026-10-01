@@ -51,6 +51,8 @@ model Paciente {
   turnos          Turno[]
   historiaClinica HistoriaClinica[]
   accesosHistoria AccesoHistoriaClinica[]
+  fichaClinica    FichaClinica?
+  objetivos       ObjetivoTratamiento[]
 
   @@index([estado])
   @@map("pacientes")
@@ -219,4 +221,32 @@ model AccesoHistoriaClinica {
 
   @@index([pacienteId, fecha])
   @@map("accesos_historia_clinica")
+}
+
+/// Datos clínicos del paciente que no son de una sesión: alertas (alergias,
+/// contraindicaciones) y antecedentes. Mismo acceso y trazabilidad que la historia.
+model FichaClinica {
+  pacienteId           String   @id @map("paciente_id")
+  alertas              String?
+  antecedentes         String?
+  actualizadoPorNombre String   @map("actualizado_por_nombre")
+  actualizadoEn        DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+  paciente             Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@map("fichas_clinicas")
+}
+
+/// Objetivos del plan de tratamiento, que se marcan como cumplidos.
+model ObjetivoTratamiento {
+  id              String    @id
+  pacienteId      String    @map("paciente_id")
+  descripcion     String
+  cumplido        Boolean   @default(false)
+  cumplidoEn      DateTime? @map("cumplido_en") @db.Timestamptz(6)
+  creadoPorNombre String    @map("creado_por_nombre")
+  creadoEn        DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
+  paciente        Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+  @@map("objetivos_tratamiento")
 }

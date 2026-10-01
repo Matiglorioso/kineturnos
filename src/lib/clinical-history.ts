@@ -1,5 +1,5 @@
 import type { ParseResult } from "@/lib/api/parse-result";
-import { isValidAppDate, normalizeAppDate } from "@/lib/date-utils";
+import { compareAppDates, isValidAppDate, normalizeAppDate } from "@/lib/date-utils";
 import type { ClinicalSummary } from "@/types";
 
 /** El autor puede corregir un registro durante este tiempo; después queda cerrado. */
@@ -12,6 +12,11 @@ export const CLINICAL_EDIT_CLOSED_ERROR =
 
 export const CLINICAL_ACCESS_DENIED_ERROR =
   "Solo podés ver la historia clínica de pacientes con los que tenés o tuviste turnos.";
+
+/** Hasta cuándo el autor puede corregir un registro. */
+export function getClinicalEditDeadline(createdAt: Date): Date {
+  return new Date(createdAt.getTime() + CLINICAL_EDIT_WINDOW_HOURS * 60 * 60 * 1000);
+}
 
 export function canEditClinicalEntry(
   entry: { authorId: string; createdAt: Date },
@@ -102,4 +107,62 @@ export function parseClinicalEntryInput(body: unknown): ParseResult<ClinicalEntr
   }
 
   return { input };
+}
+
+/**
+ * Número de sesión de cada registro, en orden cronológico (la 1 es la más vieja).
+ * `entries` puede venir en cualquier orden; desempata por hora de carga.
+ */
+export function getSessionNumbers(
+  entries: { id: string; date: string; createdAt: string }[]
+): Map<string, number> {
+  const sorted = [...entries].sort(
+    (a, b) => compareAppDates(a.date, b.date) || a.createdAt.localeCompare(b.createdAt)
+  );
+  return new Map(sorted.map((entry, index) => [entry.id, index + 1]));
+}
+
+/** Una alerta por renglón (se muestran como etiquetas). */
+export function splitClinicalAlerts(alerts: string | null | undefined): string[] {
+  return (alerts ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+export const CLINICAL_GOAL_MAX_LENGTH = 300;
+
+export function parseClinicalProfileInput(
+  body: unknown
+): ParseResult<{ alerts: string | null; background: string | null }> {
+  if (!body || typeof body !== "object") return { error: "Datos inválidos." };
+  const raw = body as Record<string, unknown>;
+  const input = { alerts: optionalText(raw.alerts), background: optionalText(raw.background) };
+  for (const [field, label] of [
+    ["alerts", "Las alertas"],
+    ["background", "Los antecedentes"],
+  ] as const) {
+    const value = input[field];
+    if (value && value.length > CLINICAL_TEXT_MAX_LENGTH) {
+      return { error: `${label} no pueden superar los ${CLINICAL_TEXT_MAX_LENGTH} caracteres.`, field };
+    }
+  }
+  return { input };
+}
+
+export function parseTreatmentGoalInput(
+  body: unknown
+): ParseResult<{ description: string }> {
+  if (!body || typeof body !== "object") return { error: "Datos inválidos." };
+  const description = optionalText((body as Record<string, unknown>).description);
+  if (!description) {
+    return { error: "Escribí el objetivo.", field: "description" };
+  }
+  if (description.length > CLINICAL_GOAL_MAX_LENGTH) {
+    return {
+      error: `El objetivo no puede superar los ${CLINICAL_GOAL_MAX_LENGTH} caracteres.`,
+      field: "description",
+    };
+  }
+  return { input: { description } };
 }
