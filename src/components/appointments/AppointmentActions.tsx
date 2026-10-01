@@ -15,17 +15,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import {
   Ban,
   CheckCircle2,
   Eye,
+  FileHeart,
   MoreHorizontal,
   Pencil,
   Trash2,
   UserX,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface AppointmentActionsProps {
@@ -53,6 +56,8 @@ export function AppointmentActions({
   canEdit = true,
   canDelete = false,
 }: AppointmentActionsProps) {
+  const router = useRouter();
+  const { can } = usePermissions();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [absentOpen, setAbsentOpen] = useState(false);
@@ -105,6 +110,21 @@ export function AppointmentActions({
             <Eye className="text-muted-foreground" />
             Ver detalle
           </DropdownMenuItem>
+          {can("clinical:read") && (
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                closeMenuThen(() =>
+                  router.push(
+                    `/pacientes/${encodeURIComponent(appointment.patientId)}/historia?turno=${encodeURIComponent(appointment.id)}`
+                  )
+                );
+              }}
+            >
+              <FileHeart className="text-muted-foreground" />
+              Historia clínica
+            </DropdownMenuItem>
+          )}
           {canEdit && (
             <DropdownMenuItem
               onSelect={(event) => {
