@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { cleanupTestData, createPatient, storageStateFor, uniqueName } from "./helpers";
+import { cleanupTestData, createPatient, prisma, storageStateFor, uniqueName } from "./helpers";
 
 test.use({ storageState: storageStateFor("recepcionista") });
 test.afterAll(cleanupTestData);
@@ -30,7 +30,7 @@ test.describe("historia clínica (Administración)", () => {
 
     // Objetivos: se agregan y se marcan como cumplidos.
     const goals = page.getByRole("region", { name: "Objetivos del tratamiento" });
-    await goals.getByRole("textbox", { name: "Nuevo objetivo" }).fill("Volver a correr");
+    await goals.getByRole("textbox", { name: "Agregar un objetivo" }).fill("Volver a correr");
     await goals.getByRole("button", { name: "Agregar" }).click();
     const goal = goals.getByRole("checkbox", { name: "Volver a correr" });
     await expect(goal).not.toBeChecked();
@@ -47,5 +47,34 @@ test.describe("historia clínica (Administración)", () => {
     // Trazabilidad visible para Administración.
     await page.getByRole("button", { name: "Ver accesos" }).click();
     await expect(page.getByText("Registró una sesión").first()).toBeVisible();
+  });
+
+  test("muestra 3 evoluciones por página, de la más reciente a la más antigua", async ({ page }) => {
+    const patient = await createPatient(uniqueName("Pag"));
+    for (let day = 1; day <= 4; day++) {
+      await prisma.historiaClinica.create({
+        data: {
+          id: `it-hc-${patient.id}-${day}`,
+          pacienteId: patient.id,
+          autorId: "u-admin",
+          autorNombre: "Carolina Viera",
+          fecha: new Date(Date.UTC(2026, 8, day)),
+          evolucion: `Evolución del día ${day}`,
+        },
+      });
+    }
+
+    await page.goto(`/pacientes/${patient.id}/historia`);
+    const sessions = page.getByRole("article");
+    await expect(sessions).toHaveCount(3);
+    await expect(sessions.first()).toContainText("Sesión 4");
+    const pager = page.getByRole("navigation", { name: "Páginas de la evolución" });
+    await expect(pager).toContainText("1–3 de 4");
+    await expect(pager.getByRole("button", { name: "Más recientes" })).toBeDisabled();
+
+    await pager.getByRole("button", { name: "Más antiguas" }).click();
+    await expect(sessions).toHaveCount(1);
+    await expect(sessions.first()).toContainText("Sesión 1");
+    await expect(pager).toContainText("4–4 de 4");
   });
 });
