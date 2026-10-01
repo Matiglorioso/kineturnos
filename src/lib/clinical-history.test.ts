@@ -2,9 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   canEditClinicalEntry,
+  CLINICAL_GOAL_MAX_LENGTH,
   CLINICAL_TEXT_MAX_LENGTH,
+  getClinicalEditDeadline,
   getClinicalSummary,
+  getSessionNumbers,
   parseClinicalEntryInput,
+  parseClinicalProfileInput,
+  parseTreatmentGoalInput,
+  splitClinicalAlerts,
 } from "./clinical-history";
 
 describe("edición de registros de historia clínica", () => {
@@ -81,6 +87,52 @@ describe("validación del registro (RF11)", () => {
     assert.equal(
       parseClinicalEntryInput({ evolution: "ok", date: "29-09-2026" }).input?.date,
       "29-09-2026"
+    );
+  });
+});
+
+describe("numeración de sesiones", () => {
+  it("la sesión 1 es la más vieja; en el mismo día desempata la hora de carga", () => {
+    const numbers = getSessionNumbers([
+      { id: "c", date: "29-09-2026", createdAt: "2026-09-29T15:00:00.000Z" },
+      { id: "a", date: "15-09-2026", createdAt: "2026-09-15T12:00:00.000Z" },
+      { id: "b", date: "29-09-2026", createdAt: "2026-09-29T10:00:00.000Z" },
+    ]);
+    assert.deepEqual([...numbers.entries()], [["a", 1], ["b", 2], ["c", 3]]);
+  });
+});
+
+describe("alertas, antecedentes y objetivos", () => {
+  it("una alerta por renglón, sin renglones vacíos", () => {
+    assert.deepEqual(splitClinicalAlerts(" Alergia al ibuprofeno \r\n\nMarcapasos"), [
+      "Alergia al ibuprofeno",
+      "Marcapasos",
+    ]);
+    assert.deepEqual(splitClinicalAlerts(null), []);
+  });
+
+  it("alertas y antecedentes son opcionales", () => {
+    assert.deepEqual(parseClinicalProfileInput({ alerts: "", background: " Hernia L4-L5 " }), {
+      input: { alerts: null, background: "Hernia L4-L5" },
+    });
+    assert.equal(parseClinicalProfileInput("x").error, "Datos inválidos.");
+  });
+
+  it("el objetivo es obligatorio y tiene un largo máximo", () => {
+    assert.deepEqual(parseTreatmentGoalInput({ description: " Volver a correr " }), {
+      input: { description: "Volver a correr" },
+    });
+    assert.equal(parseTreatmentGoalInput({ description: "" }).field, "description");
+    assert.equal(
+      parseTreatmentGoalInput({ description: "x".repeat(CLINICAL_GOAL_MAX_LENGTH + 1) }).field,
+      "description"
+    );
+  });
+
+  it("la fecha límite de edición es 24 h después de cargar", () => {
+    assert.equal(
+      getClinicalEditDeadline(new Date("2026-09-29T12:00:00Z")).toISOString(),
+      "2026-09-30T12:00:00.000Z"
     );
   });
 });

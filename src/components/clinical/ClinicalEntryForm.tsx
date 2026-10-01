@@ -32,6 +32,8 @@ interface ClinicalEntryFormProps {
   submitLabel: string;
   onSubmit: (body: ClinicalEntryRequest) => Promise<void>;
   onCancel?: () => void;
+  /** Diagnóstico y plan vigentes, como referencia en el alta. */
+  current?: { diagnosis: string | null; treatment: string | null };
 }
 
 export function ClinicalEntryForm({
@@ -42,6 +44,7 @@ export function ClinicalEntryForm({
   submitLabel,
   onSubmit,
   onCancel,
+  current,
 }: ClinicalEntryFormProps) {
   const initialSession =
     defaultAppointmentId && sessionOptions?.some((option) => option.id === defaultAppointmentId)
@@ -119,26 +122,28 @@ export function ClinicalEntryForm({
         />
       </FormField>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField id={id("diagnosis")} label="Diagnóstico (si se carga o cambia)">
-          <Textarea
-            id={id("diagnosis")}
-            value={values.diagnosis}
-            onChange={(event) => update("diagnosis", event.target.value)}
-            maxLength={CLINICAL_TEXT_MAX_LENGTH}
-            rows={3}
-          />
-        </FormField>
-        <FormField id={id("treatment")} label="Plan de tratamiento (si se carga o cambia)">
-          <Textarea
-            id={id("treatment")}
-            value={values.treatment}
-            onChange={(event) => update("treatment", event.target.value)}
-            maxLength={CLINICAL_TEXT_MAX_LENGTH}
-            rows={3}
-          />
-        </FormField>
-      </div>
+      <FormField id={id("diagnosis")} label="Diagnóstico">
+        <Textarea
+          id={id("diagnosis")}
+          value={values.diagnosis}
+          onChange={(event) => update("diagnosis", event.target.value)}
+          placeholder={current?.diagnosis ? `Vigente: ${current.diagnosis}` : "Diagnóstico kinésico"}
+          maxLength={CLINICAL_TEXT_MAX_LENGTH}
+          rows={2}
+        />
+        <p className="text-xs text-muted-foreground">Completalo solo si es el primero o si cambia.</p>
+      </FormField>
+      <FormField id={id("treatment")} label="Plan de tratamiento">
+        <Textarea
+          id={id("treatment")}
+          value={values.treatment}
+          onChange={(event) => update("treatment", event.target.value)}
+          placeholder={current?.treatment ? `Vigente: ${current.treatment}` : "Técnicas, frecuencia y cantidad de sesiones"}
+          maxLength={CLINICAL_TEXT_MAX_LENGTH}
+          rows={2}
+        />
+        <p className="text-xs text-muted-foreground">Completalo solo si es el primero o si cambia.</p>
+      </FormField>
 
       {errors.form && (
         <p className="text-sm text-destructive" role="alert">

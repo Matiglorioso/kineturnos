@@ -5,10 +5,12 @@ import type { ApiSessionUser } from "@/lib/auth/require-session";
 import {
   canEditClinicalEntry,
   CLINICAL_EDIT_CLOSED_ERROR,
+  getClinicalEditDeadline,
   getClinicalSummary,
   type ClinicalEntryInput,
 } from "@/lib/clinical-history";
-import { compareAppDates, getTodayAppDate } from "@/lib/date-utils";
+import { compareAppDates, getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
+import { timeToMinutes } from "@/lib/time-utils";
 import { appDateToDb, dbDateToApp, dbTimeToApp } from "@/lib/db/date-codec";
 import {
   ConflictError,
@@ -21,11 +23,23 @@ import type {
   ClinicalAccessLogItem,
   ClinicalEntry,
   ClinicalHistory,
+  ClinicalProfile,
   ClinicalSessionOption,
+  TreatmentGoal,
 } from "@/types";
-import type { AccionHistoriaClinica, HistoriaClinica } from "@prisma/client";
+import type {
+  AccionHistoriaClinica,
+  FichaClinica,
+  HistoriaClinica,
+  ObjetivoTratamiento,
+} from "@prisma/client";
 
 function mapEntry(record: HistoriaClinica, userId: string, now: Date): ClinicalEntry {
+  const editable = canEditClinicalEntry(
+    { authorId: record.autorId, createdAt: record.creadoEn },
+    userId,
+    now
+  );
   return {
     id: record.id,
     patientId: record.pacienteId,
@@ -39,11 +53,27 @@ function mapEntry(record: HistoriaClinica, userId: string, now: Date): ClinicalE
     evolution: record.evolucion,
     createdAt: record.creadoEn.toISOString(),
     updatedAt: record.actualizadoEn.toISOString(),
-    editable: canEditClinicalEntry(
-      { authorId: record.autorId, createdAt: record.creadoEn },
-      userId,
-      now
-    ),
+    editable,
+    editableUntil: editable ? getClinicalEditDeadline(record.creadoEn).toISOString() : null,
+  };
+}
+
+function mapGoal(record: ObjetivoTratamiento): TreatmentGoal {
+  return {
+    id: record.id,
+    description: record.descripcion,
+    achieved: record.cumplido,
+    achievedAt: record.cumplidoEn?.toISOString() ?? null,
+    createdByName: record.creadoPorNombre,
+  };
+}
+
+function mapProfile(record: FichaClinica): ClinicalProfile {
+  return {
+    alerts: record.alertas,
+    background: record.antecedentes,
+    updatedByName: record.actualizadoPorNombre,
+    updatedAt: record.actualizadoEn.toISOString(),
   };
 }
 
@@ -136,17 +166,145 @@ export async function getClinicalHistoryFromDb(
   });
   const entries = records.map((record) => mapEntry(record, user.id, now));
 
+  const [profile, goals, sessionOptions, nextAppointment] = await Promise.all([
+    prisma.fichaClinica.findUnique({ where: { pacienteId: patientId } }),
+    prisma.objetivoTratamiento.findMany({
+      where: { pacienteId: patientId },
+      orderBy: { creadoEn: "asc" },
+    }),
+    getSessionOptions(patientId, user, now),
+    getNextAppointment(patientId, now),
+  ]);
+
   return {
     patient: {
       id: patient.id,
       name: patient.nombre,
       dni: patient.dni,
       insurance: patient.obraSocial,
+      phone: patient.telefono,
     },
     entries,
     summary: getClinicalSummary(entries),
-    sessionOptions: await getSessionOptions(patientId, user, now),
+    sessionOptions,
+    profile: profile ? mapProfile(profile) : null,
+    goals: goals.map(mapGoal),
+    nextAppointment,
   };
+}
+
+/** Próximo turno activo del paciente (de hoy en adelante, sin los que ya empezaron). */
+async function getNextAppointment(
+  patientId: string,
+  now: Date
+): Promise<ClinicalHistory["nextAppointment"]> {
+  const today = getTodayAppDate(now);
+  const upcoming = await prisma.turno.findMany({
+    where: {
+      pacienteId: patientId,
+      estado: { in: ["pendiente", "confirmado"] },
+      fecha: { gte: appDateToDb(today) },
+    },
+    orderBy: [{ fecha: "asc" }, { hora: "asc" }],
+    take: 5,
+  });
+  const next = upcoming.find(
+    (record) =>
+      dbDateToApp(record.fecha) !== today ||
+      timeToMinutes(dbTimeToApp(record.hora)) >= getNowAppMinutes(now)
+  );
+  return next
+    ? {
+        date: dbDateToApp(next.fecha),
+        time: dbTimeToApp(next.hora),
+        professionalName: next.profesionalNombre,
+      }
+    : null;
+}
+
+/** Alertas y antecedentes del paciente: cualquiera con acceso a la historia los actualiza. */
+export async function saveClinicalProfileInDb(
+  patientId: string,
+  input: { alerts: string | null; background: string | null },
+  user: ApiSessionUser
+): Promise<ClinicalProfile> {
+  const record = await prisma.$transaction(async (tx) => {
+    const patient = await tx.paciente.findUnique({ where: { id: patientId } });
+    if (!patient) throw new NotFoundError("Paciente no encontrado.");
+
+    const data = {
+      alertas: input.alerts,
+      antecedentes: input.background,
+      actualizadoPorNombre: authorName(user),
+    };
+    const saved = await tx.fichaClinica.upsert({
+      where: { pacienteId: patientId },
+      create: { pacienteId: patientId, ...data },
+      update: data,
+    });
+    await logClinicalAccess(tx, { patientId, user, action: "edicion" });
+    return saved;
+  });
+  return mapProfile(record);
+}
+
+export async function createTreatmentGoalInDb(
+  patientId: string,
+  description: string,
+  user: ApiSessionUser
+): Promise<TreatmentGoal> {
+  const record = await prisma.$transaction(async (tx) => {
+    const patient = await tx.paciente.findUnique({ where: { id: patientId } });
+    if (!patient) throw new NotFoundError("Paciente no encontrado.");
+
+    const created = await tx.objetivoTratamiento.create({
+      data: {
+        id: `obj_${randomUUID()}`,
+        pacienteId: patientId,
+        descripcion: description,
+        creadoPorNombre: authorName(user),
+      },
+    });
+    await logClinicalAccess(tx, { patientId, user, action: "alta", entryId: created.id });
+    return created;
+  });
+  return mapGoal(record);
+}
+
+export async function updateTreatmentGoalInDb(
+  patientId: string,
+  goalId: string,
+  achieved: boolean,
+  user: ApiSessionUser
+): Promise<TreatmentGoal> {
+  const record = await prisma.$transaction(async (tx) => {
+    const existing = await tx.objetivoTratamiento.findUnique({ where: { id: goalId } });
+    if (!existing || existing.pacienteId !== patientId) {
+      throw new NotFoundError("Objetivo no encontrado.");
+    }
+    const updated = await tx.objetivoTratamiento.update({
+      where: { id: goalId },
+      data: { cumplido: achieved, cumplidoEn: achieved ? new Date() : null },
+    });
+    await logClinicalAccess(tx, { patientId, user, action: "edicion", entryId: goalId });
+    return updated;
+  });
+  return mapGoal(record);
+}
+
+export async function deleteTreatmentGoalInDb(
+  patientId: string,
+  goalId: string,
+  user: ApiSessionUser
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.objetivoTratamiento.findUnique({ where: { id: goalId } });
+    if (!existing || existing.pacienteId !== patientId) {
+      throw new NotFoundError("Objetivo no encontrado.");
+    }
+    await tx.objetivoTratamiento.delete({ where: { id: goalId } });
+    await logClinicalAccess(tx, { patientId, user, action: "edicion", entryId: goalId });
+  });
 }
 
 async function resolveSession(

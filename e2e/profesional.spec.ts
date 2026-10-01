@@ -73,19 +73,21 @@ test.describe("rol profesional", () => {
         url.pathname === `/pacientes/${patient.id}/historia` &&
         url.searchParams.get("turno") === turno.id
     );
-    await expect(
-      page.getByRole("heading", { name: `Historia clínica · ${patient.nombre}` })
-    ).toBeVisible();
-    await expect(page.getByText("Sin registros todavía")).toBeVisible();
-
-    await page.getByRole("textbox", { name: "Evolución de la sesión *" }).fill("Buena tolerancia al ejercicio.");
-    await page.getByRole("textbox", { name: "Diagnóstico (si se carga o cambia)" }).fill("Tendinitis rotuliana");
-    await page.getByRole("button", { name: "Guardar en la historia" }).click();
+    // Desde un turno, "Nueva evolución" se abre sola con ese turno elegido.
+    const composer = page.getByRole("dialog", { name: "Nueva evolución" });
+    await expect(composer).toBeVisible();
+    await expect(composer.getByRole("combobox", { name: "Sesión" })).toContainText("10:00");
+    await composer.getByRole("textbox", { name: "Evolución de la sesión *" }).fill("Buena tolerancia al ejercicio.");
+    await composer.getByRole("textbox", { name: "Diagnóstico" }).fill("Tendinitis rotuliana");
+    await composer.getByRole("button", { name: "Guardar en la historia" }).click();
 
     await expect(page.getByText("Sesión registrada")).toBeVisible();
-    const entry = page.getByRole("article");
+    await expect(composer).toBeHidden();
+    await expect(page.getByRole("heading", { name: patient.nombre, level: 1 })).toBeVisible();
+    const entry = page.getByRole("article", { name: /Sesión 1/ });
     await expect(entry).toContainText("Buena tolerancia al ejercicio.");
-    await expect(entry).toContainText("Sesión de un turno");
+    await expect(entry).toContainText("Turno de la agenda");
+    await expect(entry).toContainText("Editable");
     await expect(entry.getByRole("button", { name: "Corregir" })).toBeVisible();
     await expect(page.getByText("Diagnóstico vigente")).toBeVisible();
     await expect(page.getByText("Tendinitis rotuliana").first()).toBeVisible();

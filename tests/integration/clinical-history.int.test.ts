@@ -27,6 +27,9 @@ type History = {
   entries: Entry[];
   summary: { diagnosis: { text: string } | null };
   sessionOptions: { id: string }[];
+  profile: { alerts: string | null; background: string | null } | null;
+  goals: { id: string; description: string; achieved: boolean }[];
+  nextAppointment: { date: string; time: string } | null;
 };
 
 function daysAgo(days: number): string {
@@ -286,5 +289,109 @@ describe("trazabilidad (RNF07) y conservación", () => {
     const res = await api(`/api/patients/${patient.id}`, { method: "DELETE", auth: admin });
     assert.equal(res.status, 409);
     assert.match(res.error ?? "", /historia clínica/);
+  });
+});
+
+describe("alertas, antecedentes y objetivos del tratamiento", () => {
+  it("se guardan y vuelven con la historia; cada cambio queda registrado", async () => {
+    const patient = await createPatient();
+    const ficha = await api(`${historia(patient.id)}/ficha`, {
+      method: "PUT",
+      auth: admin,
+      body: { alerts: "Marcapasos", background: "Hernia L4-L5" },
+    });
+    assert.equal(ficha.status, 200, ficha.error);
+
+    const goal = await api<{ id: string }>(`${historia(patient.id)}/objetivos`, {
+      method: "POST",
+      auth: admin,
+      body: { description: "Volver a correr" },
+    });
+    assert.equal(goal.status, 201, goal.error);
+    const toggled = await api<{ achieved: boolean }>(
+      `${historia(patient.id)}/objetivos/${goal.data!.id}`,
+      { method: "PATCH", auth: admin, body: { achieved: true } }
+    );
+    assert.equal(toggled.data?.achieved, true);
+    await api(`${historia(patient.id)}/objetivos`, {
+      method: "POST",
+      auth: admin,
+      body: { description: "A quitar" },
+    });
+
+    const read = await api<History>(historia(patient.id), { auth: admin });
+    assert.deepEqual(read.data?.profile && {
+      alerts: read.data.profile.alerts,
+      background: read.data.profile.background,
+    }, { alerts: "Marcapasos", background: "Hernia L4-L5" });
+    assert.deepEqual(
+      read.data?.goals.map((item) => [item.description, item.achieved]),
+      [["Volver a correr", true], ["A quitar", false]]
+    );
+
+    const toRemove = read.data!.goals[1].id;
+    const removed = await api(`${historia(patient.id)}/objetivos/${toRemove}`, {
+      method: "DELETE",
+      auth: admin,
+    });
+    assert.equal(removed.status, 200, removed.error);
+    assert.equal(await prisma.objetivoTratamiento.count({ where: { pacienteId: patient.id } }), 1);
+
+    const log = await prisma.accesoHistoriaClinica.findMany({ where: { pacienteId: patient.id } });
+    // ficha (edición), 2 altas de objetivo, marcar cumplido, quitar, y la lectura.
+    assert.equal(log.length, 6);
+  });
+
+  it("el objetivo es obligatorio (400) y achieved tiene que ser booleano", async () => {
+    const patient = await createPatient();
+    const empty = await api(`${historia(patient.id)}/objetivos`, {
+      method: "POST",
+      auth: admin,
+      body: { description: " " },
+    });
+    assert.equal(empty.status, 400);
+    const goal = await api<{ id: string }>(`${historia(patient.id)}/objetivos`, {
+      method: "POST",
+      auth: admin,
+      body: { description: "Caminar 1 h" },
+    });
+    const bad = await api(`${historia(patient.id)}/objetivos/${goal.data!.id}`, {
+      method: "PATCH",
+      auth: admin,
+      body: { achieved: "si" },
+    });
+    assert.equal(bad.status, 400);
+  });
+
+  it("el profesional sin turnos con el paciente no los modifica (403)", async () => {
+    const patient = await createPatient();
+    const ficha = await api(`${historia(patient.id)}/ficha`, {
+      method: "PUT",
+      auth: profe,
+      body: { alerts: "No", background: "" },
+    });
+    assert.equal(ficha.status, 403);
+    const goal = await api(`${historia(patient.id)}/objetivos`, {
+      method: "POST",
+      auth: profe,
+      body: { description: "No" },
+    });
+    assert.equal(goal.status, 403);
+  });
+
+  it("muestra el próximo turno activo del paciente", async () => {
+    const patient = await createPatient();
+    const date = futureWorkday(9);
+    await createAppointmentInDb({
+      patient,
+      professional: ownProfessional,
+      date,
+      time: "16:00",
+    });
+    const read = await api<History>(historia(patient.id), { auth: admin });
+    assert.deepEqual(read.data?.nextAppointment && {
+      date: read.data.nextAppointment.date,
+      time: read.data.nextAppointment.time,
+    }, { date, time: "16:00" });
   });
 });

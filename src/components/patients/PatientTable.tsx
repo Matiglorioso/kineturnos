@@ -10,7 +10,9 @@ import {
 import { Patient } from "@/types";
 import { getInitials } from "@/lib/utils";
 import { formatAppDate } from "@/lib/date-utils";
-import { Eye } from "lucide-react";
+import { usePermissions } from "@/hooks/use-permissions";
+import { Eye, FileHeart } from "lucide-react";
+import Link from "next/link";
 
 interface PatientTableProps {
   patients: Patient[];
@@ -23,6 +25,9 @@ export function PatientTable({
   onViewDetail,
   className,
 }: PatientTableProps) {
+  const { can } = usePermissions();
+  const showClinical = can("clinical:read");
+
   if (patients.length === 0) {
     return null;
   }
@@ -68,15 +73,25 @@ export function PatientTable({
             <PatientStatusBadge active={patient.status === "activo"} />
           </DataTableCell>
           <DataTableCell>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onViewDetail(patient)}
-            >
-              <Eye className="h-4 w-4" />
-              Ver detalle
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onViewDetail(patient)}
+              >
+                <Eye className="h-4 w-4" />
+                Ver detalle
+              </Button>
+              {showClinical && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/pacientes/${encodeURIComponent(patient.id)}/historia`}>
+                    <FileHeart className="h-4 w-4" />
+                    Historia clínica
+                  </Link>
+                </Button>
+              )}
+            </div>
           </DataTableCell>
         </DataTableRow>
       ))}

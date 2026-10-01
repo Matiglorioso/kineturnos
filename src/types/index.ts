@@ -116,6 +116,27 @@ export interface ClinicalEntry {
   updatedAt: string;
   /** El usuario actual lo puede corregir (autor, dentro de las 24 h). */
   editable: boolean;
+  /** Hasta cuándo se puede corregir (ISO 8601), si `editable`. */
+  editableUntil: string | null;
+}
+
+/** Alertas (alergias, contraindicaciones) y antecedentes del paciente. */
+export interface ClinicalProfile {
+  alerts: string | null;
+  background: string | null;
+  updatedByName: string;
+  /** ISO 8601 */
+  updatedAt: string;
+}
+
+/** Objetivo del plan de tratamiento. */
+export interface TreatmentGoal {
+  id: string;
+  description: string;
+  achieved: boolean;
+  /** ISO 8601 */
+  achievedAt: string | null;
+  createdByName: string;
 }
 
 /** Diagnóstico y plan vigentes: los del último registro que los cargó. */
@@ -134,10 +155,14 @@ export interface ClinicalSessionOption {
 }
 
 export interface ClinicalHistory {
-  patient: { id: string; name: string; dni: string; insurance: string };
+  patient: { id: string; name: string; dni: string; insurance: string; phone: string };
   entries: ClinicalEntry[];
   summary: ClinicalSummary;
   sessionOptions: ClinicalSessionOption[];
+  profile: ClinicalProfile | null;
+  goals: TreatmentGoal[];
+  /** Próximo turno activo del paciente (para el encabezado). */
+  nextAppointment: { date: string; time: string; professionalName: string } | null;
 }
 
 export interface ClinicalAccessLogItem {
