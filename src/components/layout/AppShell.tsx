@@ -52,18 +52,21 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen gradient-subtle">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapsed={toggleSidebarCollapsed}
-      />
+      <div className="print:hidden">
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={toggleSidebarCollapsed}
+        />
+      </div>
       <div
         className={cn(
           "relative z-0 transition-[padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          sidebarCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-72"
+          sidebarCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-72",
+          "print:pl-0"
         )}
       >
         <Header />
-        <main className="animate-fade-in px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="animate-fade-in px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:p-0">
           {children}
         </main>
       </div>

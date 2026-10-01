@@ -100,6 +100,8 @@ export async function upsertUsers(
 }
 
 export async function clearAllTables(prisma: PrismaClient) {
+  // La historia clínica no se borra en cascada con el paciente (onDelete: Restrict).
+  await prisma.historiaClinica.deleteMany();
   await prisma.turno.deleteMany();
   await prisma.usuario.deleteMany();
   await prisma.paciente.deleteMany();
