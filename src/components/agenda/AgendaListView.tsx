@@ -16,6 +16,8 @@ import { Appointment } from "@/types";
 interface AgendaListViewProps {
   appointments: Appointment[];
   dateLabel: string;
+  /** El día mostrado es hoy. */
+  isToday?: boolean;
   renderActions: (appointment: Appointment, variant: "table" | "card") => React.ReactNode;
   onCreateAppointment?: () => void;
   emptyPreset: EmptyStatePreset;
@@ -26,6 +28,7 @@ interface AgendaListViewProps {
 export function AgendaListView({
   appointments,
   dateLabel,
+  isToday = false,
   renderActions,
   onCreateAppointment,
   emptyPreset,
@@ -53,7 +56,8 @@ export function AgendaListView({
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        Mostrando turnos de hoy — <span className="capitalize">{dateLabel}</span>
+        {isToday && "Hoy — "}
+        <span className="capitalize">{dateLabel}</span>
       </p>
 
       <div className="hidden overflow-x-auto rounded-2xl border bg-card shadow-card lg:block">
