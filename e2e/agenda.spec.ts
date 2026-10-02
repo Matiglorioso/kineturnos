@@ -122,3 +122,38 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await expect(row).toHaveCount(0);
   });
 });
+
+test.describe("día y filtros de la agenda", () => {
+  test("la tira de días muestra cuántos turnos hay y el filtro por paciente se aplica y se quita", async ({ page }) => {
+    const professional = await createProfessional(uniqueName("Prof"));
+    const first = await createPatient(uniqueName("Uno"));
+    const second = await createPatient(uniqueName("Dos"));
+    const date = futureWorkday(26);
+    await createAppointmentInDb({ patient: first, professional, date, time: "09:00" });
+    await createAppointmentInDb({ patient: second, professional, date, time: "11:00" });
+
+    await page.goto("/agenda");
+    await goToAgendaDate(page, date);
+
+    // El día elegido queda marcado en la tira, con la cantidad de turnos (de todos los profesionales).
+    const day = page
+      .getByRole("group", { name: /^Días de / })
+      .getByRole("button", { pressed: true });
+    await expect(day).toHaveAccessibleName(/\d+ turnos?$/);
+
+    const rows = page.getByRole("row");
+    await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
+    await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
+
+    const filters = page.getByRole("group", { name: "Filtros de la agenda" });
+    await selectOption(filters, page, "Paciente", first.nombre);
+    await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
+    await expect(rows.filter({ hasText: second.nombre })).toHaveCount(0);
+
+    // El filtro activo queda marcado en el selector y se quita con la X.
+    await expect(filters.getByRole("combobox", { name: "Paciente" })).toContainText(first.nombre);
+    await filters.getByRole("button", { name: "Limpiar filtros" }).click();
+    await expect(filters.getByRole("combobox", { name: "Paciente" })).toContainText("Todos los pacientes");
+    await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
+  });
+});
