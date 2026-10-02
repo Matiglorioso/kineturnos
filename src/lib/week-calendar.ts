@@ -92,6 +92,8 @@ export function filterAgendaAppointments(
   options: {
     statusFilter: Appointment["status"] | "todos";
     professionalFilter: string;
+    /** Id del paciente, o "todos". */
+    patientFilter?: string;
   }
 ): Appointment[] {
   return appointments.filter((appointment) => {
@@ -105,6 +107,14 @@ export function filterAgendaAppointments(
     if (
       options.professionalFilter !== "todos" &&
       appointment.professionalId !== options.professionalFilter
+    ) {
+      return false;
+    }
+
+    if (
+      options.patientFilter &&
+      options.patientFilter !== "todos" &&
+      appointment.patientId !== options.patientFilter
     ) {
       return false;
     }
