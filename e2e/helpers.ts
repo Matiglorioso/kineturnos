@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from "@playwright/test";
+import { dayAriaLabel, getCalendarMonth } from "../src/lib/agenda-calendar";
 import { uniqueDigits } from "../tests/integration/helpers";
 
 // Fixtures de base compartidos con los tests de integración (ids con prefijo `it-`).
@@ -54,10 +55,33 @@ export async function selectOption(scope: Page | Locator, page: Page, label: str
   await page.getByRole("option", { name: option }).click();
 }
 
-/** Lleva la agenda (vista lista) a una fecha dd-MM-yyyy. */
+/** Lleva la agenda (vista lista) a una fecha dd-MM-yyyy, eligiéndola en "Ver calendario". */
 export async function goToAgendaDate(page: Page, date: string) {
-  const dateInput = page.getByRole("textbox", { name: "Fecha de la agenda" });
-  await dateInput.fill(date);
-  await dateInput.press("Tab");
+  await page.getByRole("button", { name: "Ver calendario" }).click();
+  const dialog = page.getByRole("dialog", { name: "Elegir fecha" });
+  const grid = dialog.getByRole("grid");
+  const target = getCalendarMonth(date);
+
+  for (let step = 0; step < 36; step += 1) {
+    const shown = parseCalendarMonthLabel((await grid.getAttribute("aria-label")) ?? "");
+    const diff = target.year * 12 + target.month - (shown.year * 12 + shown.month);
+    if (diff === 0) break;
+    await dialog.getByRole("button", { name: diff > 0 ? "Mes siguiente" : "Mes anterior" }).click();
+  }
+
+  const label = dayAriaLabel(date, 0).replace(", sin turnos", "");
+  await dialog.getByRole("button", { name: new RegExp(`^${label},`) }).click();
+  await expect(dialog).toBeHidden();
   await expect(page.getByText(`Turnos del`)).toContainText(date);
+}
+
+const MONTHS = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+/** "Octubre 2026" → { year: 2026, month: 9 } */
+function parseCalendarMonthLabel(label: string): { year: number; month: number } {
+  const [name, year] = label.toLowerCase().split(" ");
+  return { year: Number(year), month: MONTHS.indexOf(name) };
 }

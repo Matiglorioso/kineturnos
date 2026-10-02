@@ -338,6 +338,7 @@ export async function cleanupTestData(): Promise<void> {
     },
   });
   await prisma.usuario.deleteMany({ where: { id: byPrefix } });
+  await prisma.historiaClinica.deleteMany({ where: { pacienteId: byPrefix } });
   await prisma.paciente.deleteMany({ where: { id: byPrefix } });
   await prisma.profesional.deleteMany({ where: { id: byPrefix } });
 }

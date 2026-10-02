@@ -59,6 +59,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 ### Pacientes
 - Alta, edición, búsqueda y detalle con ficha completa
+- **Historia clínica digital**: un registro por sesión con evolución, diagnóstico y plan de tratamiento; diagnóstico y plan vigentes; alertas clínicas, antecedentes y objetivos del tratamiento; vista de impresión; acceso por perfil y registro de accesos (quién leyó o modificó, y cuándo)
 - Próximos turnos e historial de sesiones
 - Activación / desactivación y eliminación con confirmación
 
@@ -307,6 +308,7 @@ kineturnos/
 | Migraciones Prisma formales | ✅ Completo |
 | Deploy Vercel con `DATABASE_URL` + `AUTH_SECRET` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
+| Historia clínica digital (RF11-RF13, RNF06-RNF07) | ✅ Completo |
 | Notificaciones por email (RF05) | ✅ Completo ([config](docs/NOTIFICACIONES.md)) |
 | Notificaciones por WhatsApp | ❌ No incluido |
 
