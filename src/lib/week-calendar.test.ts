@@ -96,6 +96,23 @@ describe("filtros y agrupación de la agenda", () => {
     );
   });
 
+  it("filtra por paciente, combinado con los demás filtros", () => {
+    const items = [
+      appointment({ status: "pendiente", patientId: "pac-1" }),
+      appointment({ status: "confirmado", patientId: "pac-1" }),
+      appointment({ status: "pendiente", patientId: "pac-2" }),
+    ];
+    const base = { statusFilter: "todos" as const, professionalFilter: "todos" };
+
+    assert.equal(filterAgendaAppointments(items, { ...base, patientFilter: "pac-1" }).length, 2);
+    assert.equal(
+      filterAgendaAppointments(items, { ...base, statusFilter: "pendiente", patientFilter: "pac-1" })
+        .length,
+      1
+    );
+    assert.equal(filterAgendaAppointments(items, { ...base, patientFilter: "todos" }).length, 3);
+  });
+
   it("agrupa por día de la semana, ordenado por hora, ignorando otros días", () => {
     const grouped = groupAppointmentsByAppDate(
       [

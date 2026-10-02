@@ -9,7 +9,10 @@ export type Permission =
   | "patients:delete"
   | "professionals:read"
   | "professionals:write"
-  | "professionals:delete";
+  | "professionals:delete"
+  | "clinical:read"
+  | "clinical:write"
+  | "clinical:audit";
 
 const ALL_PERMISSIONS: Permission[] = [
   "appointments:read",
@@ -21,6 +24,9 @@ const ALL_PERMISSIONS: Permission[] = [
   "professionals:read",
   "professionals:write",
   "professionals:delete",
+  "clinical:read",
+  "clinical:write",
+  "clinical:audit",
 ];
 
 /**
@@ -37,6 +43,9 @@ const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
     "appointments:status",
     "patients:read",
     "professionals:read",
+    // Historia clínica: solo de pacientes con los que tiene turnos (canAccessClinicalHistory).
+    "clinical:read",
+    "clinical:write",
   ],
 };
 
@@ -73,6 +82,19 @@ export function canManagePatients(role: RolUsuario): boolean {
 
 export function canManageProfessionals(role: RolUsuario): boolean {
   return hasPermission(role, "professionals:write");
+}
+
+/**
+ * Historia clínica (tesis, RNF06): el Administrador accede a todas; el
+ * Profesional, a la de los pacientes con los que tiene o tuvo un turno (no
+ * cancelado), así puede cubrir a un compañero sin cambiar permisos.
+ */
+export function canAccessClinicalHistory(
+  role: RolUsuario,
+  hasAppointmentWithPatient: boolean
+): boolean {
+  if (!hasPermission(role, "clinical:read")) return false;
+  return isScopedToOwnProfessional(role) ? hasAppointmentWithPatient : true;
 }
 
 export function isScopedToOwnProfessional(role: RolUsuario): boolean {

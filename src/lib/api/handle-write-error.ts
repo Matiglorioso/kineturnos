@@ -2,6 +2,7 @@ import {
   ConflictError,
   DuplicateFieldError,
   DeleteBlockedError,
+  ForbiddenError,
   ValidationError,
   NotFoundError,
 } from "@/lib/db/errors";
@@ -14,6 +15,10 @@ export function handleWriteError(
 ): NextResponse {
   if (error instanceof NotFoundError) {
     return NextResponse.json({ error: error.message }, { status: 404 });
+  }
+
+  if (error instanceof ForbiddenError) {
+    return NextResponse.json({ error: error.message }, { status: 403 });
   }
 
   if (error instanceof ConflictError) {
