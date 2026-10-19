@@ -46,7 +46,8 @@ import {
   Professional,
   SessionType,
 } from "@/types";
-import { CalendarPlus, Pencil } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Pencil } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 export interface NewAppointmentFormValues {
@@ -131,6 +132,11 @@ export function NewAppointmentDialog({
   const [form, setForm] = useState<NewAppointmentFormValues>(() =>
     buildInitialForm(defaultDate)
   );
+  // Aviso de cobertura (no bloquea): sin autorización, en trámite, agotada, vencida o por renovar.
+  const selectedPatientCoverage = useMemo(() => {
+    const coverage = patients.find((patient) => patient.id === form.patientId)?.coverage;
+    return coverage && (coverage.tone === "alert" || coverage.tone === "warning") ? coverage : null;
+  }, [patients, form.patientId]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -362,6 +368,24 @@ export function NewAppointmentDialog({
               </Select>
             </FormField>
           </div>
+
+          {selectedPatientCoverage && !isFinalEditing && (
+            <div
+              role="status"
+              className={cn(
+                "flex items-start gap-2 rounded-xl border px-3 py-2 text-sm",
+                selectedPatientCoverage.tone === "alert"
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : "border-amber-200 bg-amber-50 text-amber-900"
+              )}
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <strong className="font-semibold">{selectedPatientCoverage.label}.</strong>{" "}
+                Es solo un aviso: podés agendar igual y cargar la autorización desde la ficha del paciente.
+              </span>
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField id="date" label="Fecha" required error={errors.date}>

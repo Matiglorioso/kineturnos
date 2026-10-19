@@ -42,7 +42,11 @@ model Paciente {
   dni             String
   dniNormalizado  String                  @unique @map("dni_normalizado")
   telefono        String
+  /// Nombre de la obra social (o "Particular"), desnormalizado para listar y buscar.
   obraSocial      String                  @default("Particular") @map("obra_social")
+  obraSocialId    String?                 @map("obra_social_id")
+  nroAfiliado     String?                 @map("nro_afiliado")
+  planObraSocial  String?                 @map("plan_obra_social")
   email           String?
   observaciones   String?
   estado          EstadoPaciente          @default(activo)
@@ -53,8 +57,11 @@ model Paciente {
   accesosHistoria AccesoHistoriaClinica[]
   fichaClinica    FichaClinica?
   objetivos       ObjetivoTratamiento[]
+  obraSocialRef   ObraSocial?             @relation(fields: [obraSocialId], references: [id], onDelete: Restrict)
+  autorizaciones  Autorizacion[]
 
   @@index([estado])
+  @@index([obraSocialId])
   @@map("pacientes")
 }
 
@@ -108,6 +115,9 @@ model Turno {
   profesional       Profesional      @relation(fields: [profesionalId], references: [id], onDelete: Cascade)
   notificaciones    Notificacion[]
   historiaClinica   HistoriaClinica?
+  /// Autorización de obra social que consumió esta sesión (al pasar a atendido).
+  autorizacionId    String?          @map("autorizacion_id")
+  autorizacion      Autorizacion?    @relation(fields: [autorizacionId], references: [id], onDelete: SetNull)
 
   // Unique parcial "turno_profesional_slot_activo" (excluye cancelado/ausente):
   // Prisma no soporta índices parciales; se define en migración SQL.
@@ -249,4 +259,50 @@ model ObjetivoTratamiento {
 
   @@index([pacienteId])
   @@map("objetivos_tratamiento")
+}
+
+/// Catálogo de obras sociales y prepagas (RF07). Sin obra social = "Particular".
+model ObraSocial {
+  id                String         @id
+  nombre            String
+  /// Nombre en minúsculas y sin espacios repetidos: evita duplicados ("OSDE 210" = "osde  210").
+  nombreNormalizado String         @unique @map("nombre_normalizado")
+  activo            Boolean        @default(true)
+  observaciones     String?
+  pacientes         Paciente[]
+  autorizaciones    Autorizacion[]
+
+  @@map("obras_sociales")
+}
+
+enum EstadoAutorizacion {
+  pendiente
+  aprobada
+  rechazada
+
+  @@map("estado_autorizacion")
+}
+
+/// Autorización de la obra social para un tratamiento (RF14-RF15): una cantidad
+/// de sesiones desde una fecha y, opcionalmente, hasta un vencimiento. Las
+/// sesiones usadas son los turnos atendidos vinculados a ella.
+model Autorizacion {
+  id              String             @id
+  pacienteId      String             @map("paciente_id")
+  obraSocialId    String             @map("obra_social_id")
+  numero          String?
+  estado          EstadoAutorizacion @default(pendiente)
+  sesiones        Int
+  fechaDesde      DateTime           @map("fecha_desde") @db.Date
+  vencimiento     DateTime?          @db.Date
+  observaciones   String?
+  creadoPorNombre String             @map("creado_por_nombre")
+  creadoEn        DateTime           @default(now()) @map("creado_en") @db.Timestamptz(6)
+  paciente        Paciente           @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  obraSocial      ObraSocial         @relation(fields: [obraSocialId], references: [id], onDelete: Restrict)
+  turnos          Turno[]
+
+  @@index([pacienteId])
+  @@index([obraSocialId])
+  @@map("autorizaciones")
 }

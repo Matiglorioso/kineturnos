@@ -13,6 +13,7 @@ import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAppointments } from "@/hooks/use-appointments";
+import { useInsurances } from "@/hooks/use-insurances";
 import { usePatients } from "@/hooks/use-patients";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
@@ -61,6 +62,7 @@ function PacientesPageContent() {
   } = usePatients();
   const { appointments } = useAppointments();
   const { canManagePatients } = usePermissions();
+  const { insurances, setInsurances } = useInsurances({ enabled: canManagePatients });
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<PatientSort>(DEFAULT_PATIENT_LIST_OPTIONS.sort);
   const [insurance, setInsurance] = useState(ALL_INSURANCES);
@@ -320,6 +322,12 @@ function PacientesPageContent() {
           onSubmit={handlePatientSubmit}
           editingPatient={editingPatient}
           existingPatients={patients}
+          insurances={insurances}
+          onInsuranceCreated={(created) =>
+            setInsurances((current) =>
+              [...current, created].sort((a, b) => a.name.localeCompare(b.name, "es"))
+            )
+          }
         />
       )}
 
@@ -335,6 +343,7 @@ function PacientesPageContent() {
           canManagePatients ? handleToggleStatus : undefined
         }
         onEdit={canManagePatients ? openEditFromDetail : undefined}
+        onCoverageChange={() => void refresh({ silent: true })}
       />
 
       <ConfirmAlertDialog

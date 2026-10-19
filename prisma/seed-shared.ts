@@ -105,6 +105,7 @@ export async function clearAllTables(prisma: PrismaClient) {
   await prisma.turno.deleteMany();
   await prisma.usuario.deleteMany();
   await prisma.paciente.deleteMany();
+  await prisma.obraSocial.deleteMany();
   await prisma.profesional.deleteMany();
 }
 

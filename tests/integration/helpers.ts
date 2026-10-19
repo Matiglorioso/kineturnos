@@ -340,5 +340,9 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.usuario.deleteMany({ where: { id: byPrefix } });
   await prisma.historiaClinica.deleteMany({ where: { pacienteId: byPrefix } });
   await prisma.paciente.deleteMany({ where: { id: byPrefix } });
+  // Obras sociales de prueba: se crean con nombre "it-…" (el id sale del nombre).
+  await prisma.obraSocial.deleteMany({
+    where: { nombreNormalizado: { startsWith: TEST_PREFIX }, pacientes: { none: {} } },
+  });
   await prisma.profesional.deleteMany({ where: { id: byPrefix } });
 }

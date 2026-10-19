@@ -29,6 +29,9 @@ export function parsePatientWriteInput(
     phone: String(payload.phone ?? ""),
     email: String(payload.email ?? ""),
     insurance: String(payload.insurance ?? ""),
+    insuranceId: "",
+    affiliateNumber: "",
+    insurancePlan: "",
     status: status as PatientStatus,
     notes: String(payload.notes ?? ""),
   };
@@ -44,6 +47,16 @@ export function parsePatientWriteInput(
     phone: values.phone.trim(),
     email: values.email.trim() || undefined,
     insurance: values.insurance.trim() || "Particular",
+    insuranceId:
+      payload.insuranceId === null || payload.insuranceId === ""
+        ? null
+        : typeof payload.insuranceId === "string"
+          ? payload.insuranceId
+          : undefined,
+    affiliateNumber:
+      typeof payload.affiliateNumber === "string" ? payload.affiliateNumber.trim() || undefined : undefined,
+    insurancePlan:
+      typeof payload.insurancePlan === "string" ? payload.insurancePlan.trim() || undefined : undefined,
     status: values.status,
     notes: values.notes.trim() || undefined,
     lastAppointment:

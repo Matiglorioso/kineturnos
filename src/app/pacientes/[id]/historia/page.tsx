@@ -5,6 +5,7 @@ import { ClinicalEntryCard } from "@/components/clinical/ClinicalEntryCard";
 import { ClinicalEntryForm } from "@/components/clinical/ClinicalEntryForm";
 import { ClinicalProfileCard } from "@/components/clinical/ClinicalProfileCard";
 import { TreatmentGoalsCard } from "@/components/clinical/TreatmentGoalsCard";
+import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { DataLoadError } from "@/components/shared/DataLoadError";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -282,6 +283,7 @@ function HistoriaClinicaContent() {
             <p className="mt-0.5 text-sm text-muted-foreground">
               DNI {patient.dni} · {patient.insurance} · {patient.phone}
             </p>
+            <CoverageBadge coverage={patient.coverage} className="mt-2" />
           </div>
         </div>
         {alerts.length > 0 && (

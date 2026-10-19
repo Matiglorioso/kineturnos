@@ -19,8 +19,10 @@ import {
   DUPLICATE_DNI_MESSAGE,
   normalizeDni,
 } from "@/lib/document-validation";
+import { getCoverageByPatient, resolvePatientInsurance } from "@/lib/db/insurances";
 import { prisma } from "@/lib/prisma";
 import type { AppointmentStatus, Patient } from "@/types";
+import type { Paciente } from "@prisma/client";
 
 export type { PatientWriteInput } from "@/lib/db/patient-write";
 export { patientToWriteInput } from "@/lib/db/patient-write";
@@ -59,12 +61,14 @@ export async function getPatientsFromDb(options?: {
     },
   });
 
-  return records.map((record) =>
-    mapPatient({
+  const coverage = await getCoverageByPatient(records);
+  return records.map((record) => ({
+    ...mapPatient({
       ...record,
       ultimoTurno: resolveLastAppointment(record.turnos, record.ultimoTurno),
-    })
-  );
+    }),
+    coverage: coverage.get(record.id),
+  }));
 }
 
 export async function getPatientByIdFromDb(id: string): Promise<Patient | null> {
@@ -79,10 +83,22 @@ export async function getPatientByIdFromDb(id: string): Promise<Patient | null> 
 
   if (!record) return null;
 
-  return mapPatient({
-    ...record,
-    ultimoTurno: resolveLastAppointment(record.turnos, record.ultimoTurno),
-  });
+  const coverage = await getCoverageByPatient([record]);
+  return {
+    ...mapPatient({
+      ...record,
+      ultimoTurno: resolveLastAppointment(record.turnos, record.ultimoTurno),
+    }),
+    coverage: coverage.get(record.id),
+  };
+}
+
+/** Particular: sin número de afiliado ni plan. */
+async function insuranceWriteData(input: PatientWriteInput) {
+  const insurance = await resolvePatientInsurance(prisma, input);
+  return insurance.obraSocialId
+    ? insurance
+    : { ...insurance, nroAfiliado: null, planObraSocial: null };
 }
 
 export async function assertPatientDniAvailable(
@@ -106,11 +122,18 @@ export async function createPatientInDb(input: PatientWriteInput): Promise<Patie
     data: {
       id: resolvePatientId(input),
       ...toPacienteWriteData(input),
+      ...(await insuranceWriteData(input)),
       fechaAlta: optionalAppDateToDb(resolveCreatedAt(input), "createdAt"),
     },
   });
 
-  return mapPatient(record);
+  return withCoverage(record);
+}
+
+/** La respuesta incluye la cobertura, para que la lista muestre el aviso sin recargar. */
+async function withCoverage(record: Paciente): Promise<Patient> {
+  const coverage = await getCoverageByPatient([record]);
+  return { ...mapPatient(record), coverage: coverage.get(record.id) };
 }
 
 export async function updatePatientInDb(
@@ -124,14 +147,14 @@ export async function updatePatientInDb(
 
   const record = await prisma.paciente.update({
     where: { id },
-    data: writeData,
+    data: { ...writeData, ...(await insuranceWriteData(input)) },
   });
 
   if (existing && existing.name !== writeData.nombre) {
     await syncTurnoPatientName(id, writeData.nombre);
   }
 
-  return mapPatient(record);
+  return withCoverage(record);
 }
 
 /**
