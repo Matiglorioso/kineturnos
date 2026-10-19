@@ -11,6 +11,7 @@ import {
 import { withAppointmentLocks } from "@/lib/db/locks";
 import {
   collapseSpaces,
+  getAuthorizationStatus,
   getCoverageStatus,
   normalizeInsuranceName,
   PARTICULAR,
@@ -23,6 +24,7 @@ import { prisma, type DbClient } from "@/lib/prisma";
 import type {
   AttendanceReport,
   Authorization,
+  AuthorizationListItem,
   Insurance,
   PatientCoverage,
 } from "@/types";
@@ -266,6 +268,23 @@ export async function getPatientAuthorizationsFromDb(
       records.filter((record) => record.obraSocialId === patient.obraSocialId).map(toUsage)
     ),
   };
+}
+
+/** Todas las autorizaciones, con el paciente y su situación (RF15). */
+export async function getAllAuthorizationsFromDb(): Promise<AuthorizationListItem[]> {
+  const records = await prisma.autorizacion.findMany({
+    include: {
+      ...withUsage,
+      paciente: { select: { nombre: true, dni: true, obraSocialId: true } },
+    },
+  });
+  const today = getTodayAppDate();
+  return records.map((record) => ({
+    ...mapAuthorization(record, record.paciente.obraSocialId),
+    patientName: record.paciente.nombre,
+    patientDni: record.paciente.dni,
+    status: getAuthorizationStatus(toUsage(record), today),
+  }));
 }
 
 /**

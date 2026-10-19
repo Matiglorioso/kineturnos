@@ -243,3 +243,26 @@ describe("autorizaciones y consumo de sesiones (RF14-RF15)", () => {
     assert.equal(res.data?.coverage?.label, "Autorización en trámite");
   });
 });
+
+describe("listado de autorizaciones (RF15)", () => {
+  it("trae todas con paciente y situación; solo Administración", async () => {
+    const insurance = await createInsurance();
+    const patient = await patientWith(insurance);
+    await api(`/api/patients/${patient.id}/autorizaciones`, {
+      method: "POST",
+      auth: admin,
+      body: { number: "L-1", state: "aprobada", sessions: 2, validFrom: daysAgo(3) },
+    });
+
+    const res = await api<{ patientName: string; number: string; status: string }[]>("/api/autorizaciones", {
+      auth: admin,
+    });
+    assert.equal(res.status, 200, res.error);
+    const item = res.data?.find((row) => row.number === "L-1");
+    assert.equal(item?.patientName, patient.nombre);
+    assert.equal(item?.status, "por-renovar", "con 2 sesiones disponibles queda por renovar");
+
+    assert.equal((await api("/api/autorizaciones", { auth: profe })).status, 403);
+  });
+});
+

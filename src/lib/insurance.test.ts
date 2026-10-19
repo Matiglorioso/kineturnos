@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  filterAuthorizations,
+  getAuthorizationStatus,
   getCoverageStatus,
   normalizeInsuranceName,
   parseAuthorizationInput,
   parseInsuranceInput,
   pickAuthorizationForSession,
   summarizeCoverage,
+  type AuthorizationStatus,
   type AuthorizationUsage,
 } from "./insurance";
 
@@ -145,5 +148,51 @@ describe("validación de la autorización", () => {
     assert.equal(parseAuthorizationInput({ ...base, validUntil: "30-09-2026" }).field, "validUntil");
     assert.equal(parseAuthorizationInput({ ...base, state: "otra" }).field, "state");
     assert.equal(parseAuthorizationInput(base).input?.state, "pendiente");
+  });
+});
+
+describe("situación de cada autorización (listado)", () => {
+  it("clasifica por estado, uso y vencimiento", () => {
+    assert.equal(getAuthorizationStatus(auth({ state: "rechazada" }), TODAY), "rechazada");
+    assert.equal(getAuthorizationStatus(auth({ state: "pendiente" }), TODAY), "pendiente");
+    assert.equal(getAuthorizationStatus(auth({ used: 10 }), TODAY), "agotada");
+    assert.equal(getAuthorizationStatus(auth({ validUntil: "18-10-2026" }), TODAY), "vencida");
+    assert.equal(getAuthorizationStatus(auth({ used: 8 }), TODAY), "por-renovar");
+    assert.equal(getAuthorizationStatus(auth({ validUntil: "25-10-2026" }), TODAY), "por-renovar");
+    assert.equal(getAuthorizationStatus(auth({ used: 2 }), TODAY), "vigente");
+  });
+
+  it("busca por paciente, DNI o número, filtra y deja primero lo que hay que gestionar", () => {
+    const item = (
+      patientName: string,
+      status: AuthorizationStatus,
+      extra: Partial<{ number: string; insuranceId: string; validUntil: string | null; patientDni: string }> = {}
+    ) => ({
+      patientName,
+      patientDni: extra.patientDni ?? "30.123.456",
+      number: extra.number ?? null,
+      insuranceId: extra.insuranceId ?? "os-1",
+      status,
+      validUntil: extra.validUntil ?? null,
+    });
+    const items = [
+      item("Vigente Uno", "vigente"),
+      item("Agotada Dos", "agotada", { number: "A-77" }),
+      item("Renovar Tres", "por-renovar", { insuranceId: "os-2", patientDni: "99.888.777" }),
+    ];
+    const all = { search: "", insuranceId: "todas", status: "todas" as const };
+
+    assert.deepEqual(
+      filterAuthorizations(items, all).map((i) => i.patientName),
+      ["Agotada Dos", "Renovar Tres", "Vigente Uno"]
+    );
+    assert.deepEqual(filterAuthorizations(items, { ...all, search: "a-77" }).map((i) => i.patientName), [
+      "Agotada Dos",
+    ]);
+    assert.deepEqual(filterAuthorizations(items, { ...all, search: "99888" }).map((i) => i.patientName), [
+      "Renovar Tres",
+    ]);
+    assert.equal(filterAuthorizations(items, { ...all, insuranceId: "os-2" }).length, 1);
+    assert.equal(filterAuthorizations(items, { ...all, status: "vigente" })[0].patientName, "Vigente Uno");
   });
 });
