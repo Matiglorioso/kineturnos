@@ -39,7 +39,14 @@ export interface Patient {
   lastName?: string;
   dni: string;
   phone: string;
+  /** Nombre de la obra social, o "Particular". */
   insurance: string;
+  /** Obra social del catálogo; null o ausente = Particular. */
+  insuranceId?: string | null;
+  affiliateNumber?: string;
+  insurancePlan?: string;
+  /** Estado de la autorización con la obra social actual (lo calcula el servidor). */
+  coverage?: PatientCoverage;
   /** Formato dd-MM-yyyy */
   lastAppointment?: string;
   status: PatientStatus;
@@ -155,7 +162,14 @@ export interface ClinicalSessionOption {
 }
 
 export interface ClinicalHistory {
-  patient: { id: string; name: string; dni: string; insurance: string; phone: string };
+  patient: {
+    id: string;
+    name: string;
+    dni: string;
+    insurance: string;
+    phone: string;
+    coverage?: PatientCoverage;
+  };
   entries: ClinicalEntry[];
   summary: ClinicalSummary;
   sessionOptions: ClinicalSessionOption[];
@@ -173,4 +187,64 @@ export interface ClinicalAccessLogItem {
   entryId: string | null;
   /** ISO 8601 */
   at: string;
+}
+
+/** Obra social del catálogo. */
+export interface Insurance {
+  id: string;
+  name: string;
+  active: boolean;
+  notes: string | null;
+  /** Pacientes que la tienen como obra social actual. */
+  patientCount: number;
+}
+
+export type AuthorizationState = "pendiente" | "aprobada" | "rechazada";
+
+/** Autorización de la obra social para un tratamiento. */
+export interface Authorization {
+  id: string;
+  patientId: string;
+  insuranceId: string;
+  insuranceName: string;
+  number: string | null;
+  state: AuthorizationState;
+  sessions: number;
+  /** Sesiones atendidas que consumió. */
+  used: number;
+  /** dd-MM-yyyy */
+  validFrom: string;
+  /** dd-MM-yyyy, o null si no vence. */
+  validUntil: string | null;
+  notes: string | null;
+  createdByName: string;
+  /** Es de la obra social actual del paciente. */
+  current: boolean;
+}
+
+/** Resumen de la cobertura para chips y avisos. */
+export interface PatientCoverage {
+  kind: "particular" | "sin-autorizacion" | "pendiente" | "vigente" | "agotada" | "vencida";
+  tone: "none" | "ok" | "warning" | "alert";
+  label: string;
+}
+
+/** Planilla de asistencia mensual de una obra social (facturación). */
+export interface AttendanceReport {
+  insurance: { id: string; name: string };
+  /** yyyy-MM */
+  month: string;
+  rows: {
+    patientId: string;
+    patientName: string;
+    dni: string;
+    affiliateNumber: string | null;
+    plan: string | null;
+    authorizationNumbers: string[];
+    /** dd-MM-yyyy, en orden. */
+    dates: string[];
+    /** Sesiones atendidas sin autorización que las cubra. */
+    withoutAuthorization: number;
+  }[];
+  totalSessions: number;
 }

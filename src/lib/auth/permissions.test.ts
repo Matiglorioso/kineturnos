@@ -30,6 +30,8 @@ const EXPECTED: Record<Permission, Record<RolUsuario, boolean>> = {
   "clinical:read": { superadmin: true, admin: true, profesional: true },
   "clinical:write": { superadmin: true, admin: true, profesional: true },
   "clinical:audit": { superadmin: true, admin: true, profesional: false },
+  "insurances:read": { superadmin: true, admin: true, profesional: true },
+  "insurances:write": { superadmin: true, admin: true, profesional: false },
 };
 
 describe("permisos: matriz rol × permiso", () => {
@@ -94,6 +96,12 @@ describe("permisos: acceso a páginas", () => {
     assert.equal(canAccessPage("profesional", "/profesionales/123"), false);
     assert.equal(canAccessPage("admin", "/profesionales"), true);
     assert.equal(canAccessPage("superadmin", "/profesionales/123"), true);
+  });
+
+  it("obras sociales es una página de Administración", () => {
+    assert.equal(canAccessPage("admin", "/obras-sociales"), true);
+    assert.equal(canAccessPage("superadmin", "/obras-sociales/planilla"), true);
+    assert.equal(canAccessPage("profesional", "/obras-sociales"), false);
   });
 
   it("permite subrutas de un prefijo habilitado", () => {

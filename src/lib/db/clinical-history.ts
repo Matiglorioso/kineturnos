@@ -18,6 +18,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "@/lib/db/errors";
+import { getCoverageByPatient } from "@/lib/db/insurances";
 import { prisma, type DbClient } from "@/lib/prisma";
 import type {
   ClinicalAccessLogItem,
@@ -166,7 +167,7 @@ export async function getClinicalHistoryFromDb(
   });
   const entries = records.map((record) => mapEntry(record, user.id, now));
 
-  const [profile, goals, sessionOptions, nextAppointment] = await Promise.all([
+  const [profile, goals, sessionOptions, nextAppointment, coverage] = await Promise.all([
     prisma.fichaClinica.findUnique({ where: { pacienteId: patientId } }),
     prisma.objetivoTratamiento.findMany({
       where: { pacienteId: patientId },
@@ -174,6 +175,7 @@ export async function getClinicalHistoryFromDb(
     }),
     getSessionOptions(patientId, user, now),
     getNextAppointment(patientId, now),
+    getCoverageByPatient([patient]),
   ]);
 
   return {
@@ -183,6 +185,7 @@ export async function getClinicalHistoryFromDb(
       dni: patient.dni,
       insurance: patient.obraSocial,
       phone: patient.telefono,
+      coverage: coverage.get(patient.id),
     },
     entries,
     summary: getClinicalSummary(entries),

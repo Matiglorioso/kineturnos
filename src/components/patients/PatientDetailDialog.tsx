@@ -3,6 +3,7 @@
 import { PatientStatusBadge } from "@/components/appointments/StatusBadge";
 import { AppointmentListSection } from "@/components/shared/AppointmentListSection";
 import { InfoRow } from "@/components/shared/InfoRow";
+import { PatientCoverageSection } from "@/components/patients/PatientCoverageSection";
 import { emptyStates } from "@/lib/empty-states";
 import { pluralize } from "@/lib/pluralize";
 import { useDisplayEntity } from "@/hooks/use-display-entity";
@@ -28,7 +29,6 @@ import {
   History,
   Mail,
   Phone,
-  Shield,
   Trash2,
   Pencil,
   User,
@@ -45,6 +45,8 @@ interface PatientDetailDialogProps {
   onDeleteRequest?: (patient: Patient) => void;
   onToggleStatus?: (patient: Patient) => void;
   onEdit?: (patient: Patient) => void;
+  /** Cambió una autorización: refrescar la cobertura en la lista. */
+  onCoverageChange?: () => void;
 }
 
 export function PatientDetailDialog({
@@ -55,6 +57,7 @@ export function PatientDetailDialog({
   onDeleteRequest,
   onToggleStatus,
   onEdit,
+  onCoverageChange,
 }: PatientDetailDialogProps) {
   const { activeEntity: activePatient } = useDisplayEntity(patient, open);
   const { can } = usePermissions();
@@ -120,11 +123,6 @@ export function PatientDetailDialog({
               label="Email"
               value={activePatient.email || "No registrado"}
             />
-            <InfoRow
-              icon={Shield}
-              label="Obra social"
-              value={activePatient.insurance}
-            />
             {createdAtLabel && (
               <InfoRow
                 icon={Calendar}
@@ -142,6 +140,13 @@ export function PatientDetailDialog({
               {activePatient.notes?.trim() || "Sin observaciones registradas."}
             </p>
           </div>
+
+          <PatientCoverageSection
+            key={activePatient.id}
+            patient={activePatient}
+            canManage={can("insurances:write")}
+            onChanged={onCoverageChange}
+          />
 
           <div className={cn("space-y-6 border-t border-slate-100 pt-6")}>
             <AppointmentListSection

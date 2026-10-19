@@ -43,6 +43,11 @@ export const pageMetadata = {
     description:
       "Equipo de kinesiólogos, horarios de atención y turnos asignados por profesional.",
   },
+  obrasSociales: {
+    title: "Obras sociales",
+    description:
+      "Catálogo de obras sociales y planilla de asistencia mensual para la facturación.",
+  },
   proyecto: {
     title: "Ayuda",
     description:

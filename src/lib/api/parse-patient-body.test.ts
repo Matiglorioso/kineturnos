@@ -43,11 +43,25 @@ describe("parsePatientWriteInput: payload válido", () => {
       phone: "11 4444-4444",
       email: "juan@example.com",
       insurance: "OSDE",
+      insuranceId: undefined,
+      affiliateNumber: undefined,
+      insurancePlan: undefined,
       status: "activo",
       notes: "Notas",
       lastAppointment: "15-09-2026",
       createdAt: "01-01-2026",
     });
+  });
+
+  it("obra social del catálogo: id, número de afiliado y plan; vacío = Particular", () => {
+    const withInsurance = parsePatientWriteInput(
+      validBody({ insuranceId: "os-1", affiliateNumber: " 123/01 ", insurancePlan: "SAID" })
+    ).input;
+    assert.equal(withInsurance?.insuranceId, "os-1");
+    assert.equal(withInsurance?.affiliateNumber, "123/01");
+    assert.equal(withInsurance?.insurancePlan, "SAID");
+    assert.equal(parsePatientWriteInput(validBody({ insuranceId: "" })).input?.insuranceId, null);
+    assert.equal(parsePatientWriteInput(validBody({ insuranceId: null })).input?.insuranceId, null);
   });
 
   it("recorta espacios en los campos de texto", () => {
