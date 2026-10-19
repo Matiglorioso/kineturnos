@@ -40,6 +40,8 @@ describe("parsePatientWriteInput: payload válido", () => {
       firstName: "Juan",
       lastName: "Pérez",
       dni: "30123456",
+      cuil: undefined,
+      birthDate: undefined,
       phone: "11 4444-4444",
       email: "juan@example.com",
       insurance: "OSDE",
@@ -180,5 +182,26 @@ describe("parsePatientWriteInput: validaciones de formato (M7)", () => {
       error: "El DNI debe tener 7 u 8 dígitos",
       field: "dni",
     });
+  });
+});
+
+describe("parsePatientWriteInput: CUIL y fecha de nacimiento (RF08)", () => {
+  it("guarda el CUIL sin guiones y la fecha normalizada", () => {
+    const { input } = parsePatientWriteInput(
+      validBody({ dni: "32.456.789", cuil: "20-32456789-6", birthDate: "5/3/1990" })
+    );
+    assert.equal(input?.cuil, "20324567896");
+    assert.equal(input?.birthDate, "05-03-1990");
+  });
+
+  it("rechaza un CUIL que no corresponde al DNI", () => {
+    assert.deepEqual(parsePatientWriteInput(validBody({ cuil: "20-32456789-6" })), {
+      error: "El CUIL no corresponde al DNI",
+      field: "cuil",
+    });
+  });
+
+  it("rechaza una fecha de nacimiento inválida", () => {
+    assert.equal(parsePatientWriteInput(validBody({ birthDate: "31-02-1990" })).field, "birthDate");
   });
 });
