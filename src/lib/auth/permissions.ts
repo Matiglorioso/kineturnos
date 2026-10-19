@@ -14,7 +14,8 @@ export type Permission =
   | "clinical:write"
   | "clinical:audit"
   | "insurances:read"
-  | "insurances:write";
+  | "insurances:write"
+  | "users:manage";
 
 const ALL_PERMISSIONS: Permission[] = [
   "appointments:read",
@@ -31,6 +32,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "clinical:audit",
   "insurances:read",
   "insurances:write",
+  "users:manage",
 ];
 
 /**
@@ -57,9 +59,27 @@ const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
 
 /** Rutas de página permitidas por rol (además de públicas). */
 const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
-  superadmin: ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/proyecto"],
-  admin: ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/proyecto"],
-  profesional: ["/", "/agenda", "/pacientes", "/proyecto"],
+  superadmin: [
+    "/",
+    "/agenda",
+    "/pacientes",
+    "/profesionales",
+    "/obras-sociales",
+    "/usuarios",
+    "/proyecto",
+    "/cambiar-contrasena",
+  ],
+  admin: [
+    "/",
+    "/agenda",
+    "/pacientes",
+    "/profesionales",
+    "/obras-sociales",
+    "/usuarios",
+    "/proyecto",
+    "/cambiar-contrasena",
+  ],
+  profesional: ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena"],
 };
 
 export function hasPermission(

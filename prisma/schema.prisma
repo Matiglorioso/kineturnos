@@ -88,14 +88,18 @@ model Profesional {
 }
 
 model Usuario {
-  id            String       @id
-  email         String       @unique
-  nombre        String
-  passwordHash  String       @map("password_hash")
-  rol           RolUsuario   @default(profesional)
-  activo        Boolean      @default(true)
-  profesionalId String?      @unique @map("profesional_id")
-  profesional   Profesional? @relation(fields: [profesionalId], references: [id], onDelete: SetNull)
+  id                  String       @id
+  email               String       @unique
+  nombre              String
+  passwordHash        String       @map("password_hash")
+  rol                 RolUsuario   @default(profesional)
+  activo              Boolean      @default(true)
+  profesionalId       String?      @unique @map("profesional_id")
+  profesional         Profesional? @relation(fields: [profesionalId], references: [id], onDelete: SetNull)
+  /// Contraseña temporal (alta o restablecimiento): al ingresar tiene que elegir una propia.
+  debeCambiarPassword Boolean      @default(false) @map("debe_cambiar_password")
+  ultimoIngreso       DateTime?    @map("ultimo_ingreso")
+  creadoEn            DateTime     @default(now()) @map("creado_en")
 
   @@map("usuarios")
 }
