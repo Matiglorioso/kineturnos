@@ -8,6 +8,8 @@ interface StatCardProps {
   icon: LucideIcon;
   change?: string;
   trend?: "up" | "down" | "neutral";
+  /** Color del cambio, si no coincide con la dirección (p. ej. más cancelaciones es malo). */
+  changeTone?: "good" | "bad" | "neutral";
   accent?: "brand" | "emerald" | "amber" | "red" | "sky" | "violet";
   className?: string;
 }
@@ -51,10 +53,12 @@ export function StatCard({
   icon: Icon,
   change,
   trend = "neutral",
+  changeTone,
   accent = "brand",
   className,
 }: StatCardProps) {
   const styles = accentStyles[accent];
+  const tone = changeTone ?? (trend === "up" ? "good" : trend === "down" ? "bad" : "neutral");
 
   return (
     <Card
@@ -78,9 +82,9 @@ export function StatCard({
           <div
             className={cn(
               "flex items-center gap-0.5 text-xs font-medium",
-              trend === "up" && "text-emerald-600",
-              trend === "down" && "text-red-500",
-              trend === "neutral" && "text-muted-foreground"
+              tone === "good" && "text-emerald-600",
+              tone === "bad" && "text-red-500",
+              tone === "neutral" && "text-muted-foreground"
             )}
           >
             {trend === "up" && <TrendingUp className="h-3.5 w-3.5" />}

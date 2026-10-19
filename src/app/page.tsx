@@ -1,5 +1,6 @@
 "use client";
 
+import { PeriodIndicators } from "@/components/dashboard/PeriodIndicators";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { StatusSummary } from "@/components/dashboard/StatusSummary";
@@ -9,6 +10,7 @@ import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
+import { usePermissions } from "@/hooks/use-permissions";
 import { getRecentActivityItems } from "@/lib/dashboard-activity";
 import {
   getActivePatientsCount,
@@ -43,6 +45,7 @@ export default function DashboardPage() {
     refresh: refreshAppointments,
   } = useAppointments();
   const [today] = useState(() => getTodayAppDate());
+  const { can, isScopedProfessional } = usePermissions();
 
   const isLoading = patientsLoading || appointmentsLoading;
   const loadError = patientsError ?? appointmentsError;
@@ -173,6 +176,13 @@ export default function DashboardPage() {
           <RecentActivity items={activityItems} />
         </div>
       </div>
+
+      <PeriodIndicators
+        appointments={appointments}
+        patients={patients}
+        showProfessionals={!isScopedProfessional}
+        showAuthorizations={can("insurances:write")}
+      />
 
       <StatusSummary appointments={appointments} />
     </div>

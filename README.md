@@ -48,6 +48,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Métricas del día: turnos totales, confirmados, pendientes, cancelados y pacientes activos
 - Próximos turnos y actividad reciente
 - Resumen por estado con distribución visual
+- **Indicadores por período** (esta semana, este mes, mes anterior, últimos 3 meses, este año) comparados con el período anterior: turnos, sesiones atendidas, pacientes atendidos, tasa de cancelación y de ausentismo; evolución en el tiempo, turnos por profesional, sesiones por obra social y autorizaciones para gestionar
 
 ### Agenda
 - Vista **lista** (turnos del día) y **semanal** (lun–sáb)
@@ -316,6 +317,7 @@ kineturnos/
 | Branding, metadata y favicon | ✅ Completo |
 | Historia clínica digital (RF11-RF13, RNF06-RNF07) | ✅ Completo |
 | Obras sociales y autorizaciones (RF07, RF14, RF15) | ✅ Completo |
+| Indicadores de gestión del panel (RF16) | ✅ Completo |
 | Notificaciones por email (RF05) | ✅ Completo ([config](docs/NOTIFICACIONES.md)) |
 | Notificaciones por WhatsApp | ❌ No incluido |
 
