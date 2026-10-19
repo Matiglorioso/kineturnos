@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { usePermissions } from "@/hooks/use-permissions";
 import { Eye, FileHeart } from "lucide-react";
 import Link from "next/link";
@@ -71,9 +72,12 @@ export function PatientTable({
               {patient.phone}
             </DataTableCell>
             <DataTableCell>
-              <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                {patient.insurance}
-              </span>
+              <div className="flex flex-col items-start gap-1">
+                <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  {patient.insurance}
+                </span>
+                <CoverageBadge coverage={patient.coverage} size="xs" short onlyIssues />
+              </div>
             </DataTableCell>
             <DataTableCell className="text-slate-600">
               {patient.lastAppointment

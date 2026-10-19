@@ -63,6 +63,12 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Próximos turnos e historial de sesiones
 - Activación / desactivación y eliminación con confirmación
 
+### Obras sociales
+- Catálogo de obras sociales y prepagas; cada paciente con su obra social, número de afiliado y plan
+- Autorizaciones con cantidad de sesiones y vencimiento: las sesiones se descuentan solas al marcar los turnos como atendidos
+- Avisos (sin bloquear) cuando falta la autorización, está en trámite, se agotó o venció
+- Planilla de asistencia mensual por obra social, lista para imprimir
+
 ### Profesionales
 - CRUD de kinesiólogos con especialidad y días de atención (turnos de 1 hora, horario del consultorio 08:00 a 18:00)
 - Turnos asignados y contador del día
@@ -309,6 +315,7 @@ kineturnos/
 | Deploy Vercel con `DATABASE_URL` + `AUTH_SECRET` | 📋 [Guía](docs/TU-PARTE-VERCEL.md) |
 | Branding, metadata y favicon | ✅ Completo |
 | Historia clínica digital (RF11-RF13, RNF06-RNF07) | ✅ Completo |
+| Obras sociales y autorizaciones (RF07, RF14, RF15) | ✅ Completo |
 | Notificaciones por email (RF05) | ✅ Completo ([config](docs/NOTIFICACIONES.md)) |
 | Notificaciones por WhatsApp | ❌ No incluido |
 

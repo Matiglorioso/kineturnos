@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { optionalAppDateToDb } from "../src/lib/db/date-codec";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
+import { linkPatientsToInsuranceCatalog } from "../src/lib/db/insurances";
 import { resolveNameParts } from "../src/lib/person-name";
 import type { Patient } from "../src/types";
 import { mockPatients } from "./fixtures/mockPatients";
@@ -84,6 +85,7 @@ async function main() {
     });
     pacientes += 1;
   }
+  await linkPatientsToInsuranceCatalog(prisma);
 
   const first = mockProfessionals[0];
   if (first) {

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Patient } from "@/types";
 import { cn, getInitials } from "@/lib/utils";
 import { formatAppDate } from "@/lib/date-utils";
+import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { usePermissions } from "@/hooks/use-permissions";
 import { Eye, FileHeart, UserX } from "lucide-react";
 import Link from "next/link";
@@ -44,7 +45,10 @@ export function PatientCard({
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-slate-600 sm:block sm:space-y-2">
         <p className="truncate">{patient.phone}</p>
-        <p className="truncate">{patient.insurance}</p>
+        <div className="min-w-0 space-y-1">
+          <p className="truncate">{patient.insurance}</p>
+          <CoverageBadge coverage={patient.coverage} size="xs" short onlyIssues />
+        </div>
         <p className="col-span-2 text-xs text-muted-foreground">
           Último turno:{" "}
           {patient.lastAppointment

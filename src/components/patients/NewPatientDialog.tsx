@@ -28,7 +28,8 @@ import {
 } from "@/lib/patient-form";
 import { toAppDate } from "@/lib/date-utils";
 import { appToasts } from "@/lib/toast";
-import { Patient, PatientStatus } from "@/types";
+import { Insurance, Patient, PatientStatus } from "@/types";
+import { PatientInsuranceFields } from "@/components/patients/PatientInsuranceFields";
 import { Pencil, UserPlus } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -40,6 +41,9 @@ interface NewPatientDialogProps {
   onSubmit: (patient: Patient) => void | Promise<void>;
   editingPatient?: Patient | null;
   existingPatients?: Patient[];
+  /** Catálogo de obras sociales. */
+  insurances?: Insurance[];
+  onInsuranceCreated?: (insurance: Insurance) => void;
 }
 
 export function NewPatientDialog({
@@ -48,6 +52,8 @@ export function NewPatientDialog({
   onSubmit,
   editingPatient = null,
   existingPatients = [],
+  insurances = [],
+  onInsuranceCreated = () => undefined,
 }: NewPatientDialogProps) {
   const isEditing = Boolean(editingPatient);
   const [form, setForm] = useState<PatientFormValues>(INITIAL_PATIENT_FORM);
@@ -101,7 +107,10 @@ export function NewPatientDialog({
       dni: form.dni.trim(),
       phone: form.phone.trim(),
       email: form.email.trim() || undefined,
-      insurance: form.insurance.trim() || "Particular",
+      insurance: form.insuranceId ? form.insurance.trim() : "Particular",
+      insuranceId: form.insuranceId || null,
+      affiliateNumber: form.insuranceId ? form.affiliateNumber.trim() || undefined : undefined,
+      insurancePlan: form.insuranceId ? form.insurancePlan.trim() || undefined : undefined,
       status: form.status,
       notes: form.notes.trim() || undefined,
       lastAppointment: editingPatient?.lastAppointment,
@@ -200,14 +209,16 @@ export function NewPatientDialog({
               />
             </FormField>
 
-            <FormField id="insurance" label="Obra social / prepaga">
-              <Input
-                id="insurance"
-                value={form.insurance}
-                onChange={(e) => updateField("insurance", e.target.value)}
-                placeholder="Ej: OSDE, Swiss Medical..."
-              />
-            </FormField>
+            <PatientInsuranceFields
+              insurances={insurances}
+              insuranceId={form.insuranceId}
+              affiliateNumber={form.affiliateNumber}
+              insurancePlan={form.insurancePlan}
+              onChange={(values) => setForm((prev) => ({ ...prev, ...values }))}
+              onAffiliateNumberChange={(value) => updateField("affiliateNumber", value)}
+              onInsurancePlanChange={(value) => updateField("insurancePlan", value)}
+              onInsuranceCreated={onInsuranceCreated}
+            />
           </div>
 
           <FormField id="status" label="Estado">

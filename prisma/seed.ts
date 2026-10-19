@@ -4,6 +4,7 @@ import { mockPatients } from "./fixtures/mockPatients";
 import { mockProfessionals } from "./fixtures/mockProfessionals";
 import { resolveNameParts } from "../src/lib/person-name";
 import { normalizeDni, normalizeLicense } from "../src/lib/document-validation";
+import { linkPatientsToInsuranceCatalog } from "../src/lib/db/insurances";
 import type { Patient } from "../src/types";
 import {
   assertDatabaseEmptyOrForced,
@@ -82,6 +83,8 @@ async function main() {
       data: buildPacienteSeedData(patient),
     });
   }
+  // Catálogo de obras sociales a partir de las que tienen los pacientes de ejemplo.
+  await linkPatientsToInsuranceCatalog(prisma);
 
   const firstProfessionalId = mockProfessionals[0]?.id ?? null;
   const users = getDefaultUsers(firstProfessionalId).map((user) =>
