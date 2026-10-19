@@ -30,8 +30,11 @@ import {
   Stethoscope,
   Trash2,
   User,
+  UserCog,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo } from "react";
+import { usePermissions } from "@/hooks/use-permissions";
 
 interface ProfessionalDetailDialogProps {
   professional: Professional | null;
@@ -49,6 +52,7 @@ export function ProfessionalDetailDialog({
   onDeleteRequest,
 }: ProfessionalDetailDialogProps) {
   const { activeEntity: activeProfessional } = useDisplayEntity(professional, open);
+  const { can } = usePermissions();
 
   const stats = useMemo(() => {
     if (!activeProfessional) {
@@ -189,15 +193,26 @@ export function ProfessionalDetailDialog({
                 ? `Este profesional tiene ${pluralize(stats.total, "turno")} ${stats.total === 1 ? "asignado" : "asignados"}.`
                 : "Este profesional no tiene turnos asignados."}
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
-              onClick={() => onDeleteRequest(activeProfessional)}
-            >
-              <Trash2 className="h-4 w-4" />
-              Eliminar profesional
-            </Button>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              {can("users:manage") && (
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                  {/* Abre su usuario si ya tiene, o el alta con este profesional elegido. */}
+                  <Link href={`/usuarios?profesional=${encodeURIComponent(activeProfessional.id)}`}>
+                    <UserCog className="h-4 w-4" />
+                    Acceso al sistema
+                  </Link>
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                onClick={() => onDeleteRequest(activeProfessional)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar profesional
+              </Button>
+            </div>
           </DialogFooter>
         )}
       </DialogContent>

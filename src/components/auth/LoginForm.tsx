@@ -175,12 +175,12 @@ export function LoginForm() {
 
       <div className="space-y-2 text-center text-sm text-muted-foreground lg:text-left">
         <p className="leading-relaxed">
-          ¿Olvidaste tu contraseña?{" "}
+          ¿Olvidaste tu contraseña? Pedile a Administración que te la restablezca o{" "}
           <a
             href={getSupportMailto()}
             className="font-medium text-brand-600 hover:underline"
           >
-            Contactá soporte
+            contactá soporte
           </a>
           <span className="hidden lg:inline"> · </span>
           <Link href="/ayuda" className="font-medium text-brand-600 hover:underline lg:inline">
