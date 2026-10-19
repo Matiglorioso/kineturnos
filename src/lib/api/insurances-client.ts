@@ -2,6 +2,7 @@ import { fetchJson } from "@/lib/api/fetch-json";
 import type {
   AttendanceReport,
   Authorization,
+  AuthorizationListItem,
   AuthorizationState,
   Insurance,
   PatientCoverage,
@@ -78,4 +79,8 @@ export async function deleteAuthorizationRequest(patientId: string, authorizatio
     `${authorizationsUrl(patientId)}/${encodeURIComponent(authorizationId)}`,
     { method: "DELETE" }
   );
+}
+
+export function fetchAllAuthorizations(): Promise<AuthorizationListItem[]> {
+  return fetchJson<AuthorizationListItem[]>("/api/autorizaciones");
 }

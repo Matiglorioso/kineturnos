@@ -164,6 +164,95 @@ export function summarizeCoverage(status: CoverageStatus, today: string): Covera
   }
 }
 
+/** Situación de una autorización puntual (para el listado de autorizaciones). */
+export type AuthorizationStatus =
+  | "por-renovar"
+  | "vigente"
+  | "pendiente"
+  | "agotada"
+  | "vencida"
+  | "rechazada";
+
+export const AUTHORIZATION_STATUS_LABELS: Record<AuthorizationStatus, string> = {
+  "por-renovar": "Por renovar",
+  vigente: "Vigente",
+  pendiente: "En trámite",
+  agotada: "Agotada",
+  vencida: "Vencida",
+  rechazada: "Rechazada",
+};
+
+/** Orden del listado: primero lo que hay que gestionar. */
+export const AUTHORIZATION_STATUS_PRIORITY: AuthorizationStatus[] = [
+  "agotada",
+  "vencida",
+  "por-renovar",
+  "pendiente",
+  "vigente",
+  "rechazada",
+];
+
+/**
+ * Situación de una autorización: agotada (usó todas sus sesiones), vencida,
+ * por renovar (quedan pocas sesiones o vence pronto), vigente, en trámite o rechazada.
+ */
+export function getAuthorizationStatus(
+  authorization: AuthorizationUsage,
+  today: string
+): AuthorizationStatus {
+  if (authorization.state === "rechazada") return "rechazada";
+  if (authorization.state === "pendiente") return "pendiente";
+  if (authorization.used >= authorization.sessions) return "agotada";
+  if (isExpired(authorization, today)) return "vencida";
+  const remaining = authorization.sessions - authorization.used;
+  const expiresSoon =
+    authorization.validUntil !== null && daysUntil(authorization.validUntil, today) <= EXPIRING_SOON_DAYS;
+  return remaining <= FEW_SESSIONS_LEFT || expiresSoon ? "por-renovar" : "vigente";
+}
+
+export type AuthorizationListFilters = {
+  search: string;
+  /** Id de la obra social, o "todas". */
+  insuranceId: string;
+  /** Situación, o "todas". */
+  status: AuthorizationStatus | "todas";
+};
+
+/** Busca (paciente, DNI o Nº de autorización), filtra y ordena: lo que hay que gestionar primero. */
+export function filterAuthorizations<
+  T extends {
+    patientName: string;
+    patientDni: string;
+    number: string | null;
+    insuranceId: string;
+    status: AuthorizationStatus;
+    validUntil: string | null;
+  },
+>(items: T[], filters: AuthorizationListFilters): T[] {
+  const query = filters.search.trim().toLowerCase();
+  const digits = query.replace(/\D/g, "");
+  return items
+    .filter((item) => filters.insuranceId === "todas" || item.insuranceId === filters.insuranceId)
+    .filter((item) => filters.status === "todas" || item.status === filters.status)
+    .filter(
+      (item) =>
+        !query ||
+        item.patientName.toLowerCase().includes(query) ||
+        (item.number?.toLowerCase().includes(query) ?? false) ||
+        item.patientDni.includes(query) ||
+        (digits.length >= 3 && item.patientDni.replace(/\D/g, "").includes(digits))
+    )
+    .sort((a, b) => {
+      const byStatus =
+        AUTHORIZATION_STATUS_PRIORITY.indexOf(a.status) - AUTHORIZATION_STATUS_PRIORITY.indexOf(b.status);
+      if (byStatus !== 0) return byStatus;
+      if (a.validUntil && b.validUntil) return compareAppDates(a.validUntil, b.validUntil);
+      if (a.validUntil) return -1;
+      if (b.validUntil) return 1;
+      return a.patientName.localeCompare(b.patientName, "es");
+    });
+}
+
 export type AuthorizationInput = {
   number: string | null;
   state: AuthorizationState;

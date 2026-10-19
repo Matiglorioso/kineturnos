@@ -25,6 +25,7 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
 
     // Catálogo.
     await page.goto("/obras-sociales");
+    await page.getByRole("tab", { name: "Catálogo" }).click();
     await page.getByRole("button", { name: "Nueva obra social" }).click();
     const insuranceDialog = page.getByRole("dialog", { name: "Nueva obra social" });
     await insuranceDialog.getByRole("textbox", { name: "Nombre *" }).fill(name);
@@ -127,4 +128,49 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
     await expect(reportRow).toContainText("P-1");
     await expect(reportRow).toContainText(`${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`);
   });
+
+  test("la pestaña Autorizaciones busca, filtra y abre la edición", async ({ page }) => {
+    const name = testInsuranceName();
+    const insurance = await prisma.obraSocial.create({
+      data: { id: `it-os-${Date.now()}`, nombre: name, nombreNormalizado: name.toLowerCase() },
+    });
+    const patients = [await createPatient(uniqueName("AutA")), await createPatient(uniqueName("AutB"))];
+    for (const [index, patient] of patients.entries()) {
+      await prisma.paciente.update({
+        where: { id: patient.id },
+        data: { obraSocialId: insurance.id, obraSocial: insurance.nombre },
+      });
+      await prisma.autorizacion.create({
+        data: {
+          id: `it-aut-${Date.now()}-${index}`,
+          pacienteId: patient.id,
+          obraSocialId: insurance.id,
+          numero: `Z-${index}`,
+          estado: index === 0 ? "pendiente" : "aprobada",
+          sesiones: 10,
+          fechaDesde: new Date(),
+          creadoPorNombre: "Test",
+        },
+      });
+    }
+
+    await page.goto("/obras-sociales");
+    await expect(page.getByRole("tab", { name: "Autorizaciones" })).toHaveAttribute("aria-selected", "true");
+    const filters = page.getByRole("group", { name: "Filtros de autorizaciones" });
+    await selectOption(filters, page, "Obra social", name);
+    const rows = page.getByRole("table").getByRole("row").filter({ hasText: name });
+    await expect(rows).toHaveCount(2);
+
+    await selectOption(filters, page, "Situación", "En trámite");
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText(patients[0].nombre);
+
+    await filters.getByRole("button", { name: "Limpiar filtros" }).click();
+    await page.getByRole("textbox", { name: "Buscar autorizaciones" }).fill("Z-1");
+    await expect(page.getByRole("table").getByRole("row").filter({ hasText: "Z-1" })).toHaveCount(1);
+
+    await page.getByRole("button", { name: `Editar autorización de ${patients[1].nombre}` }).click();
+    await expect(page.getByRole("dialog", { name: "Editar autorización" })).toBeVisible();
+  });
 });
+

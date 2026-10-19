@@ -222,6 +222,21 @@ export interface Authorization {
   current: boolean;
 }
 
+export type AuthorizationStatus =
+  | "por-renovar"
+  | "vigente"
+  | "pendiente"
+  | "agotada"
+  | "vencida"
+  | "rechazada";
+
+/** Fila del listado general de autorizaciones (pestaña Autorizaciones). */
+export interface AuthorizationListItem extends Authorization {
+  patientName: string;
+  patientDni: string;
+  status: AuthorizationStatus;
+}
+
 /** Resumen de la cobertura para chips y avisos. */
 export interface PatientCoverage {
   kind: "particular" | "sin-autorizacion" | "pendiente" | "vigente" | "agotada" | "vencida";
