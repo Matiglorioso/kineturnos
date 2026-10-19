@@ -154,6 +154,14 @@ export default function AgendaPage() {
     setFormDialogOpen(true);
   };
 
+  // Desde el panel ("Agendar turno"): abre el alta y limpia el parámetro de la URL.
+  useEffect(() => {
+    if (!canSchedule || new URLSearchParams(window.location.search).get("nuevo") !== "1") return;
+    setEditingAppointment(null);
+    setFormDialogOpen(true);
+    window.history.replaceState(null, "", "/agenda");
+  }, [canSchedule]);
+
   const openEditDialog = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setFormDialogOpen(true);

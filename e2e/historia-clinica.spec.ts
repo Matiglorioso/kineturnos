@@ -10,7 +10,11 @@ test.describe("historia clínica (Administración)", () => {
 
     await page.goto("/pacientes");
     await page.getByPlaceholder("Buscar por nombre, DNI, teléfono u obra social…").fill(patient.dni);
-    await page.getByRole("link", { name: "Historia clínica" }).filter({ visible: true }).first().click();
+    // Esperar a que la lista quede filtrada antes del click (si no, el enlace se re-renderiza en el medio).
+    const row = page.getByRole("row").filter({ hasText: patient.nombre });
+    await expect(row).toBeVisible();
+    await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
+    await row.getByRole("link", { name: "Historia clínica" }).click();
 
     await expect(page).toHaveURL(`/pacientes/${patient.id}/historia`);
     await expect(page.getByRole("heading", { name: patient.nombre, level: 1 })).toBeVisible();

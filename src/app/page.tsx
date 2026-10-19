@@ -1,180 +1,221 @@
 "use client";
 
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { StatusSummary } from "@/components/dashboard/StatusSummary";
-import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
+import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
+import { DashboardShortcuts } from "@/components/dashboard/DashboardShortcuts";
+import { MetricTile } from "@/components/dashboard/MetricTile";
+import { PeriodIndicators } from "@/components/dashboard/PeriodIndicators";
+import { TodayScheduleCard } from "@/components/dashboard/TodayScheduleCard";
 import { DataLoadBanner } from "@/components/shared/DataLoadBanner";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
-import { getRecentActivityItems } from "@/lib/dashboard-activity";
+import { usePermissions } from "@/hooks/use-permissions";
+import { computeIndicators, getPeriodRange } from "@/lib/dashboard-indicators";
 import {
-  getActivePatientsCount,
-  getTodayAppDate,
-  getTodayDashboardMetrics,
-  getUpcomingAppointments,
-} from "@/lib/dashboard-stats";
-import { formatTodayLongLabel } from "@/lib/date-utils";
+  getDaySchedule,
+  getNextWorkday,
+  getPendingAttendance,
+  getUnconfirmed,
+  greetingFor,
+  summarizeDay,
+} from "@/lib/dashboard-today";
+import { formatAppDate, getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
+import type { Appointment, AppointmentStatus, Patient } from "@/types";
 import {
-  Ban,
   CalendarCheck,
-  Clock,
-  TrendingUp,
+  CalendarClock,
+  ClipboardCheck,
+  Plus,
+  ShieldAlert,
   UserCheck,
-  Users,
+  UserPlus,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+/** Minutos del día en el consultorio, actualizados cada minuto (turno en curso, asistencia por registrar). */
+function useNowMinutes() {
+  const [now, setNow] = useState(() => getNowAppMinutes());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(getNowAppMinutes()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  return now;
+}
+
+function coverageIssuesOf(patients: Patient[]): Patient[] {
+  const rank = { alert: 0, warning: 1 } as const;
+  return patients
+    .filter(
+      (patient) =>
+        patient.status === "activo" &&
+        (patient.coverage?.tone === "alert" || patient.coverage?.tone === "warning")
+    )
+    .sort(
+      (a, b) =>
+        rank[a.coverage!.tone as "alert" | "warning"] - rank[b.coverage!.tone as "alert" | "warning"] ||
+        a.name.localeCompare(b.name, "es")
+    );
+}
 
 export default function DashboardPage() {
-  const {
-    patients,
-    isLoading: patientsLoading,
-    error: patientsError,
-    refresh: refreshPatients,
-  } = usePatients();
+  const { data: session } = useSession();
+  const { patients, isLoading: patientsLoading, error: patientsError, refresh: refreshPatients } = usePatients();
   const {
     appointments,
     isLoading: appointmentsLoading,
     error: appointmentsError,
     refresh: refreshAppointments,
+    updateAppointmentStatus,
   } = useAppointments();
+  const { role, can, canSchedule, canManagePatients, isScopedProfessional } = usePermissions();
   const [today] = useState(() => getTodayAppDate());
+  const nowMinutes = useNowMinutes();
 
-  const isLoading = patientsLoading || appointmentsLoading;
-  const loadError = patientsError ?? appointmentsError;
-
-  const handleRetry = () => {
-    void refreshPatients();
-    void refreshAppointments();
-  };
-
-  const todayMetrics = useMemo(
-    () => getTodayDashboardMetrics(appointments, today),
+  const schedule = useMemo(() => getDaySchedule(appointments, today), [appointments, today]);
+  const daySummary = useMemo(() => summarizeDay(schedule, nowMinutes), [schedule, nowMinutes]);
+  const pendingAttendance = useMemo(
+    () => getPendingAttendance(appointments, today, nowMinutes),
+    [appointments, today, nowMinutes]
+  );
+  const nextWorkday = useMemo(() => getNextWorkday(today), [today]);
+  const unconfirmed = useMemo(() => getUnconfirmed(appointments, nextWorkday), [appointments, nextWorkday]);
+  const coverageIssues = useMemo(() => coverageIssuesOf(patients), [patients]);
+  const patientsById = useMemo(() => new Map(patients.map((patient) => [patient.id, patient])), [patients]);
+  const monthAttended = useMemo(
+    () => computeIndicators(appointments, getPeriodRange("mes", today)).attended,
     [appointments, today]
   );
 
-  const activePatients = useMemo(
-    () => getActivePatientsCount(patients),
-    [patients]
-  );
+  const showCoverage = can("insurances:write");
+  const firstName = session?.user?.name?.split(" ")[0];
+  const handleStatusChange = async (appointment: Appointment, status: AppointmentStatus) => {
+    await updateAppointmentStatus(appointment, status);
+  };
 
-  const upcoming = useMemo(
-    () => getUpcomingAppointments(appointments, 5),
-    [appointments]
-  );
-
-  const activityItems = useMemo(
-    () => getRecentActivityItems(patients, appointments, 6),
-    [patients, appointments]
-  );
-
-  const dateLabel = formatTodayLongLabel();
-
-  const confirmedPercent =
-    todayMetrics.todayTotal > 0
-      ? Math.round(
-          (todayMetrics.todayConfirmed / todayMetrics.todayTotal) * 100
-        )
-      : 0;
-
-  if (isLoading) {
-    return <PageLoadingState title="Resumen del día" description="Cargando panel..." />;
+  if (patientsLoading || appointmentsLoading) {
+    return <PageLoadingState title="Panel" description="Cargando el día..." />;
   }
 
+  const loadError = patientsError ?? appointmentsError;
   if (loadError) {
     return (
       <div className="space-y-6">
-        <div className="animate-slide-up">
-          <p className="text-sm font-medium text-brand-600">{siteConfig.clinicName}</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Resumen del día
-          </h1>
-        </div>
-        <DataLoadBanner message={loadError} onRetry={handleRetry} />
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Panel</h1>
+        <DataLoadBanner
+          message={loadError}
+          onRetry={() => {
+            void refreshPatients();
+            void refreshAppointments();
+          }}
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <div className="animate-slide-up">
-        <p className="text-sm font-medium text-brand-600">Panel del consultorio</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Resumen del día
-        </h1>
-        <p className="mt-1.5 capitalize text-slate-500">{dateLabel}</p>
-      </div>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-brand-600">{siteConfig.clinicName}</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            {greetingFor(nowMinutes)}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
+          <p className="mt-1 text-slate-500 first-letter:uppercase">
+            {formatAppDate(today, "EEEE d 'de' MMMM 'de' yyyy")}
+          </p>
+        </div>
+        {(canSchedule || canManagePatients) && (
+          <div className="grid grid-cols-2 gap-2 sm:flex">
+            {canManagePatients && (
+              <Button asChild variant="outline">
+                <Link href="/pacientes?nuevo=1">
+                  <UserPlus className="h-4 w-4" />
+                  Nuevo paciente
+                </Link>
+              </Button>
+            )}
+            {canSchedule && (
+              <Button asChild>
+                <Link href="/agenda?nuevo=1">
+                  <Plus className="h-4 w-4" />
+                  Agendar turno
+                </Link>
+              </Button>
+            )}
+          </div>
+        )}
+      </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <StatCard
-          title="Turnos de hoy"
-          value={todayMetrics.todayTotal}
-          icon={CalendarCheck}
-          accent="brand"
-        />
-        <StatCard
-          title="Confirmados hoy"
-          value={todayMetrics.todayConfirmed}
-          icon={UserCheck}
-          change={
-            todayMetrics.todayTotal > 0
-              ? `${confirmedPercent}% del día`
-              : undefined
-          }
-          trend={confirmedPercent >= 50 ? "up" : "neutral"}
-          accent="emerald"
-        />
-        <StatCard
-          title="Pendientes hoy"
-          value={todayMetrics.todayPending}
-          icon={Clock}
-          accent="amber"
-        />
-        <StatCard
-          title="Cancelados hoy"
-          value={todayMetrics.todayCancelled}
-          icon={Ban}
-          accent="red"
-        />
-        <StatCard
-          title="Pacientes activos"
-          value={activePatients}
-          icon={Users}
-          accent="violet"
-        />
-      </div>
+      <DashboardShortcuts role={role} />
 
-      <div className="grid gap-6 md:grid-cols-5">
-        <div className="md:col-span-3">
-          <Card>
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-brand-600" />
-                Próximos turnos
-              </CardTitle>
-              <Link
-                href="/agenda"
-                className="text-sm font-medium text-brand-600 hover:text-brand-700"
-              >
-                Ver agenda
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <UpcomingAppointments appointments={upcoming} />
-            </CardContent>
-          </Card>
+      <section aria-labelledby="hoy-titulo" className="space-y-4">
+        <h2 id="hoy-titulo" className="sr-only">
+          Hoy
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <MetricTile
+            label="Turnos de hoy"
+            value={daySummary.total}
+            icon={CalendarCheck}
+            tone="brand"
+            hint={`${daySummary.attended} atendidos · ${daySummary.upcoming} por venir`}
+            href="/agenda"
+          />
+          <MetricTile
+            label="Por registrar"
+            value={pendingAttendance.length}
+            icon={ClipboardCheck}
+            tone={pendingAttendance.length ? "amber" : "slate"}
+            hint="asistencia de turnos ya terminados"
+          />
+          <MetricTile
+            label="Por confirmar"
+            value={unconfirmed.length}
+            icon={CalendarClock}
+            tone={unconfirmed.length ? "sky" : "slate"}
+            hint={`para el ${formatAppDate(nextWorkday, "EEEE d/MM")}`}
+          />
+          {showCoverage ? (
+            <MetricTile
+              label="Autorizaciones"
+              value={coverageIssues.length}
+              icon={ShieldAlert}
+              tone={coverageIssues.length ? "red" : "slate"}
+              hint="vencidas, agotadas o por renovar"
+              href="/obras-sociales"
+            />
+          ) : (
+            <MetricTile
+              label="Atendidos este mes"
+              value={monthAttended}
+              icon={UserCheck}
+              tone="emerald"
+              hint="sesiones"
+            />
+          )}
         </div>
 
-        <div className="md:col-span-2">
-          <RecentActivity items={activityItems} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TodayScheduleCard schedule={schedule} nowMinutes={nowMinutes} showProfessional={!isScopedProfessional} />
+          <ActionCenterCard
+            pendingAttendance={pendingAttendance}
+            unconfirmed={unconfirmed}
+            unconfirmedDate={nextWorkday}
+            coverageIssues={coverageIssues}
+            patientsById={patientsById}
+            canConfirm={can("appointments:status")}
+            showCoverage={showCoverage}
+            onStatusChange={handleStatusChange}
+          />
         </div>
-      </div>
+      </section>
 
-      <StatusSummary appointments={appointments} />
+      <PeriodIndicators appointments={appointments} patients={patients} showProfessionals={!isScopedProfessional} />
     </div>
   );
 }
