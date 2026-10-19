@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { cuilCheckDigit } from "../src/lib/document-validation";
 import { cleanupTestData, createPatient, prisma, selectOption, storageStateFor, uniqueName } from "./helpers";
 
 test.use({ storageState: storageStateFor("recepcionista") });
@@ -40,5 +41,40 @@ test.describe("lista de pacientes: orden y filtro por obra social", () => {
 
     await controls.getByRole("button", { name: "Quitar filtro de obra social" }).click();
     await expect(table.getByRole("row").filter({ hasText: other.nombre })).toBeVisible();
+  });
+});
+
+test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
+  test("se cargan al editar, se validan y se ven en la ficha", async ({ page }) => {
+    const patient = await createPatient(uniqueName("Cuil"));
+    const dni = patient.dni.padStart(8, "0");
+    const prefix = ["20", "27", "23"].find((p) => cuilCheckDigit(p + dni) !== null)!;
+    const cuil = `${prefix}-${dni}-${cuilCheckDigit(prefix + dni)}`;
+
+    await page.goto("/pacientes");
+    await page.getByPlaceholder("Buscar por nombre, DNI, teléfono u obra social…").fill(patient.nombre);
+    await page.getByRole("row").filter({ hasText: patient.nombre }).getByRole("button", { name: "Ver detalle" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Editar paciente" }).click();
+
+    const form = page.getByRole("dialog", { name: "Editar paciente" });
+    await form.getByLabel("CUIL").fill("20-32456789-6");
+    await form.getByLabel("Fecha de nacimiento").fill("31/02/1990");
+    await form.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(form.getByText("El CUIL no corresponde al DNI")).toBeVisible();
+    await expect(form.getByText("Ingresá la fecha con el formato dd-mm-aaaa")).toBeVisible();
+
+    await form.getByLabel("CUIL").fill(cuil.replaceAll("-", ""));
+    await form.getByLabel("Fecha de nacimiento").fill("5/3/1990");
+    await form.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(form).toBeHidden();
+
+    const saved = await prisma.paciente.findUniqueOrThrow({ where: { id: patient.id } });
+    expect(saved.cuil).toBe(cuil.replaceAll("-", ""));
+    expect(saved.fechaNacimiento?.toISOString().slice(0, 10)).toBe("1990-03-05");
+
+    await page.getByRole("row").filter({ hasText: patient.nombre }).getByRole("button", { name: "Ver detalle" }).click();
+    const detail = page.getByRole("dialog", { name: patient.nombre });
+    await expect(detail).toContainText(cuil);
+    await expect(detail).toContainText(/05-03-1990 \(\d+ años\)/);
   });
 });

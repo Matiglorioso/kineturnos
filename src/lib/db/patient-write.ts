@@ -1,6 +1,6 @@
 import { toAppDate } from "@/lib/date-utils";
 import { optionalAppDateToDb } from "@/lib/db/date-codec";
-import { normalizeDni } from "@/lib/document-validation";
+import { normalizeCuil, normalizeDni } from "@/lib/document-validation";
 import { resolveNameParts, toTitleCaseName } from "@/lib/person-name";
 import type { Patient, PatientStatus } from "@/types";
 
@@ -9,6 +9,9 @@ export interface PatientWriteInput {
   firstName: string;
   lastName: string;
   dni: string;
+  cuil?: string;
+  /** dd-MM-yyyy */
+  birthDate?: string;
   phone: string;
   /** Nombre de la obra social (compatibilidad: se busca o se crea en el catálogo). */
   insurance?: string;
@@ -35,9 +38,11 @@ export function patientToWriteInput(patient: Patient): PatientWriteInput {
     firstName,
     lastName,
     dni: patient.dni,
+    cuil: patient.cuil,
+    birthDate: patient.birthDate,
     phone: patient.phone,
     insurance: patient.insurance,
-    insuranceId: patient.insuranceId ?? null,
+    insuranceId: patient.insuranceId,
     affiliateNumber: patient.affiliateNumber,
     insurancePlan: patient.insurancePlan,
     email: patient.email,
@@ -59,6 +64,8 @@ export function toPacienteWriteData(input: PatientWriteInput) {
     apellido: lastName,
     dni,
     dniNormalizado: normalizeDni(dni),
+    cuil: normalizeCuil(input.cuil ?? "") || null,
+    fechaNacimiento: optionalAppDateToDb(input.birthDate, "birthDate"),
     telefono: input.phone.trim(),
     nroAfiliado: input.affiliateNumber?.trim() || null,
     planObraSocial: input.insurancePlan?.trim() || null,

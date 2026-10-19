@@ -11,6 +11,7 @@ import {
   testId,
   uniqueDigits,
 } from "./helpers";
+import { cuilCheckDigit } from "../../src/lib/document-validation";
 
 after(async () => {
   await cleanupTestData();
@@ -122,5 +123,38 @@ describe("API de pacientes", () => {
     });
     assert.equal(res.status, 400);
     assert.equal(res.field, "status");
+  });
+
+  it("CUIL y fecha de nacimiento (RF08): se guardan, se devuelven y se pueden borrar", async () => {
+    const id = testId("pac");
+    const dni = uniqueDigits(8);
+    const prefix = ["20", "27", "23"].find((p) => cuilCheckDigit(p + dni) !== null)!;
+    const cuil = `${prefix}${dni}${cuilCheckDigit(prefix + dni)}`;
+    const body = patientBody({ id, dni, cuil: `${cuil.slice(0, 2)}-${dni}-${cuil.slice(10)}`, birthDate: "5/3/1990" });
+
+    const created = await api<{ cuil?: string; birthDate?: string }>("/api/patients", { method: "POST", body });
+    assert.equal(created.status, 201, created.error);
+    assert.equal(created.data?.cuil, cuil);
+    assert.equal(created.data?.birthDate, "05-03-1990");
+    const record = await prisma.paciente.findUniqueOrThrow({ where: { id } });
+    assert.equal(record.cuil, cuil);
+    assert.equal(record.fechaNacimiento?.toISOString().slice(0, 10), "1990-03-05");
+
+    const cleared = await api<{ cuil?: string; birthDate?: string }>(`/api/patients/${id}`, {
+      method: "PATCH",
+      body: { ...body, cuil: "", birthDate: "" },
+    });
+    assert.equal(cleared.status, 200, cleared.error);
+    assert.equal(cleared.data?.cuil, undefined);
+    assert.equal(cleared.data?.birthDate, undefined);
+  });
+
+  it("rechaza un CUIL que no corresponde al DNI con 400 y field cuil", async () => {
+    const res = await api("/api/patients", {
+      method: "POST",
+      body: patientBody({ id: testId("pac"), cuil: "20-32456789-6" }),
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.field, "cuil");
   });
 });
