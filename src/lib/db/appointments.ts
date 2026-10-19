@@ -10,6 +10,7 @@ import {
   toTurnoWriteData,
   type AppointmentWriteInput,
 } from "@/lib/db/appointment-write";
+import { assignSessionForAppointment } from "@/lib/db/insurances";
 import { enqueueAppointmentNotifications } from "@/lib/db/notifications";
 import { getProfessionalsFromDb } from "@/lib/db/professionals";
 import { recomputePatientLastAppointment } from "@/lib/db/sync";
@@ -20,6 +21,7 @@ import {
   validateAppointmentStatusChange,
 } from "@/lib/appointment-validation";
 import { scheduleNotificationDispatch } from "@/lib/notifications/schedule";
+import { withAppointmentLocks } from "@/lib/db/locks";
 import { prisma, type DbClient } from "@/lib/prisma";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { Prisma } from "@prisma/client";
@@ -47,33 +49,6 @@ export async function getAppointmentByIdFromDb(
 ): Promise<Appointment | null> {
   const record = await db.turno.findUnique({ where: { id } });
   return record ? mapAppointment(record) : null;
-}
-
-/**
- * Serializa las escrituras de turnos que tocan al mismo paciente o profesional
- * (advisory locks de transacción): validar + escribir queda atómico frente a
- * altas concurrentes. Se toman primero los de pacientes y después los de
- * profesionales, en orden, para no generar deadlocks.
- */
-async function withAppointmentLocks<T>(
-  patientIds: string[],
-  professionalIds: string[],
-  fn: (tx: DbClient) => Promise<T>
-): Promise<T> {
-  const keys = [
-    ...[...new Set(patientIds)].sort().map((id) => `turno:paciente:${id}`),
-    ...[...new Set(professionalIds)].sort().map((id) => `turno:profesional:${id}`),
-  ];
-
-  return prisma.$transaction(
-    async (tx) => {
-      for (const key of keys) {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
-      }
-      return fn(tx);
-    },
-    { timeout: 15_000 }
-  );
 }
 
 async function resolveAppointmentNames(
@@ -206,6 +181,9 @@ export async function createAppointmentInDb(
         rethrowTurnoSlotUniqueViolation(error);
       }
 
+      // Turno cargado ya atendido (fecha pasada): descuenta de la autorización vigente.
+      await assignSessionForAppointment(tx, created);
+
       const notificationIds = await enqueueAppointmentNotifications(tx, null, {
         appointment: mapAppointment(created),
         patientEmail,
@@ -252,6 +230,8 @@ export async function updateAppointmentInDb(
       } catch (error) {
         rethrowTurnoSlotUniqueViolation(error);
       }
+
+      await assignSessionForAppointment(tx, updated);
 
       const previousEmail =
         existing.patientId === input.patientId
@@ -312,6 +292,9 @@ export async function updateAppointmentStatusInDb(
       } catch (error) {
         rethrowTurnoSlotUniqueViolation(error);
       }
+
+      // Al pasar a atendido se descuenta una sesión de la autorización vigente.
+      await assignSessionForAppointment(tx, updated);
 
       const patientEmail = await getPatientEmail(existing.patientId, tx);
       const notificationIds = await enqueueAppointmentNotifications(

@@ -14,6 +14,10 @@ export interface PatientFormValues {
   phone: string;
   email: string;
   insurance: string;
+  /** Obra social del catálogo; "" = Particular. */
+  insuranceId: string;
+  affiliateNumber: string;
+  insurancePlan: string;
   status: PatientStatus;
   notes: string;
 }
@@ -32,6 +36,9 @@ export const INITIAL_PATIENT_FORM: PatientFormValues = {
   phone: "",
   email: "",
   insurance: "",
+  insuranceId: "",
+  affiliateNumber: "",
+  insurancePlan: "",
   status: "activo",
   notes: "",
 };
@@ -50,6 +57,9 @@ export function buildPatientFormValues(patient: Patient): PatientFormValues {
     phone: patient.phone,
     email: patient.email ?? "",
     insurance: patient.insurance === "Particular" ? "" : patient.insurance,
+    insuranceId: patient.insuranceId ?? "",
+    affiliateNumber: patient.affiliateNumber ?? "",
+    insurancePlan: patient.insurancePlan ?? "",
     status: patient.status,
     notes: patient.notes ?? "",
   };

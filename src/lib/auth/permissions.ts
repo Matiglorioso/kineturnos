@@ -12,7 +12,9 @@ export type Permission =
   | "professionals:delete"
   | "clinical:read"
   | "clinical:write"
-  | "clinical:audit";
+  | "clinical:audit"
+  | "insurances:read"
+  | "insurances:write";
 
 const ALL_PERMISSIONS: Permission[] = [
   "appointments:read",
@@ -27,6 +29,8 @@ const ALL_PERMISSIONS: Permission[] = [
   "clinical:read",
   "clinical:write",
   "clinical:audit",
+  "insurances:read",
+  "insurances:write",
 ];
 
 /**
@@ -46,13 +50,15 @@ const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
     // Historia clínica: solo de pacientes con los que tiene turnos (canAccessClinicalHistory).
     "clinical:read",
     "clinical:write",
+    // Ve la cobertura de sus pacientes; el catálogo y las autorizaciones los gestiona Administración.
+    "insurances:read",
   ],
 };
 
 /** Rutas de página permitidas por rol (además de públicas). */
 const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
-  superadmin: ["/", "/agenda", "/pacientes", "/profesionales", "/proyecto"],
-  admin: ["/", "/agenda", "/pacientes", "/profesionales", "/proyecto"],
+  superadmin: ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/proyecto"],
+  admin: ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/proyecto"],
   profesional: ["/", "/agenda", "/pacientes", "/proyecto"],
 };
 

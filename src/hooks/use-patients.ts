@@ -17,8 +17,9 @@ export function usePatients() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
+  /** `silent`: actualiza los datos sin mostrar la pantalla de carga (no cierra diálogos abiertos). */
+  const refresh = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setIsLoading(true);
     setError(null);
 
     try {

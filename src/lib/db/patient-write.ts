@@ -10,7 +10,12 @@ export interface PatientWriteInput {
   lastName: string;
   dni: string;
   phone: string;
+  /** Nombre de la obra social (compatibilidad: se busca o se crea en el catálogo). */
   insurance?: string;
+  /** Obra social del catálogo; null = Particular; ausente = se resuelve por `insurance`. */
+  insuranceId?: string | null;
+  affiliateNumber?: string;
+  insurancePlan?: string;
   email?: string;
   notes?: string;
   status?: PatientStatus;
@@ -32,6 +37,9 @@ export function patientToWriteInput(patient: Patient): PatientWriteInput {
     dni: patient.dni,
     phone: patient.phone,
     insurance: patient.insurance,
+    insuranceId: patient.insuranceId ?? null,
+    affiliateNumber: patient.affiliateNumber,
+    insurancePlan: patient.insurancePlan,
     email: patient.email,
     notes: patient.notes,
     status: patient.status,
@@ -52,7 +60,8 @@ export function toPacienteWriteData(input: PatientWriteInput) {
     dni,
     dniNormalizado: normalizeDni(dni),
     telefono: input.phone.trim(),
-    obraSocial: input.insurance?.trim() || "Particular",
+    nroAfiliado: input.affiliateNumber?.trim() || null,
+    planObraSocial: input.insurancePlan?.trim() || null,
     email: input.email?.trim() || null,
     observaciones: input.notes?.trim() || null,
     estado: input.status ?? "activo",

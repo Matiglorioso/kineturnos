@@ -20,6 +20,7 @@ import {
   Stethoscope,
   Users,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -54,6 +55,11 @@ const navigation = [
     name: "Profesionales",
     href: "/profesionales",
     icon: Stethoscope,
+  },
+  {
+    name: "Obras sociales",
+    href: "/obras-sociales",
+    icon: ShieldCheck,
   },
 ];
 
