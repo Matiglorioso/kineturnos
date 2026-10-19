@@ -82,6 +82,14 @@ function PacientesPageContent() {
     }
   }, [searchParams]);
 
+  // Desde el panel ("Nuevo paciente"): abre el alta y limpia el parámetro de la URL.
+  useEffect(() => {
+    if (searchParams.get("nuevo") !== "1" || !canManagePatients) return;
+    setEditingPatient(null);
+    setDialogOpen(true);
+    window.history.replaceState(null, "", "/pacientes");
+  }, [searchParams, canManagePatients]);
+
   const deleteAppointmentCount = useMemo(() => {
     if (!patientToDelete) return 0;
     return countPatientAppointments(appointments, patientToDelete.id);

@@ -19,7 +19,9 @@ test.describe("login", () => {
       await loginViaUi(page, USERS[role].email, SEED_PASSWORD);
 
       await expect(page).toHaveURL("/");
-      await expect(page.getByRole("heading", { name: "Resumen del día" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: /^(Buen día|Buenas tardes|Buenas noches)/ })
+      ).toBeVisible();
       await expect(page.getByText(USERS[role].roleLabel, { exact: true })).toBeVisible();
     });
   }
