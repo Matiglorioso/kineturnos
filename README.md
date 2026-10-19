@@ -45,10 +45,11 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 ## Funcionalidades principales
 
 ### Panel de control
-- Métricas del día: turnos totales, confirmados, pendientes, cancelados y pacientes activos
-- Próximos turnos y actividad reciente
-- Resumen por estado con distribución visual
-- **Indicadores por período** (esta semana, este mes, mes anterior, últimos 3 meses, este año) comparados con el período anterior: turnos, sesiones atendidas, pacientes atendidos, tasa de cancelación y de ausentismo; evolución en el tiempo, turnos por profesional, sesiones por obra social y autorizaciones para gestionar
+- Saludo, fecha y atajos para **agendar un turno** o **registrar un paciente**
+- **Accesos rápidos** a Agenda, Pacientes, Obras sociales y Profesionales (según el perfil)
+- **Hoy**: turnos del día, asistencias por registrar, turnos por confirmar del próximo día y autorizaciones para gestionar
+- **Agenda de hoy** (con el turno en curso resaltado) y **Para hacer**: marcar atendido/ausente, confirmar turnos (con el teléfono para llamar) y autorizaciones vencidas o por renovar, sin salir del panel
+- **Indicadores (RF16)** de esta semana, este mes o el mes anterior, comparados con el período anterior: sesiones atendidas, pacientes atendidos, tasa de cancelación y de ausentismo, evolución y turnos por profesional
 
 ### Agenda
 - Vista **lista** (turnos del día) y **semanal** (lun–sáb)
