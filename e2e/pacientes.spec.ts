@@ -23,7 +23,7 @@ test.describe("lista de pacientes: orden y filtro por obra social", () => {
     });
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, teléfono u obra social…").fill(tag);
+    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(tag);
     const table = page.getByRole("table");
     await expect(table.getByRole("row").filter({ hasText: other.nombre })).toBeVisible();
 
@@ -52,7 +52,7 @@ test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
     const cuil = `${prefix}-${dni}-${cuilCheckDigit(prefix + dni)}`;
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, teléfono u obra social…").fill(patient.nombre);
+    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(patient.nombre);
     await page.getByRole("row").filter({ hasText: patient.nombre }).getByRole("button", { name: "Ver detalle" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Editar paciente" }).click();
 
@@ -76,5 +76,24 @@ test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
     const detail = page.getByRole("dialog", { name: patient.nombre });
     await expect(detail).toContainText(cuil);
     await expect(detail).toContainText(/05-03-1990 \(\d+ años\)/);
+  });
+
+  test("el buscador encuentra al paciente por CUIL, con o sin guiones", async ({ page }) => {
+    const patient = await createPatient(uniqueName("BuscaCuil"));
+    const dni = patient.dni.padStart(8, "0");
+    const prefix = ["20", "27", "23"].find((p) => cuilCheckDigit(p + dni) !== null)!;
+    const cuil = `${prefix}${dni}${cuilCheckDigit(prefix + dni)}`;
+    await prisma.paciente.update({ where: { id: patient.id }, data: { cuil } });
+
+    await page.goto("/pacientes");
+    const search = page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…");
+    const row = page.getByRole("row").filter({ hasText: patient.nombre });
+
+    await search.fill(`${cuil.slice(0, 2)}-${cuil.slice(2, 10)}-${cuil.slice(10)}`);
+    await expect(row).toBeVisible();
+    await expect(page.getByRole("row")).toHaveCount(2);
+
+    await search.fill(cuil);
+    await expect(row).toBeVisible();
   });
 });

@@ -34,7 +34,7 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
 
     // Ficha del paciente: obra social del catálogo y número de afiliado.
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, teléfono u obra social…").fill(patient.dni);
+    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(patient.dni);
     await page.getByRole("button", { name: "Ver detalle" }).filter({ visible: true }).first().click();
     const detail = page.getByRole("dialog", { name: patient.nombre });
     await detail.getByRole("button", { name: "Editar paciente" }).click();
