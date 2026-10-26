@@ -1,0 +1,82 @@
+name: Respaldo
+
+# RNF09: respaldo diario de la base de producción, cifrado con AES-256 (el
+# repositorio es público: sin la frase no se puede leer). Se guarda 14 días como
+# archivo del workflow. Si la base no cambió desde el último respaldo, no se sube
+# otro, salvo que ese tenga 7 días o más (así siempre hay uno vigente).
+# Requiere los secrets BACKUP_DATABASE_URL (usuario de solo lectura, host directo
+# sin -pooler) y BACKUP_PASSPHRASE. Ver docs/RESPALDOS.md.
+on:
+  schedule:
+    - cron: "30 6 * * *" # 03:30 en Buenos Aires
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Respaldar y decidir si se guarda
+        id: respaldo
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "Faltan los secrets BACKUP_DATABASE_URL o BACKUP_PASSPHRASE: no se respalda."
+            echo "guardar=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          scripts/respaldo/respaldar.sh salida
+          hash=$(cut -c1-12 salida/hash)
+          today=$(date -u +%F)
+
+          # Último respaldo vigente: respaldo-<fecha>-<hash>.
+          last=$(gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false and (.name | startswith("respaldo-")))
+                  | "\(.created_at) \(.name)"' | sort | tail -n 1 | awk '{print $2, $1}')
+          save=true
+          reason="no hay respaldos vigentes"
+          if [ -n "$last" ]; then
+            last_name=${last%% *}
+            last_date=${last##* }
+            age_days=$(( ( $(date -u +%s) - $(date -u -d "$last_date" +%s) ) / 86400 ))
+            if [ "${last_name##*-}" = "$hash" ] && [ "$age_days" -lt 7 ]; then
+              save=false
+              reason="la base no cambió desde $last_name (hace $age_days días)"
+            elif [ "${last_name##*-}" = "$hash" ]; then
+              reason="la base no cambió, pero el último respaldo tiene $age_days días"
+            else
+              reason="la base cambió desde $last_name"
+            fi
+          fi
+
+          echo "guardar=$save" >> "$GITHUB_OUTPUT"
+          echo "nombre=respaldo-$today-$hash" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Respaldo de la base"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Tamaño (cifrado) | $(cat salida/tamano) |"
+            echo "| Huella (sha256) | \`$hash\` |"
+            echo "| Se guarda | $([ "$save" = true ] && echo "✅ sí" || echo "— no") ($reason) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar el respaldo (14 días)
+        if: steps.respaldo.outputs.guardar == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.respaldo.outputs.nombre }}
+          path: salida/kineturnos.sql.gz.gpg
+          retention-days: 14
+          compression-level: 0
+          if-no-files-found: error
