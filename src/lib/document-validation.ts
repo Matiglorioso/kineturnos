@@ -77,3 +77,50 @@ export const DUPLICATE_DNI_MESSAGE =
 
 export const DUPLICATE_LICENSE_MESSAGE =
   "Ya existe un profesional registrado con esa matrícula";
+
+/** CUIL/CUIT de persona: prefijo de 2 dígitos, DNI de 8 y dígito verificador. */
+const CUIL_LENGTH = 11;
+const CUIL_PERSON_PREFIXES = ["20", "23", "24", "27"];
+const CUIL_WEIGHTS = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+
+export function normalizeCuil(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+/** 20-32456789-6. Si no tiene 11 dígitos, lo devuelve como vino. */
+export function formatCuil(value: string): string {
+  const digits = normalizeCuil(value);
+  if (digits.length !== CUIL_LENGTH) return value;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
+}
+
+export function cuilCheckDigit(firstTen: string): number | null {
+  const sum = CUIL_WEIGHTS.reduce((acc, weight, index) => acc + weight * Number(firstTen[index]), 0);
+  const digit = 11 - (sum % 11);
+  if (digit === 11) return 0;
+  if (digit === 10) return null;
+  return digit;
+}
+
+/** El CUIL es opcional; si se carga, tiene que ser válido y corresponder al DNI. */
+export function cuilFormatValidationError(value: string, dni: string): string | undefined {
+  const normalized = normalizeCuil(value);
+  if (!normalized) return undefined;
+
+  if (normalized.length !== CUIL_LENGTH) {
+    return "El CUIL debe tener 11 dígitos";
+  }
+  if (
+    !CUIL_PERSON_PREFIXES.includes(normalized.slice(0, 2)) ||
+    cuilCheckDigit(normalized.slice(0, 10)) !== Number(normalized[10])
+  ) {
+    return "El CUIL no es válido: revisá los dígitos";
+  }
+
+  const dniDigits = normalizeDni(dni);
+  if (dniDigits && normalized.slice(2, 10) !== dniDigits.padStart(8, "0")) {
+    return "El CUIL no corresponde al DNI";
+  }
+
+  return undefined;
+}
