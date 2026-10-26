@@ -58,4 +58,24 @@ test.describe("mobile (390 px)", () => {
     await expect(page).toHaveURL("/cambiar-contrasena");
     await expect(page.getByRole("heading", { name: "Cambiar contraseña" })).toBeVisible();
   });
+
+  test("agenda por profesional: un profesional a la vez, elegido arriba", async ({ page }) => {
+    const professional = await createProfessional(uniqueName("Movil"));
+    const patient = await createPatient(uniqueName("Movil"));
+    const date = futureWorkday(26);
+    await createAppointmentInDb({ patient, professional, date, time: "09:00" });
+
+    await page.goto("/agenda");
+    await goToAgendaDate(page, date);
+    // El día elegido se mantiene al cambiar de vista.
+    await page.getByRole("group", { name: "Vista de la agenda" }).getByRole("button", { name: "Profesionales" }).click();
+
+    await expect(page.getByRole("table", { name: "Turnos por profesional" })).toBeHidden();
+    const tabs = page.getByRole("tablist", { name: "Profesionales del día" });
+    await tabs.getByRole("tab", { name: new RegExp(professional.nombre) }).click();
+    const panel = page.getByRole("tabpanel", { name: professional.nombre });
+    await expect(panel.getByRole("button", { name: new RegExp(`^09:00 · ${patient.nombre}`) })).toBeVisible();
+    await expect(panel.getByRole("button", { name: `Agendar con ${professional.nombre} a las 10:00` })).toBeVisible();
+  });
 });
+
