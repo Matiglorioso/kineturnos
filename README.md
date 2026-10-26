@@ -16,7 +16,7 @@ Sistema web para organizar turnos, pacientes y profesionales en consultorios de 
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
 | **Versión** | v1.0 · PostgreSQL + Auth · 2026 |
 | **Base de datos** | PostgreSQL (Neon) + Prisma — [setup local](docs/TU-PARTE-NEON.md) · [deploy Vercel](docs/TU-PARTE-VERCEL.md) |
-| **Documentación** | [Fases](docs/FASES.md) · [Modelo de datos (DER)](docs/DER.md) · [Pruebas](docs/TESTING.md) · [Rendimiento](docs/RENDIMIENTO.md) · [Disponibilidad](docs/DISPONIBILIDAD.md) · [Notificaciones](docs/NOTIFICACIONES.md) |
+| **Documentación** | [Fases](docs/FASES.md) · [Modelo de datos (DER)](docs/DER.md) · [Pruebas](docs/TESTING.md) · [Rendimiento](docs/RENDIMIENTO.md) · [Disponibilidad](docs/DISPONIBILIDAD.md) · [Respaldos](docs/RESPALDOS.md) · [Notificaciones](docs/NOTIFICACIONES.md) |
 
 ---
 
@@ -349,6 +349,7 @@ kineturnos/
 | Gestión de usuarios y contraseñas | ✅ Completo |
 | Búsqueda de pacientes por nombre, DNI o CUIL (RF08) | ✅ Completo |
 | Monitoreo de disponibilidad 24 h (RNF08) | ✅ Completo ([detalle](docs/DISPONIBILIDAD.md)) |
+| Respaldo diario cifrado de la base (RNF09) | ✅ Completo ([detalle](docs/RESPALDOS.md)) |
 | Rendimiento medido con 6.640 turnos (RNF03, RNF04) | ✅ Completo ([informe](docs/RENDIMIENTO.md)) |
 | Notificaciones por WhatsApp | ❌ No incluido |
 

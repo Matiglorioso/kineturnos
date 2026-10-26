@@ -48,7 +48,8 @@ Requerimientos: RF16 y RF17.
 - CUIL y fecha de nacimiento del paciente, con búsqueda por CUIL (RF08);
 - vista de la agenda por profesional (RF03);
 - medición del rendimiento con el volumen real de operación (RNF03 y RNF04);
-- monitoreo continuo de la disponibilidad (RNF08).
+- monitoreo continuo de la disponibilidad (RNF08);
+- respaldo diario cifrado de la base (RNF09).
 
 Las fases 2 y 4 se implementaron en orden inverso al planificado: las notificaciones quedaron operativas antes que la historia clínica.
 
@@ -84,7 +85,7 @@ Las fases 2 y 4 se implementaron en orden inverso al planificado: las notificaci
 | RNF05 – Contraseñas cifradas | 1 | ✅ bcrypt |
 | RNF06, RNF07 – Privacidad y trazabilidad clínica | 2 | ✅ |
 | RNF08 – Disponibilidad 24 h | Cierre | ✅ Monitoreo cada 15 min ([DISPONIBILIDAD.md](DISPONIBILIDAD.md)) |
-| RNF09 – Respaldo periódico de la base | — | ⚠️ Lo da Neon (historial de restauración); falta un respaldo propio programado |
+| RNF09 – Respaldo periódico de la base | Cierre | ✅ Respaldo diario cifrado, 14 días, con prueba de restauración en el CI ([RESPALDOS.md](RESPALDOS.md)) |
 | RNF10 – Chrome y Edge | Todas | ✅ (pruebas E2E en Chromium) |
 | RNF11, RNF12 – Arquitectura modular y código mantenible | Todas | ✅ |
 | RNF13 – Nivel técnico Superadmin | 1 | ✅ |
