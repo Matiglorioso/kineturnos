@@ -70,15 +70,21 @@ interface NewAppointmentDialogProps {
   professionals: Professional[];
   existingAppointments: Appointment[];
   defaultDate: string;
+  /** Alta desde un hueco libre de la vista por profesional: profesional y hora ya elegidos. */
+  defaultProfessionalId?: string;
+  defaultTime?: string;
   editingAppointment?: Appointment | null;
 }
 
-function buildInitialForm(defaultDate: string): NewAppointmentFormValues {
+function buildInitialForm(
+  defaultDate: string,
+  defaults: { professionalId?: string; time?: string } = {}
+): NewAppointmentFormValues {
   return {
     patientId: "",
-    professionalId: "",
+    professionalId: defaults.professionalId ?? "",
     date: defaultDate,
-    time: "",
+    time: defaults.time ?? "",
     sessionType: "",
     status: "pendiente",
     notes: "",
@@ -107,6 +113,8 @@ export function NewAppointmentDialog({
   professionals,
   existingAppointments,
   defaultDate,
+  defaultProfessionalId,
+  defaultTime,
   editingAppointment = null,
 }: NewAppointmentDialogProps) {
   const isEditing = Boolean(editingAppointment);
@@ -151,10 +159,10 @@ export function NewAppointmentDialog({
       setForm(buildFormFromAppointment(editingAppointment));
       setErrors({});
     } else {
-      setForm(buildInitialForm(defaultDate));
+      setForm(buildInitialForm(defaultDate, { professionalId: defaultProfessionalId, time: defaultTime }));
       setErrors({});
     }
-  }, [open, defaultDate, editingAppointment]);
+  }, [open, defaultDate, defaultProfessionalId, defaultTime, editingAppointment]);
 
   // Estados posibles: los que admite la fecha y, al editar, las transiciones
   // permitidas desde el estado actual del turno.

@@ -52,8 +52,8 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - **Indicadores (RF16)** de esta semana, este mes o el mes anterior, comparados con el período anterior: sesiones atendidas, pacientes atendidos, tasa de cancelación y de ausentismo, evolución y turnos por profesional
 
 ### Agenda
-- Vista **lista** (turnos del día) y **semanal** (lun–sáb)
-- Filtros por estado y profesional
+- Vistas por **día**, por **semana** (lun–sáb) y por **profesional** (RF03): el día de todos los profesionales en columnas, con los horarios libres a un toque de "Agendar turno" (en celular, un profesional a la vez)
+- Filtros por estado, paciente y profesional
 - Creación, edición y cambio de estado de turnos
 - Validación de solapamientos y horarios del profesional
 - **Correos al paciente** al crear, confirmar, reprogramar o cancelar un turno, y recordatorio 24 h antes ([`docs/NOTIFICACIONES.md`](docs/NOTIFICACIONES.md))
@@ -313,7 +313,7 @@ kineturnos/
 |---|---|
 | UI / UX responsive | ✅ Completo |
 | CRUD pacientes, profesionales y turnos | ✅ Completo |
-| Agenda lista + semanal | ✅ Completo |
+| Agenda por día, semana y profesional (RF03) | ✅ Completo |
 | Validación de horarios y solapamientos | ✅ Completo (cliente + servidor) |
 | PostgreSQL (Neon) + Prisma | ✅ Completo |
 | API REST + hooks conectados a DB | ✅ Completo |
