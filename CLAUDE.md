@@ -58,6 +58,7 @@ npx prisma migrate dev --name <nombre>   # crear una migración nueva
 ## Reglas de dominio
 
 - **Fechas** en la app y en la API: string `dd-MM-yyyy`; horas `HH:mm`. En la base son `DATE` / `TIME` (`src/lib/db/date-codec.ts` convierte). No comparar fechas como strings: usar `compareAppDates` / `areSameAppDay`.
+- **Paciente (RF08):** DNI obligatorio y único; CUIL y fecha de nacimiento opcionales (los pacientes ya cargados no los tienen). El CUIL se guarda sin guiones y se valida en `cuilFormatValidationError` (prefijo de persona, dígito verificador módulo 11 y que el DNI coincida); la fecha de nacimiento acepta `/` o `.` y no puede ser futura (`src/lib/birth-date.ts`, que también calcula la edad).
 - **"Hoy"** se calcula en `America/Argentina/Buenos_Aires` (`getTodayAppDate`, `getNowAppMinutes`), no con la hora del servidor (Vercel corre en UTC).
 - **Turnos de 1 hora** y horario del consultorio común a todos los profesionales: `CLINIC_OPENING_TIME` / `CLINIC_CLOSING_TIME` en `src/lib/appointment-constants.ts` (08:00–18:00). Cada profesional solo define sus días de atención.
 - **Estados** de turno: activos (`pendiente`, `confirmado`) y finales (`atendido`, `cancelado`, `ausente`). Solo se eliminan turnos finales; no se borra un paciente ni un profesional con turnos activos. `atendido`/`ausente` no se permiten en fechas futuras.

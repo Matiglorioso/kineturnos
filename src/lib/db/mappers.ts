@@ -17,6 +17,8 @@ export function mapPatient(record: Paciente): Patient {
     firstName: record.nombrePila ?? undefined,
     lastName: record.apellido ?? undefined,
     dni: record.dni,
+    cuil: record.cuil ?? undefined,
+    birthDate: optionalDbDateToApp(record.fechaNacimiento),
     phone: record.telefono,
     insurance: record.obraSocial,
     insuranceId: record.obraSocialId,

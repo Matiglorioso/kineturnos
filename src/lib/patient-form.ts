@@ -1,6 +1,10 @@
 import { Patient, PatientStatus } from "@/types";
+import { birthDateValidationError, normalizeBirthDateInput } from "@/lib/birth-date";
 import {
+  cuilFormatValidationError,
   dniFormatValidationError,
+  formatCuil,
+  normalizeCuil,
   DUPLICATE_DNI_MESSAGE,
   isDuplicateDni,
 } from "@/lib/document-validation";
@@ -11,6 +15,9 @@ export interface PatientFormValues {
   firstName: string;
   lastName: string;
   dni: string;
+  cuil: string;
+  /** dd-mm-aaaa, tal como se escribe. */
+  birthDate: string;
   phone: string;
   email: string;
   insurance: string;
@@ -27,12 +34,16 @@ export type PatientFormErrors = Partial<Record<keyof PatientFormValues, string>>
 export interface PatientFormValidationOptions {
   excludePatientId?: string;
   existingPatients?: Array<Pick<Patient, "id" | "dni">>;
+  /** dd-MM-yyyy; por defecto, hoy en el consultorio. */
+  today?: string;
 }
 
 export const INITIAL_PATIENT_FORM: PatientFormValues = {
   firstName: "",
   lastName: "",
   dni: "",
+  cuil: "",
+  birthDate: "",
   phone: "",
   email: "",
   insurance: "",
@@ -54,6 +65,8 @@ export function buildPatientFormValues(patient: Patient): PatientFormValues {
     firstName,
     lastName,
     dni: patient.dni,
+    cuil: patient.cuil ? formatCuil(patient.cuil) : "",
+    birthDate: patient.birthDate ?? "",
     phone: patient.phone,
     email: patient.email ?? "",
     insurance: patient.insurance === "Particular" ? "" : patient.insurance,
@@ -93,6 +106,14 @@ export function validatePatientForm(
     errors.dni = DUPLICATE_DNI_MESSAGE;
   }
 
+  if (!errors.dni) {
+    const cuilError = cuilFormatValidationError(values.cuil, values.dni);
+    if (cuilError) errors.cuil = cuilError;
+  }
+
+  const birthDateError = birthDateValidationError(values.birthDate, options?.today);
+  if (birthDateError) errors.birthDate = birthDateError;
+
   const phoneError = requiredFieldError(values.phone, "El teléfono es obligatorio");
   if (phoneError) errors.phone = phoneError;
 
@@ -100,4 +121,12 @@ export function validatePatientForm(
   if (emailError) errors.email = emailError;
 
   return errors;
+}
+
+/** CUIL (solo dígitos) y fecha de nacimiento (dd-MM-yyyy) listos para guardar. */
+export function normalizeIdentityFields(values: Pick<PatientFormValues, "cuil" | "birthDate">) {
+  return {
+    cuil: normalizeCuil(values.cuil) || undefined,
+    birthDate: normalizeBirthDateInput(values.birthDate) || undefined,
+  };
 }
