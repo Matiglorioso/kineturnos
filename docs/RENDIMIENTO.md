@@ -93,9 +93,12 @@ Hasta este cambio, Vercel ejecutaba la API en su región por defecto, `iad1` (Wa
 
 [`vercel.json`](../vercel.json) fija ahora `"regions": ["gru1"]` (São Paulo): la API corre al lado de la base y más cerca del consultorio.
 
-| Medición en producción | `iad1` (antes) | `gru1` (después) |
+| Medición en producción (26-10-2026) | `iad1` (antes) | `gru1` (después) |
 |---|---|---|
-| `/api/health/db` (una consulta), mediana de 12 | 553 ms | *(se completa después del deploy)* |
+| `/api/health/db` (una consulta), mediana de 12 | 553 ms | **312 ms** (−44 %) |
+| Mínimo / máximo | 516 / 972 ms | 294 / 560 ms |
+
+Medido desde Argentina, con todo el recorrido incluido (conexión, Vercel y base). Los 312 ms restantes son casi todos de la red hasta Vercel. La consulta a la base, que antes cruzaba el continente, ahora ocurre dentro de São Paulo. En las pantallas que hacen varias consultas, la mejora se multiplica.
 
 ## Cómo repetirlo
 

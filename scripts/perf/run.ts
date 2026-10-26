@@ -12,14 +12,11 @@
  * pero usá la rama de pruebas de Neon, nunca la de producción.
  */
 import { DEFAULT_VOLUME, seedVolume } from "./seed-volume";
-import { PrismaClient } from "@prisma/client";
+import { createScratchApp } from "../lib/scratch-app";
 import { chromium } from "@playwright/test";
-import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { addDays, format } from "date-fns";
-
-process.loadEnvFile?.(".env.local");
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(`--${name}`);
@@ -36,7 +33,6 @@ const PAGE_RUNS = Number(option("cargas", "5"));
 /** Altas y cambios de estado: dos recepcionistas a la vez, como en el consultorio. */
 const WRITERS = 2;
 const LIMIT_MS = 3000;
-const DIST_DIR = ".next-perf";
 
 interface Sample {
   ms: number;
@@ -104,28 +100,6 @@ async function load(total: number, users: number, run: (index: number) => Promis
   return samples;
 }
 
-function run(command: string, commandArgs: string[], env: NodeJS.ProcessEnv, label: string) {
-  const result = spawnSync(command, commandArgs, {
-    env,
-    encoding: "utf8",
-    shell: process.platform === "win32",
-    timeout: 600_000,
-  });
-  if (result.status !== 0) throw new Error(`${label} falló:\n${result.stdout}\n${result.stderr}`);
-}
-
-async function waitForServer() {
-  for (let attempt = 0; attempt < 120; attempt += 1) {
-    try {
-      if ((await fetch(`${BASE}/login`)).ok) return;
-    } catch {
-      // todavía arrancando
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  throw new Error("La app no respondió en el puerto 3100.");
-}
-
 async function measurePages(email: string, password: string) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -170,58 +144,26 @@ async function measurePages(email: string, password: string) {
 }
 
 async function main() {
-  const baseUrl = process.env.DATABASE_URL;
-  if (!baseUrl) throw new Error("Falta DATABASE_URL (.env.local).");
-
-  const name = `kineturnos_perf_${Date.now()}`;
-  const pooled = new URL(baseUrl);
-  pooled.pathname = `/${name}`;
-  const direct = new URL(pooled.toString());
-  direct.hostname = direct.hostname.replace("-pooler", "");
-
-  const admin = new PrismaClient();
-  let server: ChildProcess | null = null;
+  const app = await createScratchApp("kineturnos_perf", PORT);
   const password = randomBytes(12).toString("base64url") + "9a";
   let dbLatency = 0;
 
-  console.log(`Base descartable: ${name}`);
-  await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
-
   try {
-    run("npx", ["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: direct.toString() }, "migrate deploy");
-
-    const db = new PrismaClient({ datasources: { db: { url: pooled.toString() } } });
     // Ida y vuelta a la base desde donde corre la app: pesa en cada consulta.
-    await db.$queryRaw`SELECT 1`;
+    await app.db.$queryRaw`SELECT 1`;
     const pings: number[] = [];
     for (let index = 0; index < 10; index += 1) {
       const start = performance.now();
-      await db.$queryRaw`SELECT 1`;
+      await app.db.$queryRaw`SELECT 1`;
       pings.push(performance.now() - start);
     }
     dbLatency = percentile(pings, 50);
     console.log(`Latencia app → base: ${fmtMs(dbLatency)} por consulta`);
     const seedStart = performance.now();
-    const volume = await seedVolume(db, password, DEFAULT_VOLUME);
-    await db.$disconnect();
+    const volume = await seedVolume(app.db, password, DEFAULT_VOLUME);
     console.log(`Volumen cargado en ${fmtMs(performance.now() - seedStart)}:`, volume.counts);
 
-    const appEnv = {
-      ...process.env,
-      DATABASE_URL: pooled.toString(),
-      NEXT_DIST_DIR: DIST_DIR,
-      BREVO_API_KEY: "",
-    };
-    if (!flag("sin-build")) {
-      console.log("Compilando para producción…");
-      run("npx", ["next", "build"], { ...appEnv, NODE_ENV: "production" }, "next build");
-    }
-    server = spawn("npx", ["next", "start", "-p", String(PORT)], {
-      env: { ...appEnv, NODE_ENV: "production" },
-      shell: process.platform === "win32",
-      stdio: "ignore",
-    });
-    await waitForServer();
+    await app.start({ skipBuild: flag("sin-build") });
 
     const adminCookie = await login(volume.adminEmail, password);
     const professionalCookie = await login(volume.professionalEmail, password);
@@ -280,14 +222,12 @@ async function main() {
         }),
       WRITERS
     );
-    const appointmentsDb = new PrismaClient({ datasources: { db: { url: pooled.toString() } } });
-    for (const appointment of await appointmentsDb.turno.findMany({
+    for (const appointment of await app.db.turno.findMany({
       where: { profesionalId: { in: volume.freeProfessionalIds } },
       select: { id: true },
     })) {
       created.push(appointment.id);
     }
-    await appointmentsDb.$disconnect();
     await measure(
       "Confirmar un turno (cambio de estado)",
       (index) =>
@@ -338,13 +278,7 @@ async function main() {
     const output = option("salida", "");
     if (output) writeFileSync(output, report, "utf8");
   } finally {
-    if (server?.pid) {
-      if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(server.pid), "/T", "/F"]);
-      else server.kill("SIGTERM");
-    }
-    await admin.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
-    await admin.$disconnect();
-    console.log(`Base ${name} borrada.`);
+    await app.dispose();
   }
 }
 

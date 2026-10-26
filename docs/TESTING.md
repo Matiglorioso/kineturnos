@@ -67,7 +67,7 @@ Commits en formato rojo → verde. PR: #5 unitarios (paso 1), #6 regresión (pas
 | **M6** "Último turno" mal calculado | `patient-appointments.test.ts`, `appointments.int.test.ts` | `b6fb182` → `620b04e` | #6 | ✅ |
 | **M7** Validación incompleta en la API | `parse-*-body.test.ts` | `6c5f5a4` → `0485c9a` | #6 | ✅ 400 con `field` |
 | **M8** Turnos a profesionales/pacientes inactivos | — | — | — | ⏳ Pendiente |
-| **M9** Sin gestión de usuarios | — | — | — | ⏳ Fuera del alcance del plan |
+| **M9** Sin gestión de usuarios | `users.int.test.ts`, `e2e/usuarios.spec.ts` | — | #23 | ✅ Resuelto después del plan (ver §9) |
 | **B1** Orden de turnos por string | `appointment-sort.test.ts` | `4895be7` → `56c29ee` | #6 | ✅ |
 | **B2** Actividad con la hora de creación | `dashboard.test.ts` (`it.todo`) | — | — | ⏳ Documentado, pendiente |
 | **B3–B8** (profesional sin ficha, health público, headers, escalabilidad, transacciones, next-auth beta) | — | — | — | ⏳ Pendientes. B7 mitigado para turnos por las transacciones de M2 |
@@ -126,3 +126,43 @@ Integración y E2E crean y borran datos: nunca contra la base de producción (ve
 - **Cobertura del servidor por líneas:** integración y E2E no suman a la métrica de líneas. Se podría instrumentar `next dev` con `NODE_V8_COVERAGE` para medirla.
 - **Hallazgos pendientes:** M8, B2–B8 y las decisiones de producto de M4 (borrado solo para admin) y A3 (duración de la sesión).
 - **Concurrencia de M2:** los locks cubren las escrituras de la app; no hay una restricción de base equivalente al índice único del profesional para el paciente.
+
+## 9. Estado de la suite al cierre (26-10-2026)
+
+Después del plan de testing, cada fase se entregó con sus propias pruebas en el mismo PR, y el CI corre todo en cada cambio antes de publicarlo.
+
+| | Al cierre del plan (25-09) | Al cierre del proyecto (26-10) |
+|---|---|---|
+| Tests unitarios | 253 (17 archivos) | **400** (27 archivos) |
+| Tests de integración (DB + API) | 44 (6 archivos) | **85** (10 archivos) |
+| Tests E2E (Playwright, escritorio y 390 px) | 17 | **37** (9 archivos) |
+| Cobertura de líneas de la lógica de dominio | 98,1 % (35 archivos) | **98,2 %** (48 archivos) |
+| Cobertura de ramas / funciones de `src/lib` | 88,8 % / 89,5 % | 88,8 % / 88,4 % |
+
+### Qué se prueba de cada módulo nuevo
+
+| Módulo | Unitarios | Integración | E2E |
+|---|---|---|---|
+| Notificaciones (RF05) | Eventos por cambio de turno, plantillas, ventana del recordatorio | Encolado en la misma transacción, cron con `CRON_SECRET`, sin duplicados, reintentos | — |
+| Historia clínica (RF11-RF13) | Resumen vigente, número de sesión, edición del autor en 24 h | Acceso por perfil y por turno, trazabilidad, paciente con historia no se borra | Alta desde la lista y desde la agenda del profesional, paginado |
+| Obras sociales (RF07, RF14, RF15) | Estado de cobertura, elección de la autorización, filtros | Sesiones descontadas al atender, reasignación al editar, planilla mensual | Alta de autorización, aviso al agendar, planilla, pestaña Autorizaciones |
+| Panel e indicadores (RF16, RF17) | Períodos, tasas, evolución, tareas del día | — | Accesos rápidos, registrar asistencia y confirmar desde el panel, indicadores del mes anterior |
+| Pacientes (RF08) | CUIL (dígito verificador, DNI), fecha de nacimiento y edad, búsqueda por CUIL | Alta y borrado de CUIL y fecha | Edición con errores y búsqueda por CUIL |
+| Usuarios | Política de contraseñas, temporal, reglas de perfil y de uno mismo | Alta con contraseña temporal, cambio obligatorio, Superadmin, restablecer y desactivar | Alta de un profesional, primer ingreso y cambio de contraseña; lista en celular |
+| Agenda por profesional (RF03) | Grilla del día: libres, ocupados, pasados, cancelados, filtros | — | Columna con turnos y alta desde un horario libre; pestañas en celular |
+
+### Rendimiento y disponibilidad
+
+- **Rendimiento (RNF03, RNF04):** `npm run perf` mide la API y las pantallas con 6.640 turnos y varios usuarios a la vez. La medición encontró dos cuellos de botella, que se corrigieron sin cambiar las reglas: los mismos tests de integración pasan antes y después. Ver [RENDIMIENTO.md](RENDIMIENTO.md).
+- **Disponibilidad (RNF08):** un chequeo automático cada 15 minutos sobre producción, con aviso por correo si falla. Ver [DISPONIBILIDAD.md](DISPONIBILIDAD.md).
+
+### Hallazgos durante el desarrollo de las fases
+
+| Hallazgo | Cómo apareció | Arreglo |
+|---|---|---|
+| Crear o editar un paciente no devolvía su cobertura | E2E de obras sociales | `withCoverage` en la capa de datos (#20) |
+| Una evolución recién creada no se podía editar por diferencia de reloj entre servidor y base | Test de integración de historia clínica | Tolerancia a tiempos negativos en `canEditClinicalEntry` (#17) |
+| Avatares de profesionales en blanco (violeta y rosa) | Revisión visual en celular | Tailwind escanea `src/lib` (#25) |
+| La lista de pacientes y la validación de turnos traían toda la historia de turnos | Medición de rendimiento | Agregados en la base y validación solo del día (#26) |
+| La API corría en otra región que la base | Medición de rendimiento | Región `gru1` (#26) |
+

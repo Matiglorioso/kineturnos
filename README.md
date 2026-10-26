@@ -16,6 +16,7 @@ Sistema web para organizar turnos, pacientes y profesionales en consultorios de 
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
 | **Versión** | v1.0 · PostgreSQL + Auth · 2026 |
 | **Base de datos** | PostgreSQL (Neon) + Prisma — [setup local](docs/TU-PARTE-NEON.md) · [deploy Vercel](docs/TU-PARTE-VERCEL.md) |
+| **Documentación** | [Fases](docs/FASES.md) · [Modelo de datos (DER)](docs/DER.md) · [Pruebas](docs/TESTING.md) · [Rendimiento](docs/RENDIMIENTO.md) · [Disponibilidad](docs/DISPONIBILIDAD.md) · [Notificaciones](docs/NOTIFICACIONES.md) |
 
 ---
 
@@ -93,27 +94,41 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 ## Capturas
 
+Datos de demostración, con nombres ficticios.
+
 ### Desktop (1440px)
 
-| Dashboard | Agenda semanal |
+| Panel | Agenda del día |
 |:---:|:---:|
-| ![Dashboard desktop](./docs/screenshots/dashboard-desktop.png) | ![Agenda semanal desktop](./docs/screenshots/agenda-semana-desktop.png) |
+| ![Panel](./docs/screenshots/dashboard-desktop.png) | ![Agenda del día](./docs/screenshots/agenda-dia-desktop.png) |
 
-| Pacientes | Profesionales |
+| Agenda semanal | Agenda por profesional |
 |:---:|:---:|
-| ![Pacientes desktop](./docs/screenshots/pacientes-desktop.png) | ![Profesionales desktop](./docs/screenshots/profesionales-desktop.png) |
+| ![Agenda semanal](./docs/screenshots/agenda-semana-desktop.png) | ![Agenda por profesional](./docs/screenshots/agenda-profesionales-desktop.png) |
 
-### Mobile
-
-| Dashboard | Agenda semanal |
+| Pacientes | Historia clínica |
 |:---:|:---:|
-| ![Dashboard](./docs/screenshots/dashboard.png) | ![Agenda semanal](./docs/screenshots/agenda-semana.png) |
+| ![Pacientes](./docs/screenshots/pacientes-desktop.png) | ![Historia clínica](./docs/screenshots/historia-clinica-desktop.png) |
 
-| Pacientes | Profesionales |
+| Autorizaciones | Planilla mensual por obra social |
 |:---:|:---:|
-| ![Pacientes](./docs/screenshots/pacientes.png) | ![Profesionales](./docs/screenshots/profesionales.png) |
+| ![Autorizaciones](./docs/screenshots/autorizaciones-desktop.png) | ![Planilla mensual](./docs/screenshots/planilla-desktop.png) |
 
-_Login requerido. Regenerar desktop: `npm run screenshots:desktop` (Playwright)._
+| Profesionales | Usuarios |
+|:---:|:---:|
+| ![Profesionales](./docs/screenshots/profesionales-desktop.png) | ![Usuarios](./docs/screenshots/usuarios-desktop.png) |
+
+### Mobile (390px)
+
+| Panel | Agenda | Agenda por profesional | Historia clínica |
+|:---:|:---:|:---:|:---:|
+| ![Panel](./docs/screenshots/dashboard.png) | ![Agenda](./docs/screenshots/agenda.png) | ![Agenda por profesional](./docs/screenshots/agenda-profesionales.png) | ![Historia clínica](./docs/screenshots/historia-clinica.png) |
+
+| Agenda semanal | Pacientes | Profesionales | Usuarios |
+|:---:|:---:|:---:|:---:|
+| ![Agenda semanal](./docs/screenshots/agenda-semana.png) | ![Pacientes](./docs/screenshots/pacientes.png) | ![Profesionales](./docs/screenshots/profesionales.png) | ![Usuarios](./docs/screenshots/usuarios.png) |
+
+_Se regeneran con `npm run screenshots`: crea una base descartable con datos de demostración, compila la app y captura con Playwright._
 
 ---
 
@@ -226,6 +241,9 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run test:coverage` | Cobertura de los unitarios (c8); reporte HTML en `coverage/`. Resultados: [docs/TESTING.md](docs/TESTING.md) |
 | `npm run test:e2e` | Tests E2E con Playwright (levanta `npm run dev`; base sembrada con `db:seed`, nunca producción) |
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
+| `npm run perf` | Prueba de rendimiento con volumen real en una base descartable ([docs/RENDIMIENTO.md](docs/RENDIMIENTO.md)) |
+| `npm run screenshots` | Regenera las capturas de `docs/screenshots` con datos de demostración |
+| `npm run disponibilidad` | Porcentaje de disponibilidad según el monitoreo ([docs/DISPONIBILIDAD.md](docs/DISPONIBILIDAD.md)) |
 
 ### Variables de entorno
 
