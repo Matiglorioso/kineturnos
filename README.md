@@ -331,6 +331,7 @@ kineturnos/
 | Gestión de usuarios y contraseñas | ✅ Completo |
 | Búsqueda de pacientes por nombre, DNI o CUIL (RF08) | ✅ Completo |
 | Monitoreo de disponibilidad 24 h (RNF08) | ✅ Completo ([detalle](docs/DISPONIBILIDAD.md)) |
+| Rendimiento medido con 6.640 turnos (RNF03, RNF04) | ✅ Completo ([informe](docs/RENDIMIENTO.md)) |
 | Notificaciones por WhatsApp | ❌ No incluido |
 
 ---

@@ -74,6 +74,7 @@ npx prisma migrate dev --name <nombre>   # crear una migración nueva
 
 ## Tests y CI
 
+- **Rendimiento (RNF03, RNF04):** `npm run perf` (`scripts/perf/`) crea una base descartable en el servidor de `DATABASE_URL`, carga ~6.600 turnos, compila en `.next-perf` (`NEXT_DIST_DIR`) y mide API y pantallas; resultados en `docs/RENDIMIENTO.md`. No traer "todos los turnos" en caminos calientes: la validación de solapamientos usa solo los del día del profesional o paciente, y el último turno de la lista de pacientes sale de un `groupBy`. Producción corre en `gru1` (`vercel.json`), al lado de Neon `sa-east-1`.
 - **Disponibilidad (RNF08):** `.github/workflows/disponibilidad.yml` consulta cada 15 min `/login` y `/api/health/db` en `APP_URL` (3 intentos por la reactivación de Neon); `npm run disponibilidad` calcula el porcentaje con el historial de Actions (necesita `gh`). Ver `docs/DISPONIBILIDAD.md`.
 - CI (`.github/workflows/ci.yml`) corre **solo en push a `main` y en PRs contra `main`**: lint, build, unitarios, *Verify DB + API* (Postgres efímero + `test:int`) y *E2E (Playwright)*. Un PR apilado sobre otra rama no dispara CI.
 - Integración y E2E comparten fixtures (`tests/integration/helpers.ts`: `createProfessional`, `createPatient`, `createAppointmentInDb`, `createUser`, `cleanupTestData`). Los scripts destructivos (seeds, `purge-demo`) se prueban en una base descartable creada con `withScratchDatabase`.

@@ -14,6 +14,7 @@ import {
   dbDateToApp,
   optionalAppDateToDb,
 } from "@/lib/db/date-codec";
+import { getTodayAppDate } from "@/lib/date-utils";
 import { getPatientLastAppointmentDate } from "@/lib/patient-appointments";
 import {
   DUPLICATE_DNI_MESSAGE,
@@ -46,26 +47,46 @@ function resolveLastAppointment(
   return last ? appDateToDb(last) : null;
 }
 
+/**
+ * Último turno de cada paciente calculado en la base (agregados), sin traer
+ * todos sus turnos: con meses de operación son miles de filas (RNF03).
+ */
+async function getLastAppointmentsByPatient() {
+  const [attended, withAppointments] = await Promise.all([
+    prisma.turno.groupBy({
+      by: ["pacienteId"],
+      where: { estado: "atendido", fecha: { lte: appDateToDb(getTodayAppDate()) } },
+      _max: { fecha: true },
+    }),
+    prisma.turno.groupBy({ by: ["pacienteId"] }),
+  ]);
+  return {
+    lastAttended: new Map(attended.map((row) => [row.pacienteId, row._max.fecha])),
+    withAppointments: new Set(withAppointments.map((row) => row.pacienteId)),
+  };
+}
+
 export async function getPatientsFromDb(options?: {
   professionalId?: string;
 }): Promise<Patient[]> {
-  const records = await prisma.paciente.findMany({
-    where: options?.professionalId
-      ? { turnos: { some: { profesionalId: options.professionalId } } }
-      : undefined,
-    orderBy: { nombre: "asc" },
-    include: {
-      turnos: {
-        select: { fecha: true, estado: true },
-      },
-    },
-  });
+  const [records, last] = await Promise.all([
+    prisma.paciente.findMany({
+      where: options?.professionalId
+        ? { turnos: { some: { profesionalId: options.professionalId } } }
+        : undefined,
+      orderBy: { nombre: "asc" },
+    }),
+    getLastAppointmentsByPatient(),
+  ]);
 
   const coverage = await getCoverageByPatient(records);
   return records.map((record) => ({
     ...mapPatient({
       ...record,
-      ultimoTurno: resolveLastAppointment(record.turnos, record.ultimoTurno),
+      // Mismo criterio que resolveLastAppointment: sin turnos se conserva el valor cargado.
+      ultimoTurno: last.withAppointments.has(record.id)
+        ? last.lastAttended.get(record.id) ?? null
+        : record.ultimoTurno,
     }),
     coverage: coverage.get(record.id),
   }));

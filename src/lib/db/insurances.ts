@@ -237,13 +237,17 @@ export async function getCoverageByPatient(
       })
     : [];
   const today = getTodayAppDate();
+  const byPatient = new Map<string, typeof records>();
+  for (const record of records) {
+    byPatient.set(record.pacienteId, [...(byPatient.get(record.pacienteId) ?? []), record]);
+  }
   return new Map(
     patients.map((patient) => [
       patient.id,
       coverageFor(
         patient.obraSocialId,
-        records
-          .filter((record) => record.pacienteId === patient.id && record.obraSocialId === patient.obraSocialId)
+        (byPatient.get(patient.id) ?? [])
+          .filter((record) => record.obraSocialId === patient.obraSocialId)
           .map(toUsage),
         today
       ),
