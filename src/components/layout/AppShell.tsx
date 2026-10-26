@@ -15,7 +15,8 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const isStandalonePage = pathname === "/login" || pathname === "/ayuda";
+  const isStandalonePage =
+    pathname === "/login" || pathname === "/ayuda" || pathname === "/cambiar-contrasena";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {

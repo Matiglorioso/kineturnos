@@ -32,6 +32,7 @@ const EXPECTED: Record<Permission, Record<RolUsuario, boolean>> = {
   "clinical:audit": { superadmin: true, admin: true, profesional: false },
   "insurances:read": { superadmin: true, admin: true, profesional: true },
   "insurances:write": { superadmin: true, admin: true, profesional: false },
+  "users:manage": { superadmin: true, admin: true, profesional: false },
 };
 
 describe("permisos: matriz rol × permiso", () => {
@@ -85,7 +86,7 @@ describe("permisos: helpers por capacidad", () => {
 describe("permisos: acceso a páginas", () => {
   it("todos los roles acceden a inicio, agenda, pacientes y proyecto", () => {
     for (const role of ROLES) {
-      for (const path of ["/", "/agenda", "/pacientes", "/proyecto"]) {
+      for (const path of ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena"]) {
         assert.equal(canAccessPage(role, path), true, `${role} → ${path}`);
       }
     }
@@ -98,10 +99,13 @@ describe("permisos: acceso a páginas", () => {
     assert.equal(canAccessPage("superadmin", "/profesionales/123"), true);
   });
 
-  it("obras sociales es una página de Administración", () => {
+  it("obras sociales y usuarios son páginas de Administración", () => {
     assert.equal(canAccessPage("admin", "/obras-sociales"), true);
     assert.equal(canAccessPage("superadmin", "/obras-sociales/planilla"), true);
     assert.equal(canAccessPage("profesional", "/obras-sociales"), false);
+    assert.equal(canAccessPage("admin", "/usuarios"), true);
+    assert.equal(canAccessPage("superadmin", "/usuarios"), true);
+    assert.equal(canAccessPage("profesional", "/usuarios"), false);
   });
 
   it("permite subrutas de un prefijo habilitado", () => {

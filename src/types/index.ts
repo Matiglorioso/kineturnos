@@ -269,3 +269,20 @@ export interface AttendanceReport {
   }[];
   totalSessions: number;
 }
+
+/** Usuario del sistema (gestión de accesos). */
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "superadmin" | "admin" | "profesional";
+  active: boolean;
+  professionalId: string | null;
+  professionalName: string | null;
+  /** ISO 8601; null si nunca ingresó. */
+  lastLogin: string | null;
+  /** Tiene una contraseña temporal pendiente de cambiar. */
+  mustChangePassword: boolean;
+  /** ISO 8601 */
+  createdAt: string;
+}
