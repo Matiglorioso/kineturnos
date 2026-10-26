@@ -148,7 +148,8 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        # Misma versión que Neon: pg_dump 17 genera SQL que Postgres 16 no acepta.
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
