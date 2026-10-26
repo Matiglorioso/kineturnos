@@ -11,6 +11,7 @@
     "test:coverage": "c8 npm test",
     "test:int": "tsx --test --test-concurrency=1 \"tests/integration/**/*.int.test.ts\"",
     "test:e2e": "playwright test",
+    "disponibilidad": "node scripts/availability-report.mjs",
     "clean": "node scripts/clean-cache.js",
     "dev:clean": "node scripts/kill-port.js && node scripts/clean-cache.js && next dev -p 3000",
     "postinstall": "prisma generate",
