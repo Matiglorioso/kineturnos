@@ -16,6 +16,7 @@ const OUTPUT_DIR = join(process.cwd(), "docs", "diagramas");
 const DIAGRAMS = [
   { source: "docs/DER.md", file: "der.png" },
   { source: "docs/ARQUITECTURA.md", file: "arquitectura.png" },
+  { source: "docs/CLASES.md", file: "clases-turnos.png" },
 ];
 
 function firstMermaidBlock(path: string): string {
@@ -41,7 +42,7 @@ async function main() {
           mermaid: { initialize: (config: object) => void; render: (id: string, code: string) => Promise<{ svg: string }> };
         }
       ).mermaid;
-      mermaid.initialize({ startOnLoad: false, theme: "neutral", er: { useMaxWidth: false }, flowchart: { useMaxWidth: false } });
+      mermaid.initialize({ startOnLoad: false, theme: "neutral", er: { useMaxWidth: false }, flowchart: { useMaxWidth: false }, class: { useMaxWidth: false } });
       const { svg } = await mermaid.render("svg-diagrama", code);
       document.getElementById("diagrama")!.innerHTML = svg;
     }, firstMermaidBlock(diagram.source));
