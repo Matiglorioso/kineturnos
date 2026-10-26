@@ -16,7 +16,7 @@ Sistema web para organizar turnos, pacientes y profesionales en consultorios de 
 | **Repositorio** | [github.com/Matiglorioso/kineturnos](https://github.com/Matiglorioso/kineturnos) |
 | **Versión** | v1.0 · PostgreSQL + Auth · 2026 |
 | **Base de datos** | PostgreSQL (Neon) + Prisma — [setup local](docs/TU-PARTE-NEON.md) · [deploy Vercel](docs/TU-PARTE-VERCEL.md) |
-| **Documentación** | [Fases](docs/FASES.md) · [Modelo de datos (DER)](docs/DER.md) · [Pruebas](docs/TESTING.md) · [Rendimiento](docs/RENDIMIENTO.md) · [Disponibilidad](docs/DISPONIBILIDAD.md) · [Respaldos](docs/RESPALDOS.md) · [Notificaciones](docs/NOTIFICACIONES.md) |
+| **Documentación** | [Fases](docs/FASES.md) · [Arquitectura](docs/ARQUITECTURA.md) · [Modelo de datos (DER)](docs/DER.md) · [Pruebas](docs/TESTING.md) · [Rendimiento](docs/RENDIMIENTO.md) · [Disponibilidad](docs/DISPONIBILIDAD.md) · [Respaldos](docs/RESPALDOS.md) · [Notificaciones](docs/NOTIFICACIONES.md) |
 
 ---
 
@@ -243,6 +243,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
 | `npm run perf` | Prueba de rendimiento con volumen real en una base descartable ([docs/RENDIMIENTO.md](docs/RENDIMIENTO.md)) |
 | `npm run screenshots` | Regenera las capturas de `docs/screenshots` con datos de demostración |
+| `npm run diagramas` | Dibuja como PNG los diagramas de `docs/DER.md` y `docs/ARQUITECTURA.md` en `docs/diagramas/` |
 | `npm run disponibilidad` | Porcentaje de disponibilidad según el monitoreo ([docs/DISPONIBILIDAD.md](docs/DISPONIBILIDAD.md)) |
 
 ### Variables de entorno
