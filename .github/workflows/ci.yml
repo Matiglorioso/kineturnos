@@ -142,3 +142,69 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
+  backup:
+    name: Respaldo y restauración
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kineturnos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kineturnos
+      RESTORED_URL: postgresql://postgres:postgres@localhost:5432/kineturnos_restaurada
+      BACKUP_PASSPHRASE: ci-frase-de-prueba-del-respaldo
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate:deploy
+      - run: npm run db:seed
+        env:
+          ALLOW_DEV_SEED: "1"
+      - name: Respaldar (scripts/respaldo/respaldar.sh)
+        run: scripts/respaldo/respaldar.sh salida
+      - name: El respaldo está cifrado
+        run: |
+          if gunzip -t salida/kineturnos.sql.gz.gpg 2>/dev/null || grep -qa "CREATE TABLE" salida/kineturnos.sql.gz.gpg; then
+            echo "El archivo no está cifrado." && exit 1
+          fi
+          docker run --rm --network host postgres:17-alpine psql "$DATABASE_URL" -c "CREATE DATABASE kineturnos_restaurada"
+          if BACKUP_PASSPHRASE=otra-frase scripts/respaldo/restaurar.sh salida/kineturnos.sql.gz.gpg "$RESTORED_URL"; then
+            echo "Se pudo restaurar con una frase incorrecta." && exit 1
+          fi
+          tables=$(docker run --rm --network host postgres:17-alpine psql "$RESTORED_URL" -tAc \
+            "SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")
+          [ "$tables" = "0" ] || { echo "La frase incorrecta dejó $tables tablas a medio restaurar."; exit 1; }
+      - name: Restaurar en una base vacía y comparar
+        run: |
+          scripts/respaldo/restaurar.sh salida/kineturnos.sql.gz.gpg "$RESTORED_URL"
+          count() {
+            docker run --rm --network host postgres:17-alpine psql "$1" -tAc \
+              "SELECT string_agg(t.relname || '=' || (xpath('/row/c/text()', query_to_xml('SELECT count(*) AS c FROM public.' || quote_ident(t.relname), false, true, '')))[1]::text, ',' ORDER BY t.relname)
+               FROM pg_class t JOIN pg_namespace n ON n.oid = t.relnamespace
+               WHERE n.nspname = 'public' AND t.relkind = 'r'"
+          }
+          original=$(count "$DATABASE_URL")
+          restored=$(count "$RESTORED_URL")
+          echo "Original:   $original"
+          echo "Restaurada: $restored"
+          [ "$original" = "$restored" ] || { echo "Las bases no coinciden."; exit 1; }
+      - name: No restaura sobre una base con datos
+        run: |
+          if scripts/respaldo/restaurar.sh salida/kineturnos.sql.gz.gpg "$RESTORED_URL"; then
+            echo "Restauró sobre una base con datos." && exit 1
+          fi
