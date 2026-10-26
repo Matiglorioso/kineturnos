@@ -10,6 +10,8 @@ function toRequestBody(patient: Patient) {
     firstName: input.firstName,
     lastName: input.lastName,
     dni: input.dni,
+    cuil: input.cuil ?? "",
+    birthDate: input.birthDate ?? "",
     phone: input.phone,
     email: input.email ?? "",
     insurance: input.insurance === "Particular" ? "" : input.insurance,

@@ -11,7 +11,7 @@ import {
 } from "@/lib/clinical-history";
 import { compareAppDates, getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
 import { timeToMinutes } from "@/lib/time-utils";
-import { appDateToDb, dbDateToApp, dbTimeToApp } from "@/lib/db/date-codec";
+import { appDateToDb, dbDateToApp, dbTimeToApp, optionalDbDateToApp } from "@/lib/db/date-codec";
 import {
   ConflictError,
   ForbiddenError,
@@ -183,6 +183,7 @@ export async function getClinicalHistoryFromDb(
       id: patient.id,
       name: patient.nombre,
       dni: patient.dni,
+      birthDate: optionalDbDateToApp(patient.fechaNacimiento),
       insurance: patient.obraSocial,
       phone: patient.telefono,
       coverage: coverage.get(patient.id),

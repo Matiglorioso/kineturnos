@@ -60,7 +60,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Tabla en desktop y **cards apiladas** en mobile
 
 ### Pacientes
-- Alta, edición, búsqueda y detalle con ficha completa
+- Alta, edición, búsqueda y detalle con ficha completa: DNI, CUIL (validado con el dígito verificador y contra el DNI), fecha de nacimiento y edad, contacto y obra social
 - **Historia clínica digital**: un registro por sesión con evolución, diagnóstico y plan de tratamiento; diagnóstico y plan vigentes; alertas clínicas, antecedentes y objetivos del tratamiento; vista de impresión; acceso por perfil y registro de accesos (quién leyó o modificó, y cuándo)
 - Próximos turnos e historial de sesiones
 - Activación / desactivación y eliminación con confirmación

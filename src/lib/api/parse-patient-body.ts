@@ -1,4 +1,5 @@
 import {
+  normalizeIdentityFields,
   validatePatientForm,
   type PatientFormValues,
 } from "@/lib/patient-form";
@@ -26,6 +27,8 @@ export function parsePatientWriteInput(
     firstName: String(payload.firstName ?? ""),
     lastName: String(payload.lastName ?? ""),
     dni: String(payload.dni ?? ""),
+    cuil: String(payload.cuil ?? ""),
+    birthDate: String(payload.birthDate ?? ""),
     phone: String(payload.phone ?? ""),
     email: String(payload.email ?? ""),
     insurance: String(payload.insurance ?? ""),
@@ -44,6 +47,7 @@ export function parsePatientWriteInput(
     firstName: values.firstName.trim(),
     lastName: values.lastName.trim(),
     dni: values.dni.trim(),
+    ...normalizeIdentityFields(values),
     phone: values.phone.trim(),
     email: values.email.trim() || undefined,
     insurance: values.insurance.trim() || "Particular",

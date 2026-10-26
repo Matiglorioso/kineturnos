@@ -41,6 +41,9 @@ model Paciente {
   apellido        String?
   dni             String
   dniNormalizado  String                  @unique @map("dni_normalizado")
+  /// CUIL normalizado (11 dígitos), opcional.
+  cuil            String?
+  fechaNacimiento DateTime?               @map("fecha_nacimiento") @db.Date
   telefono        String
   /// Nombre de la obra social (o "Particular"), desnormalizado para listar y buscar.
   obraSocial      String                  @default("Particular") @map("obra_social")

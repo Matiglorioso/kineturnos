@@ -38,6 +38,10 @@ export interface Patient {
   firstName?: string;
   lastName?: string;
   dni: string;
+  /** 11 dígitos, sin guiones. */
+  cuil?: string;
+  /** Formato dd-MM-yyyy */
+  birthDate?: string;
   phone: string;
   /** Nombre de la obra social, o "Particular". */
   insurance: string;
@@ -166,6 +170,8 @@ export interface ClinicalHistory {
     id: string;
     name: string;
     dni: string;
+    /** dd-MM-yyyy */
+    birthDate?: string;
     insurance: string;
     phone: string;
     coverage?: PatientCoverage;

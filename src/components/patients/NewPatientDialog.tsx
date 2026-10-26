@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   buildPatientFormValues,
   INITIAL_PATIENT_FORM,
+  normalizeIdentityFields,
   validatePatientForm,
   type PatientFormErrors,
   type PatientFormValues,
@@ -105,6 +106,7 @@ export function NewPatientDialog({
       firstName,
       lastName,
       dni: form.dni.trim(),
+      ...normalizeIdentityFields(form),
       phone: form.phone.trim(),
       email: form.email.trim() || undefined,
       insurance: form.insuranceId ? form.insurance.trim() : "Particular",
@@ -182,9 +184,32 @@ export function NewPatientDialog({
             <FormField id="dni" label="DNI" required error={errors.dni}>
               <Input
                 id="dni"
+                inputMode="numeric"
                 value={form.dni}
                 onChange={(e) => updateField("dni", e.target.value)}
                 placeholder="Ej: 32.456.789"
+              />
+            </FormField>
+
+            <FormField id="cuil" label="CUIL" error={errors.cuil}>
+              <Input
+                id="cuil"
+                inputMode="numeric"
+                value={form.cuil}
+                onChange={(e) => updateField("cuil", e.target.value)}
+                placeholder="Ej: 20-32456789-6"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField id="birthDate" label="Fecha de nacimiento" error={errors.birthDate}>
+              <Input
+                id="birthDate"
+                inputMode="numeric"
+                value={form.birthDate}
+                onChange={(e) => updateField("birthDate", e.target.value)}
+                placeholder="dd-mm-aaaa"
               />
             </FormField>
 
@@ -209,6 +234,25 @@ export function NewPatientDialog({
               />
             </FormField>
 
+            <FormField id="status" label="Estado">
+              <Select
+                value={form.status}
+                onValueChange={(value: PatientStatus) =>
+                  updateField("status", value)
+                }
+              >
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="activo">Activo</SelectItem>
+                  <SelectItem value="inactivo">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <PatientInsuranceFields
               insurances={insurances}
               insuranceId={form.insuranceId}
@@ -220,23 +264,6 @@ export function NewPatientDialog({
               onInsuranceCreated={onInsuranceCreated}
             />
           </div>
-
-          <FormField id="status" label="Estado">
-            <Select
-              value={form.status}
-              onValueChange={(value: PatientStatus) =>
-                updateField("status", value)
-              }
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Seleccionar estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="activo">Activo</SelectItem>
-                <SelectItem value="inactivo">Inactivo</SelectItem>
-              </SelectContent>
-            </Select>
-          </FormField>
 
           <FormField id="notes" label="Observaciones">
             <Textarea

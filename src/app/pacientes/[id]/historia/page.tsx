@@ -32,6 +32,7 @@ import {
 } from "@/lib/api/clinical-history-client";
 import { ApiError } from "@/lib/api/fetch-json";
 import { getSessionNumbers, splitClinicalAlerts } from "@/lib/clinical-history";
+import { formatAge } from "@/lib/birth-date";
 import { formatAppDate } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
 import { showSuccessToast } from "@/lib/toast";
@@ -281,7 +282,14 @@ function HistoriaClinicaContent() {
             <p className="text-xs font-medium uppercase tracking-wide text-brand-700">Historia clínica</p>
             <h1 className="truncate text-2xl font-bold tracking-tight text-slate-900">{patient.name}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              DNI {patient.dni} · {patient.insurance} · {patient.phone}
+              {[
+                `DNI ${patient.dni}`,
+                patient.birthDate && `${formatAge(patient.birthDate)} (${formatAppDate(patient.birthDate)})`,
+                patient.insurance,
+                patient.phone,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
             <CoverageBadge coverage={patient.coverage} className="mt-2" />
           </div>

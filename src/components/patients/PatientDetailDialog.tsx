@@ -22,11 +22,15 @@ import { splitPatientAppointments } from "@/lib/patient-appointments";
 import { cn, getInitials } from "@/lib/utils";
 import { Appointment, Patient } from "@/types";
 import { formatAppDate } from "@/lib/date-utils";
+import { formatAge } from "@/lib/birth-date";
+import { formatCuil } from "@/lib/document-validation";
 import {
+  Cake,
   Calendar,
   CalendarClock,
   FileHeart,
   History,
+  IdCard,
   Mail,
   Phone,
   Trash2,
@@ -117,6 +121,20 @@ export function PatientDetailDialog({
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <InfoRow icon={User} label="DNI" value={activePatient.dni} />
+            <InfoRow
+              icon={IdCard}
+              label="CUIL"
+              value={activePatient.cuil ? formatCuil(activePatient.cuil) : "No registrado"}
+            />
+            <InfoRow
+              icon={Cake}
+              label="Fecha de nacimiento"
+              value={
+                activePatient.birthDate
+                  ? `${formatAppDate(activePatient.birthDate)} (${formatAge(activePatient.birthDate)})`
+                  : "No registrada"
+              }
+            />
             <InfoRow icon={Phone} label="Teléfono" value={activePatient.phone} />
             <InfoRow
               icon={Mail}
