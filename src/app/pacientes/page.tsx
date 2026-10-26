@@ -256,7 +256,7 @@ function PacientesPageContent() {
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-10"
-            placeholder="Buscar por nombre, DNI, teléfono u obra social…"
+            placeholder="Buscar por nombre, DNI, CUIL, teléfono u obra social…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             disabled={isSaving}

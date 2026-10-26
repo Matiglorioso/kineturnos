@@ -72,6 +72,7 @@ npx prisma migrate dev --name <nombre>   # crear una migración nueva
 
 ## Tests y CI
 
+- **Disponibilidad (RNF08):** `.github/workflows/disponibilidad.yml` consulta cada 15 min `/login` y `/api/health/db` en `APP_URL` (3 intentos por la reactivación de Neon); `npm run disponibilidad` calcula el porcentaje con el historial de Actions (necesita `gh`). Ver `docs/DISPONIBILIDAD.md`.
 - CI (`.github/workflows/ci.yml`) corre **solo en push a `main` y en PRs contra `main`**: lint, build, unitarios, *Verify DB + API* (Postgres efímero + `test:int`) y *E2E (Playwright)*. Un PR apilado sobre otra rama no dispara CI.
 - Integración y E2E comparten fixtures (`tests/integration/helpers.ts`: `createProfessional`, `createPatient`, `createAppointmentInDb`, `createUser`, `cleanupTestData`). Los scripts destructivos (seeds, `purge-demo`) se prueban en una base descartable creada con `withScratchDatabase`.
 - E2E: el setup inicia sesión por UI con cada rol y guarda la sesión en `e2e/.auth/`. Antes de interactuar con el login hay que llamar a `waitForLoginForm` (en frío, un click antes de la hidratación hace un submit nativo). Selectores por rol/label, no por clases.

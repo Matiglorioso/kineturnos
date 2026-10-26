@@ -1,0 +1,58 @@
+name: Disponibilidad
+
+# RNF08: cada 15 minutos verifica que producción responda (la app y la base).
+# Si falla, el workflow queda en rojo y GitHub avisa por correo; el historial
+# de ejecuciones es la evidencia de disponibilidad (ver docs/DISPONIBILIDAD.md).
+# Usa la variable APP_URL (la misma que el cron de recordatorios).
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  chequeo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verificar la app y la base de datos
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          if [ -z "$APP_URL" ]; then
+            echo "Falta la variable APP_URL: no hay nada que verificar."
+            exit 0
+          fi
+
+          # Hasta 3 intentos separados por 20 s: la base de Neon puede estar
+          # suspendida por inactividad y tarda unos segundos en despertar.
+          check() {
+            local name="$1" url="$2"
+            for attempt in 1 2 3; do
+              result=$(curl --silent --output /dev/null --max-time 30 \
+                --write-out "%{http_code} %{time_total}" "$url" || echo "000 0")
+              code=${result%% *}
+              seconds=${result##* }
+              echo "$name: intento $attempt → HTTP $code en ${seconds}s"
+              if [ "$code" = "200" ]; then
+                echo "| $name | ✅ HTTP $code | ${seconds} s | $attempt |" >> "$GITHUB_STEP_SUMMARY"
+                return 0
+              fi
+              [ "$attempt" -lt 3 ] && sleep 20
+            done
+            echo "| $name | ❌ HTTP $code | ${seconds} s | 3 |" >> "$GITHUB_STEP_SUMMARY"
+            return 1
+          }
+
+          {
+            echo "### Chequeo de disponibilidad"
+            echo
+            echo "| Qué | Resultado | Tiempo | Intentos |"
+            echo "|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          ok=0
+          check "App (página de ingreso)" "$APP_URL/login" || ok=1
+          check "API y base de datos" "$APP_URL/api/health/db" || ok=1
+          exit $ok

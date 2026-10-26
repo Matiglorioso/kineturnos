@@ -49,8 +49,12 @@ function matchesSearch(patient: Patient, query: string): boolean {
     (patient.email?.toLowerCase().includes(query) ?? false) ||
     patient.dni.includes(query) ||
     patient.phone.includes(query) ||
-    // "30123456" encuentra el DNI "30.123.456" y viceversa.
-    (digits.length >= 3 && patient.dni.replace(/\D/g, "").includes(digits))
+    // "30123456" encuentra el DNI "30.123.456" y viceversa; el CUIL, con o sin guiones (RF08).
+    (digits.length >= 3 &&
+      (patient.dni.replace(/\D/g, "").includes(digits) ||
+        (patient.cuil?.includes(digits) ?? false) ||
+        // CUIL completo de un paciente que no lo tiene cargado: se busca por el DNI que contiene.
+        (digits.length === 11 && patient.dni.replace(/\D/g, "").padStart(8, "0") === digits.slice(2, 10))))
   );
 }
 

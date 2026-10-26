@@ -91,7 +91,7 @@ export function Header({ title, subtitle }: HeaderProps) {
                 value={patientQuery}
                 onChange={(event) => setPatientQuery(event.target.value)}
                 placeholder="Buscar pacientes…"
-                aria-label="Buscar pacientes por nombre o DNI"
+                aria-label="Buscar pacientes por nombre, DNI o CUIL"
                 className="w-56 bg-muted/50 pl-9 lg:w-64"
               />
             </form>
