@@ -9,7 +9,7 @@ test.describe("historia clínica (Administración)", () => {
     const patient = await createPatient(uniqueName("Hc"));
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, teléfono u obra social…").fill(patient.dni);
+    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(patient.dni);
     // Esperar a que la lista quede filtrada antes del click (si no, el enlace se re-renderiza en el medio).
     const row = page.getByRole("row").filter({ hasText: patient.nombre });
     await expect(row).toBeVisible();

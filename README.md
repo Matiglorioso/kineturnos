@@ -60,7 +60,8 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Tabla en desktop y **cards apiladas** en mobile
 
 ### Pacientes
-- Alta, edición, búsqueda y detalle con ficha completa: DNI, CUIL (validado con el dígito verificador y contra el DNI), fecha de nacimiento y edad, contacto y obra social
+- Búsqueda por nombre, DNI (con o sin puntos), CUIL (con o sin guiones), teléfono u obra social
+- Alta, edición y detalle con ficha completa: DNI, CUIL (validado con el dígito verificador y contra el DNI), fecha de nacimiento y edad, contacto y obra social
 - **Historia clínica digital**: un registro por sesión con evolución, diagnóstico y plan de tratamiento; diagnóstico y plan vigentes; alertas clínicas, antecedentes y objetivos del tratamiento; vista de impresión; acceso por perfil y registro de accesos (quién leyó o modificó, y cuándo)
 - Próximos turnos e historial de sesiones
 - Activación / desactivación y eliminación con confirmación
@@ -327,6 +328,9 @@ kineturnos/
 | Obras sociales y autorizaciones (RF07, RF14, RF15) | ✅ Completo |
 | Indicadores de gestión del panel (RF16) | ✅ Completo |
 | Notificaciones por email (RF05) | ✅ Completo ([config](docs/NOTIFICACIONES.md)) |
+| Gestión de usuarios y contraseñas | ✅ Completo |
+| Búsqueda de pacientes por nombre, DNI o CUIL (RF08) | ✅ Completo |
+| Monitoreo de disponibilidad 24 h (RNF08) | ✅ Completo ([detalle](docs/DISPONIBILIDAD.md)) |
 | Notificaciones por WhatsApp | ❌ No incluido |
 
 ---
