@@ -18,6 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Stethoscope,
+  UserCog,
   Users,
   X,
   ShieldCheck,
@@ -60,6 +61,11 @@ const navigation = [
     name: "Obras sociales",
     href: "/obras-sociales",
     icon: ShieldCheck,
+  },
+  {
+    name: "Usuarios",
+    href: "/usuarios",
+    icon: UserCog,
   },
 ];
 

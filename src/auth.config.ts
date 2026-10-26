@@ -12,11 +12,17 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized: () => true,
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id!;
         token.role = user.role;
         token.professionalId = user.professionalId ?? null;
+        token.mustChangePassword = user.mustChangePassword ?? false;
+      }
+      // Después de cambiar la contraseña temporal. Solo afecta la redirección:
+      // la API lo vuelve a verificar contra la base en cada llamada.
+      if (trigger === "update" && session?.mustChangePassword === false) {
+        token.mustChangePassword = false;
       }
       return token;
     },
@@ -26,6 +32,7 @@ export const authConfig = {
         session.user.role = token.role as RolUsuario;
         session.user.professionalId =
           (token.professionalId as string | null | undefined) ?? null;
+        session.user.mustChangePassword = token.mustChangePassword === true;
       }
       return session;
     },

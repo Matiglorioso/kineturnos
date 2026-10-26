@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "@/auth.config";
 import { findAuthUserByEmail } from "@/lib/auth/users";
+import { recordLoginInDb } from "@/lib/db/users";
 import { verifyPassword } from "@/lib/auth/password";
 import {
   buildLimitKeys,
@@ -44,6 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         await clearLoginFailures(email);
+        await recordLoginInDb(user.id);
 
         return {
           id: user.id,
@@ -51,6 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           role: user.role,
           professionalId: user.professionalId ?? null,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),

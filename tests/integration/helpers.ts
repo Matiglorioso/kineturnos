@@ -337,7 +337,8 @@ export async function cleanupTestData(): Promise<void> {
       OR: [{ id: byPrefix }, { pacienteId: byPrefix }, { profesionalId: byPrefix }],
     },
   });
-  await prisma.usuario.deleteMany({ where: { id: byPrefix } });
+  // Los creados desde la pantalla de Usuarios tienen id propio (u-…): se reconocen por el email.
+  await prisma.usuario.deleteMany({ where: { OR: [{ id: byPrefix }, { email: byPrefix }] } });
   await prisma.historiaClinica.deleteMany({ where: { pacienteId: byPrefix } });
   await prisma.paciente.deleteMany({ where: { id: byPrefix } });
   // Obras sociales de prueba: se crean con nombre "it-…" (el id sale del nombre).

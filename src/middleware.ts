@@ -7,6 +7,8 @@ import {
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
+const PASSWORD_CHANGE_PATH = "/cambiar-contrasena";
+
 export const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
@@ -37,6 +39,15 @@ export default auth((req) => {
       loginUrl.searchParams.set("callbackUrl", pathname);
     }
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Contraseña temporal: hasta cambiarla, cualquier página lleva al cambio.
+  if (
+    req.auth.user.mustChangePassword &&
+    !pathname.startsWith("/api/") &&
+    pathname !== PASSWORD_CHANGE_PATH
+  ) {
+    return NextResponse.redirect(new URL(PASSWORD_CHANGE_PATH, req.url));
   }
 
   const role = req.auth.user.role;

@@ -48,6 +48,14 @@ export const pageMetadata = {
     description:
       "Catálogo de obras sociales y planilla de asistencia mensual para la facturación.",
   },
+  usuarios: {
+    title: "Usuarios",
+    description: "Accesos al sistema: perfiles, profesional vinculado y contraseñas.",
+  },
+  cambiarContrasena: {
+    title: "Cambiar contraseña",
+    description: "Elegí una contraseña propia para ingresar a KineTurnos.",
+  },
   proyecto: {
     title: "Ayuda",
     description:

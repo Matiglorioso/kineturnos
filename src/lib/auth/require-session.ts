@@ -26,8 +26,12 @@ type SessionFail = {
   unauthorized: NextResponse;
 };
 
+export const PASSWORD_CHANGE_REQUIRED_MESSAGE =
+  "Tenés que cambiar tu contraseña temporal antes de seguir.";
+
 export async function requireApiSession(
-  request?: Request
+  request?: Request,
+  options: { allowPendingPasswordChange?: boolean } = {}
 ): Promise<SessionOk | SessionFail> {
   if (request) {
     const pathname = new URL(request.url).pathname;
@@ -57,11 +61,22 @@ export async function requireApiSession(
   // llamada, para que desactivar o cambiar el rol de un usuario tenga efecto ya.
   const user = await prisma.usuario.findUnique({
     where: { id: session.user.id },
-    select: { rol: true, activo: true, profesionalId: true },
+    select: { rol: true, activo: true, profesionalId: true, debeCambiarPassword: true },
   });
 
   if (!user || !user.activo) {
     return unauthorizedResult();
+  }
+
+  // Con contraseña temporal solo puede cambiarla (el middleware además lo redirige).
+  if (user.debeCambiarPassword && !options.allowPendingPasswordChange) {
+    return {
+      session: null,
+      unauthorized: NextResponse.json(
+        { error: PASSWORD_CHANGE_REQUIRED_MESSAGE, code: "password_change_required" },
+        { status: 403 }
+      ),
+    };
   }
 
   return {

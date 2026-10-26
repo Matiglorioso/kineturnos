@@ -8,6 +8,7 @@ export type AuthUser = {
   role: RolUsuario;
   active: boolean;
   professionalId?: string | null;
+  mustChangePassword: boolean;
 };
 
 export async function findAuthUserByEmail(
@@ -26,6 +27,7 @@ export async function findAuthUserByEmail(
     role: record.rol,
     active: record.activo,
     professionalId: record.profesionalId,
+    mustChangePassword: record.debeCambiarPassword,
     passwordHash: record.passwordHash,
   };
 }

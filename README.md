@@ -75,6 +75,13 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - CRUD de kinesiólogos con especialidad y días de atención (turnos de 1 hora, horario del consultorio 08:00 a 18:00)
 - Turnos asignados y contador del día
 
+### Usuarios
+- Página **Usuarios** (solo Administración): alta con perfil y profesional vinculado, búsqueda y filtros por perfil y estado, último ingreso
+- **Contraseña temporal** al crear o restablecer un acceso (se muestra una sola vez); en el primer ingreso la persona tiene que elegir una propia
+- Los usuarios no se borran: se **desactivan** y pierden el acceso al instante
+- Cada usuario cambia su contraseña desde el menú de su cuenta; solo un Superadmin gestiona otros Superadmin
+- Atajo **Acceso al sistema** desde la ficha de cada profesional
+
 ### Experiencia de producto
 - Modales accesibles (Radix UI)
 - Toasts de éxito y error
@@ -139,7 +146,7 @@ Crea los perfiles de la app para **SANMAR SALUD**: **Superadmin** (equipo de des
 | Perfil | Quiénes | Puede |
 |---|---|---|
 | Superadmin | Equipo de desarrollo | Todo (y a futuro, tareas técnicas de mantenimiento) |
-| Administrador | Dueños y recepción | Turnos, pacientes, profesionales y dashboard |
+| Administrador | Dueños y recepción | Turnos, pacientes, profesionales, obras sociales, usuarios y dashboard |
 | Profesional | Kinesiólogos | Su propia agenda y el registro de asistencia |
 
 > Si la base ya tiene datos, el seed **aborta** sin tocar nada. Para restablecer la contraseña de los usuarios iniciales sobre una base en uso: `npm run db:seed:minimal -- --force` (nunca borra pacientes, profesionales ni turnos).

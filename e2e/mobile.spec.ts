@@ -45,4 +45,17 @@ test.describe("mobile (390 px)", () => {
     await expect(page).toHaveURL("/agenda");
     await expect(page.getByRole("heading", { name: "Agenda" })).toBeVisible();
   });
+
+  test("usuarios en tarjetas y el menú de la cuenta con cambio de contraseña", async ({ page }) => {
+    await page.goto("/usuarios");
+    await expect(page.getByRole("table")).toBeHidden();
+    const cards = page.getByRole("list", { name: "Usuarios" });
+    await expect(cards.getByText("recepcion@kineturnos.local")).toBeVisible();
+
+    await page.getByRole("button", { name: "Menú de tu cuenta" }).click();
+    await expect(page.getByRole("menuitem", { name: "Cerrar sesión" })).toBeVisible();
+    await page.getByRole("menuitem", { name: "Cambiar contraseña" }).click();
+    await expect(page).toHaveURL("/cambiar-contrasena");
+    await expect(page.getByRole("heading", { name: "Cambiar contraseña" })).toBeVisible();
+  });
 });
