@@ -7,6 +7,7 @@ import {
   type AgendaFilterValues,
 } from "@/components/agenda/AgendaFilters";
 import { AgendaListView } from "@/components/agenda/AgendaListView";
+import { AgendaProfessionalsView } from "@/components/agenda/AgendaProfessionalsView";
 import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
 import { AppointmentActions } from "@/components/appointments/AppointmentActions";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
@@ -33,15 +34,22 @@ import {
   sortAppointmentsByTime,
 } from "@/lib/week-calendar";
 import { countAppointmentsByDay } from "@/lib/agenda-calendar";
+import { buildProfessionalDayGrid } from "@/lib/agenda-professionals";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import type { EmptyStatePreset } from "@/lib/empty-states";
 import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
-import { LayoutGrid, List, Plus } from "lucide-react";
+import { Columns3, LayoutGrid, List, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-type AgendaViewMode = "list" | "week";
+type AgendaViewMode = "list" | "week" | "professionals";
+
+const VIEW_OPTIONS: { value: AgendaViewMode; label: string; icon: typeof List }[] = [
+  { value: "list", label: "Día", icon: List },
+  { value: "week", label: "Semana", icon: LayoutGrid },
+  { value: "professionals", label: "Profesionales", icon: Columns3 },
+];
 
 export default function AgendaPage() {
   const { patients, isLoading: patientsLoading, error: patientsError, refresh: refreshPatients } = usePatients();
@@ -79,6 +87,7 @@ export default function AgendaPage() {
     null
   );
   const [detailOpen, setDetailOpen] = useState(false);
+  const [slotPreset, setSlotPreset] = useState<{ professionalId: string; time: string } | null>(null);
   const today = getTodayAppDate();
   const selectedListDate = isValidAppDate(listDate)
     ? normalizeAppDate(listDate)
@@ -120,10 +129,28 @@ export default function AgendaPage() {
     [filteredByCommon, weekStart]
   );
 
+  const professionalGrid = useMemo(
+    () =>
+      buildProfessionalDayGrid({
+        date: selectedListDate,
+        professionals,
+        visibleAppointments: filteredByCommon,
+        allAppointments: appointments,
+        professionalFilter: filters.professionalId,
+        showCancelled: filters.status === "cancelado",
+      }),
+    [selectedListDate, professionals, filteredByCommon, appointments, filters]
+  );
+
+  // Un día elegido (Día y Profesionales) o la semana.
+  const showsDay = viewMode !== "week";
+
   const pageDescription =
     viewMode === "list"
       ? `Turnos del ${selectedListDateLabel}`
-      : `Vista semanal — ${formatWeekRangeLabel(weekStart)}`;
+      : viewMode === "professionals"
+        ? `Por profesional — ${selectedListDateLabel}`
+        : `Vista semanal — ${formatWeekRangeLabel(weekStart)}`;
 
   const hasActiveFilters =
     filters.status !== "todos" ||
@@ -151,6 +178,13 @@ export default function AgendaPage() {
 
   const openCreateDialog = () => {
     setEditingAppointment(null);
+    setSlotPreset(null);
+    setFormDialogOpen(true);
+  };
+
+  const openCreateForSlot = (professionalId: string, time: string) => {
+    setEditingAppointment(null);
+    setSlotPreset({ professionalId, time });
     setFormDialogOpen(true);
   };
 
@@ -176,6 +210,7 @@ export default function AgendaPage() {
     setFormDialogOpen(open);
     if (!open) {
       setEditingAppointment(null);
+      setSlotPreset(null);
     }
   };
 
@@ -254,33 +289,31 @@ export default function AgendaPage() {
 
       <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="inline-flex w-full shrink-0 rounded-xl bg-muted p-1 sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:flex-none sm:px-3.5",
-                viewMode === "list"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <List className="h-4 w-4" />
-              Lista
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("week")}
-              className={cn(
-                "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:flex-none sm:px-3.5",
-                viewMode === "week"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Semana
-            </button>
+          <div
+            role="group"
+            aria-label="Vista de la agenda"
+            className="inline-flex w-full shrink-0 rounded-xl bg-muted p-1 sm:w-auto"
+          >
+            {VIEW_OPTIONS.filter(
+              // El Profesional ve solo su agenda: la vista por profesional no le aporta.
+              (option) => option.value !== "professionals" || !isScopedProfessional
+            ).map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={viewMode === value}
+                onClick={() => setViewMode(value)}
+                className={cn(
+                  "inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 py-2 text-[13px] font-medium transition-all sm:flex-none sm:px-3.5 sm:text-sm",
+                  viewMode === value
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
+                <span className="truncate">{label}</span>
+              </button>
+            ))}
           </div>
 
           <AgendaFilters
@@ -292,7 +325,7 @@ export default function AgendaPage() {
           />
         </div>
 
-        {viewMode === "list" && (
+        {showsDay && (
           <div className="border-t border-slate-100 pt-4">
             <AgendaDayStrip
               value={selectedListDate}
@@ -304,7 +337,14 @@ export default function AgendaPage() {
         )}
       </div>
 
-      {viewMode === "list" ? (
+      {viewMode === "professionals" ? (
+        <AgendaProfessionalsView
+          grid={professionalGrid}
+          dateLabel={selectedListDateLabel}
+          onAppointmentClick={openDetailDialog}
+          onFreeSlotClick={canSchedule ? openCreateForSlot : undefined}
+        />
+      ) : viewMode === "list" ? (
         <AgendaListView
           appointments={listAppointments}
           dateLabel={selectedListDateLabel}
@@ -341,7 +381,9 @@ export default function AgendaPage() {
           patients={patients}
           professionals={professionals}
           existingAppointments={appointments}
-          defaultDate={viewMode === "list" ? selectedListDate : today}
+          defaultDate={showsDay ? selectedListDate : today}
+          defaultProfessionalId={slotPreset?.professionalId}
+          defaultTime={slotPreset?.time}
           editingAppointment={editingAppointment}
         />
       )}

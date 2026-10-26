@@ -157,3 +157,32 @@ test.describe("día y filtros de la agenda", () => {
     await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
   });
 });
+
+test.describe("vista por profesional (RF03)", () => {
+  test("muestra el día de cada profesional y un horario libre abre el alta con profesional y hora", async ({ page }) => {
+    const professional = await createProfessional(uniqueName("Col"));
+    const patient = await createPatient(uniqueName("Col"));
+    const date = futureWorkday(25);
+    await createAppointmentInDb({ patient, professional, date, time: "10:00" });
+
+    await page.goto("/agenda");
+    await goToAgendaDate(page, date);
+    // El día elegido se mantiene al cambiar de vista.
+    await page.getByRole("group", { name: "Vista de la agenda" }).getByRole("button", { name: "Profesionales" }).click();
+
+    const grid = page.getByRole("table", { name: "Turnos por profesional" });
+    await expect(grid.getByRole("columnheader").filter({ hasText: professional.nombre })).toContainText(
+      "1 turno · 9 libres"
+    );
+
+    await grid.getByRole("button", { name: new RegExp(`^10:00 · ${patient.nombre}`) }).click();
+    await expect(page.getByRole("dialog").getByText(patient.nombre).first()).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await grid.getByRole("button", { name: `Agendar con ${professional.nombre} a las 11:00` }).click();
+    const dialog = page.getByRole("dialog", { name: "Agendar turno" });
+    await expect(dialog.getByRole("combobox", { name: "Profesional" })).toContainText(professional.nombre);
+    await expect(dialog.getByRole("combobox", { name: "Horario" })).toContainText("11:00");
+  });
+});
+

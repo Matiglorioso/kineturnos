@@ -8,6 +8,8 @@ const config: Config = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    // Clases definidas en la lógica (p. ej. colores de avatar de los profesionales).
+    "./src/lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
