@@ -1,4 +1,5 @@
 import { mapAppointment } from "@/lib/db/mappers";
+import { appDateToDb } from "@/lib/db/date-codec";
 import {
   ConflictError,
   NotFoundError,
@@ -125,14 +126,36 @@ function throwFirstValidationError(errors: Record<string, string | undefined>): 
   throw new ValidationError(message!, field);
 }
 
+async function getAppointmentsForOverlapCheck(
+  input: AppointmentWriteInput,
+  db: DbClient
+): Promise<Appointment[]> {
+  let fecha: Date;
+  try {
+    fecha = appDateToDb(input.date);
+  } catch {
+    // Fecha inválida: la rechaza validateAppointmentForm, no hay solapamientos que buscar.
+    return [];
+  }
+  const records = await db.turno.findMany({
+    where: {
+      fecha,
+      OR: [{ profesionalId: input.professionalId }, { pacienteId: input.patientId }],
+    },
+  });
+  return records.map(mapAppointment);
+}
+
 export async function assertAppointmentInputValid(
   input: AppointmentWriteInput,
   excludeId?: string,
   db: DbClient = prisma
 ): Promise<void> {
   // create/update pasan por validateAppointmentForm (días de atención + overlap).
+  // Para los solapamientos alcanzan los turnos de ese día del profesional o del
+  // paciente: no se traen todos los turnos de la historia (RNF03).
   const [appointments, professionals, existing] = await Promise.all([
-    getAppointmentsFromDb(undefined, db),
+    getAppointmentsForOverlapCheck(input, db),
     getProfessionalsFromDb(db),
     excludeId ? getAppointmentByIdFromDb(excludeId, db) : Promise.resolve(null),
   ]);
