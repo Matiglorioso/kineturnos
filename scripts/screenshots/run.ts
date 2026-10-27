@@ -9,7 +9,8 @@
  */
 import { createScratchApp } from "../lib/scratch-app";
 import { seedDemo } from "./demo-data";
-import { chromium, type Page } from "@playwright/test";
+import { chromium, type Locator, type Page } from "@playwright/test";
+import { addDays, format } from "date-fns";
 import { randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -23,6 +24,8 @@ interface Shot {
   /** Espera a que la pantalla esté lista (datos cargados) y la deja como se quiere mostrar. */
   prepare: (page: Page) => Promise<void>;
   fullPage?: boolean;
+  /** Captura solo este elemento (p. ej. un formulario) en lugar de la página. */
+  element?: (page: Page) => Locator;
 }
 
 async function login(page: Page, baseUrl: string, email: string, password: string) {
@@ -39,7 +42,8 @@ async function capture(page: Page, baseUrl: string, shot: Shot) {
   await shot.prepare(page);
   // Deja terminar animaciones y la carga de fuentes.
   await page.waitForTimeout(600);
-  await page.screenshot({ path: join(OUTPUT_DIR, shot.file), fullPage: shot.fullPage ?? true });
+  if (shot.element) await shot.element(page).screenshot({ path: join(OUTPUT_DIR, shot.file) });
+  else await page.screenshot({ path: join(OUTPUT_DIR, shot.file), fullPage: shot.fullPage ?? true });
   console.log(`OK ${shot.file}`);
 }
 
@@ -78,6 +82,31 @@ async function main() {
         prepare: async (p) => {
           await view(p, "Profesionales");
           await p.getByRole("table", { name: "Turnos por profesional" }).waitFor();
+        },
+      },
+      {
+        // Prototipo "Formulario Turno": un turno completo, con el aviso de cobertura del paciente.
+        file: "turno-formulario-desktop.png",
+        path: "/agenda",
+        element: (p) => p.getByRole("dialog", { name: "Agendar turno" }),
+        prepare: async (p) => {
+          await p.getByRole("main").getByRole("button", { name: "Agendar turno" }).first().click();
+          const dialog = p.getByRole("dialog", { name: "Agendar turno" });
+          await dialog.getByRole("combobox", { name: "Paciente" }).click();
+          await p.getByRole("option", { name: new RegExp(demo.featuredPatientName) }).click();
+          await dialog.getByRole("combobox", { name: "Profesional" }).click();
+          await p.getByRole("option", { name: /Laura Méndez/ }).click();
+          // Próximo día hábil de lunes a viernes (Laura Méndez no atiende sábados).
+          let day = addDays(new Date(), 1);
+          while (day.getDay() === 0 || day.getDay() === 6) day = addDays(day, 1);
+          const date = dialog.getByLabel("Fecha");
+          await date.fill(format(day, "dd-MM-yyyy"));
+          await date.press("Tab");
+          await dialog.getByRole("combobox", { name: "Horario" }).click();
+          await p.getByRole("option").filter({ hasNotText: /Ocupado/i }).last().click();
+          await dialog.getByRole("combobox", { name: "Tipo de sesión" }).click();
+          await p.getByRole("option", { name: "Rehabilitación" }).click();
+          await dialog.getByLabel("Observaciones").fill("Control de rodilla. Traer estudios.");
         },
       },
       {
