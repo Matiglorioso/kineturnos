@@ -243,7 +243,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run verify:production` | Smoke test de kineturnos.vercel.app + usuarios en Neon |
 | `npm run perf` | Prueba de rendimiento con volumen real en una base descartable ([docs/RENDIMIENTO.md](docs/RENDIMIENTO.md)) |
 | `npm run screenshots` | Regenera las capturas de `docs/screenshots` con datos de demostración |
-| `npm run diagramas` | Dibuja como PNG los diagramas de `docs/DER.md` y `docs/ARQUITECTURA.md` en `docs/diagramas/` |
+| `npm run diagramas` | Genera los diagramas de la tesis en draw.io (`docs/diagramas/*.drawio`); se exportan a PNG con draw.io ([detalle](docs/diagramas/README.md)) |
 | `npm run disponibilidad` | Porcentaje de disponibilidad según el monitoreo ([docs/DISPONIBILIDAD.md](docs/DISPONIBILIDAD.md)) |
 
 ### Variables de entorno
