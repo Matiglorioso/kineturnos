@@ -12,7 +12,7 @@ import {
   type AuthorizationRequest,
 } from "@/lib/api/insurances-client";
 import { ApiError } from "@/lib/api/fetch-json";
-import { formatAppDate } from "@/lib/date-utils";
+import { APP_DATE_FORMAT, formatAppDate } from "@/lib/date-utils";
 import { AUTHORIZATION_STATE_LABELS } from "@/lib/insurance";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -34,9 +34,9 @@ interface PatientCoverageSectionProps {
 }
 
 function period(authorization: Authorization): string {
-  const from = formatAppDate(authorization.validFrom, "dd/MM/yyyy");
+  const from = formatAppDate(authorization.validFrom, APP_DATE_FORMAT);
   return authorization.validUntil
-    ? `${from} al ${formatAppDate(authorization.validUntil, "dd/MM/yyyy")}`
+    ? `${from} al ${formatAppDate(authorization.validUntil, APP_DATE_FORMAT)}`
     : `Desde ${from}, sin vencimiento`;
 }
 

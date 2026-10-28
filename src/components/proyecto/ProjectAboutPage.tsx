@@ -3,11 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import {
   appointmentStatuses,
+  authorizationStatuses,
   helpIntro,
   helpMeta,
   helpSectionNav,
   moduleGuides,
   quickStartSteps,
+  roleGuides,
   supportInfo,
   systemScope,
 } from "@/data/help-content";
@@ -19,6 +21,7 @@ import {
   CircleHelp,
   LifeBuoy,
   ListChecks,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -220,6 +223,49 @@ export function ProjectAboutPage() {
                 >
                   <p className="font-medium text-slate-900">{status.name}</p>
                   <p className="mt-1 text-sm text-slate-600">{status.description}</p>
+                </li>
+              ))}
+            </ul>
+
+            <h3 className="mt-8 text-lg font-semibold text-slate-900">
+              Situación de las autorizaciones
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Los mismos nombres que se ven en Obras sociales, en la lista de pacientes y en el panel.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {authorizationStatuses.map((status) => (
+                <li
+                  key={status.name}
+                  className="rounded-xl border border-slate-100 bg-white px-4 py-3"
+                >
+                  <p className="font-medium text-slate-900">{status.name}</p>
+                  <p className="mt-1 text-sm text-slate-600">{status.description}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard id="perfiles">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+            <UserRound className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <SectionLabel>Perfiles</SectionLabel>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900">
+              Qué ve cada perfil
+            </h2>
+            <ul className="mt-6 space-y-3">
+              {roleGuides.map((role) => (
+                <li
+                  key={role.name}
+                  className="rounded-xl border border-slate-100 bg-white px-4 py-3"
+                >
+                  <p className="font-medium text-slate-900">{role.name}</p>
+                  <p className="mt-1 text-sm text-slate-600">{role.description}</p>
                 </li>
               ))}
             </ul>

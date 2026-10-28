@@ -48,6 +48,15 @@ describe("formulario y reglas de usuarios", () => {
       { email: "Ingresá un email válido" }
     );
     assert.deepEqual(validateUserForm({ name: "Ana", email: "ana@test.local", role: "admin", professionalId: "" }), {});
+    // Con tilde o eñe el correo no llega: se rechaza al cargarlo.
+    assert.deepEqual(
+      validateUserForm({ name: "Martín", email: "martín.aguirre@sanmarsalud.com", role: "admin", professionalId: "" }),
+      { email: "Ingresá un email válido" }
+    );
+    assert.deepEqual(
+      validateUserForm({ name: "Ana", email: "ana.o'neil+turnos@mail.com.ar", role: "admin", professionalId: "" }),
+      {}
+    );
   });
 
   it("solo un Superadmin asigna o gestiona el perfil Superadmin", () => {

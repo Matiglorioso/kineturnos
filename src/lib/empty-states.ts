@@ -127,8 +127,8 @@ export const emptyStates = {
 /** Etiquetas de acción sugeridas para empty states */
 export const emptyStateActions = {
   scheduleAppointment: "Agendar turno",
-  registerPatient: "Registrar paciente",
-  registerProfessional: "Registrar profesional",
+  registerPatient: "Nuevo paciente",
+  registerProfessional: "Nuevo profesional",
   clearSearch: "Limpiar búsqueda",
   clearFilters: "Limpiar filtros",
   goToAgenda: "Ir a la agenda",
