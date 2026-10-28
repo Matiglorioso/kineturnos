@@ -1,6 +1,5 @@
 "use client";
 
-import { LogoMark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +18,7 @@ import { cn, getInitials } from "@/lib/utils";
 import { ChevronDown, KeyRound, LogOut, Plus, Search } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 interface HeaderProps {
@@ -45,7 +44,11 @@ export function Header({ title, subtitle }: HeaderProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
+  const pathname = usePathname();
   const { canSchedule, canManagePatients } = usePermissions();
+  // En Pacientes y en la Agenda la página ya tiene su buscador y su "Agendar turno".
+  const showPatientSearch = canManagePatients && pathname !== "/pacientes";
+  const showSchedule = canSchedule && pathname !== "/agenda";
   const [patientQuery, setPatientQuery] = useState("");
 
   const handlePatientSearch = (event: FormEvent<HTMLFormElement>) => {
@@ -79,7 +82,7 @@ export function Header({ title, subtitle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {canManagePatients && (
+          {showPatientSearch && (
             <form
               onSubmit={handlePatientSearch}
               className="relative hidden md:block"
@@ -97,16 +100,16 @@ export function Header({ title, subtitle }: HeaderProps) {
             </form>
           )}
 
-          {canSchedule && (
+          {showSchedule && (
             <>
               <Button size="icon" className="sm:hidden" asChild>
-                <Link href="/agenda" aria-label="Agendar turno">
+                <Link href="/agenda?nuevo=1" aria-label="Agendar turno">
                   <Plus className="h-4 w-4" />
                 </Link>
               </Button>
 
               <Button size="sm" className="hidden sm:inline-flex" asChild>
-                <Link href="/agenda">
+                <Link href="/agenda?nuevo=1">
                   <Plus className="h-4 w-4" />
                   Agendar turno
                 </Link>
@@ -155,8 +158,6 @@ export function Header({ title, subtitle }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-
-          <LogoMark className="h-9 w-9" />
         </div>
       </div>
     </header>
