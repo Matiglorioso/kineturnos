@@ -32,7 +32,11 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await createAppointmentInDb({ patient: other, professional, date, time: "10:00" });
 
     const dialog = await openNewAppointmentDialog(page);
-    await selectOption(dialog, page, "Paciente *", patient.nombre);
+    // El paciente se busca escribiendo (por DNI o nombre), no en una lista de cientos.
+    await dialog.getByRole("combobox", { name: "Paciente *" }).fill(patient.dni);
+    await expect(page.getByRole("option")).toHaveCount(1);
+    await page.getByRole("option", { name: patient.nombre }).click();
+    await expect(dialog.getByRole("combobox", { name: "Paciente *" })).toHaveValue(patient.nombre);
     await selectOption(dialog, page, "Profesional *", new RegExp(professional.nombre));
     await dialog.getByRole("textbox", { name: "Fecha *" }).fill(date);
 
@@ -46,7 +50,7 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await slots.filter({ hasText: "09:00 - 10:00 hs" }).click();
 
     await selectOption(dialog, page, "Tipo de sesión *", "Control");
-    await dialog.getByRole("button", { name: "Confirmar turno" }).click();
+    await dialog.getByRole("button", { name: "Agendar turno" }).click();
 
     await expect(page.getByText("Turno agendado")).toBeVisible();
     await expect(dialog).toBeHidden();
@@ -72,12 +76,29 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await dialog.getByRole("textbox", { name: "Fecha *" }).fill(date);
     await selectOption(dialog, page, "Horario *", "11:00 - 12:00 hs");
     await selectOption(dialog, page, "Tipo de sesión *", "Control");
-    await dialog.getByRole("button", { name: "Confirmar turno" }).click();
+    await dialog.getByRole("button", { name: "Agendar turno" }).click();
 
     await expect(
       dialog.getByText("El paciente ya tiene otro turno en ese horario.").first()
     ).toBeVisible();
     await expect(dialog).toBeVisible();
+  });
+
+  test("confirma un turno pendiente con un toque desde la agenda", async ({ page }) => {
+    const professional = await createProfessional(uniqueName("Prof"));
+    const patient = await createPatient(uniqueName("Pac"));
+    const date = futureWorkday(15);
+    await createAppointmentInDb({ patient, professional, date, time: "10:00", status: "pendiente" });
+
+    await page.goto("/agenda");
+    await goToAgendaDate(page, date);
+    const row = page.getByRole("row").filter({ hasText: patient.nombre });
+    await row.getByRole("button", { name: `Confirmar turno: ${patient.nombre}` }).click();
+    await expect(row).toContainText("Confirmado");
+    // Ya confirmado y en el futuro: no queda acción rápida ni asistencia para registrar.
+    await expect(row.getByRole("button", { name: /^(Confirmar turno|Marcar atendido):/ })).toHaveCount(0);
+    await row.getByRole("button", { name: "Acciones del turno" }).click();
+    await expect(page.getByRole("menuitem", { name: "Marcar como atendido" })).toHaveCount(0);
   });
 
   test("confirmar, atender y recién ahí eliminar un turno", async ({ page }) => {

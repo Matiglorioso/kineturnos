@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppointmentActionsVariant } from "@/components/appointments/AppointmentActions";
 import { WeekAppointmentBlock } from "@/components/agenda/WeekAppointmentBlock";
 import { WeekNavigation } from "@/components/agenda/WeekNavigation";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
@@ -31,7 +32,7 @@ interface AgendaWeekViewProps {
   onAppointmentClick: (appointment: Appointment) => void;
   renderActions: (
     appointment: Appointment,
-    variant?: "table" | "card"
+    variant?: AppointmentActionsVariant
   ) => React.ReactNode;
   onCreateAppointment?: () => void;
   emptyPreset: EmptyStatePreset;
@@ -178,7 +179,7 @@ export function AgendaWeekView({
                       key={appointment.id}
                       appointment={appointment}
                       onClick={onAppointmentClick}
-                      actions={renderActions(appointment, "table")}
+                      actions={renderActions(appointment, "compact")}
                       compact
                       className="absolute z-10"
                       style={{

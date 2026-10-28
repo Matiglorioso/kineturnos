@@ -137,7 +137,7 @@ export function ActionCenterCard({
             <Group
               title={`Confirmar turnos del ${formatAppDate(unconfirmedDate, "EEEE d/MM")}`}
               count={unconfirmed.length}
-              more={{ label: "Ver en la agenda", href: "/agenda" }}
+              more={{ label: "Ver en la agenda", href: `/agenda?fecha=${unconfirmedDate}` }}
             >
               {unconfirmed.slice(0, MAX_ITEMS).map((appointment) => {
                 const phone = patientsById.get(appointment.patientId)?.phone;
