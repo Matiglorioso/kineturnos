@@ -120,7 +120,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-brand-600">{siteConfig.clinicName}</p>
+          <p className="text-sm font-medium text-brand-700">{siteConfig.clinicName}</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {greetingFor(nowMinutes)}
             {firstName ? `, ${firstName}` : ""}

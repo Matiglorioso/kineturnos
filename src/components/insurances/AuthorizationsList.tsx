@@ -408,7 +408,7 @@ export function AuthorizationsList({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-600 hover:text-brand-700"
+                              className="h-9 w-9 text-slate-600 hover:text-brand-800"
                               aria-label={`Editar autorización de ${item.patientName}`}
                               onClick={() => setEditing(item)}
                             >
@@ -423,7 +423,7 @@ export function AuthorizationsList({
                               asChild
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-600 hover:text-brand-700"
+                              className="h-9 w-9 text-slate-600 hover:text-brand-800"
                             >
                               <Link
                                 href={patientLink(item)}

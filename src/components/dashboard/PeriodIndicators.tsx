@@ -97,7 +97,7 @@ export function PeriodIndicators({ appointments, patients, showProfessionals }: 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 id="indicadores-titulo" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <BarChart3 className="h-5 w-5 text-brand-600" />
+            <BarChart3 className="h-5 w-5 text-brand-700" />
             Indicadores
           </h2>
           <p className="text-sm text-muted-foreground">{formatRangeLabel(range)} · contra el período anterior</p>

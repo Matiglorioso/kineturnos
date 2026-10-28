@@ -38,7 +38,7 @@ const SIDEBAR_TRANSITION =
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "Panel",
     href: "/",
     icon: LayoutDashboard,
   },
@@ -116,8 +116,8 @@ function NavLink({
         className={cn(
           "h-5 w-5 shrink-0",
           isActive
-            ? "text-brand-600"
-            : "text-slate-400 group-hover:text-slate-600"
+            ? "text-brand-700"
+            : "text-slate-500 group-hover:text-slate-600"
         )}
       />
       {/* No animar labels ocultos: evita spans opacity-0 que interceptan clicks */}
@@ -171,8 +171,8 @@ export function Sidebar({
       <>
         <nav className={cn("flex-1 space-y-1 p-3", compact ? "overflow-visible" : "overflow-y-auto")}>
           {!compact && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              Menu principal
+            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Menú principal
             </p>
           )}
           {visibleNavigation.map((item) => {
@@ -197,7 +197,7 @@ export function Sidebar({
 
         <nav className="space-y-1 px-3 pb-3">
           {!compact && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
               Soporte
             </p>
           )}
@@ -227,7 +227,7 @@ export function Sidebar({
         type="button"
         onClick={() => setMobileOpen(true)}
         className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm lg:hidden"
-        aria-label="Abrir menu"
+        aria-label="Abrir menú"
       >
         <Menu className="h-5 w-5 text-slate-600" />
       </button>
@@ -252,7 +252,7 @@ export function Sidebar({
           type="button"
           onClick={() => setMobileOpen(false)}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100"
-          aria-label="Cerrar menu"
+          aria-label="Cerrar menú"
         >
           <X className="h-4 w-4 text-slate-500" />
         </button>

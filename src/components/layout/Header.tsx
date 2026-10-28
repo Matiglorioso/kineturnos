@@ -70,7 +70,7 @@ export function Header({ title, subtitle }: HeaderProps) {
             </div>
           ) : (
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-brand-600">
+              <p className="text-xs font-medium uppercase tracking-wide text-brand-700">
                 {siteConfig.clinicName}
               </p>
               <TodayLabel />
@@ -129,7 +129,7 @@ export function Header({ title, subtitle }: HeaderProps) {
                     <span className="block text-xs font-semibold text-slate-900">{user.name}</span>
                     <span className="block text-[10px] text-muted-foreground">{getRoleLabel(user.role)}</span>
                   </span>
-                  <ChevronDown className="hidden h-3.5 w-3.5 text-slate-400 sm:block" />
+                  <ChevronDown className="hidden h-3.5 w-3.5 text-slate-500 sm:block" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">

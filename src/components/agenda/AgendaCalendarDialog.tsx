@@ -112,8 +112,9 @@ export function AgendaCalendarDialog({
                           ? "bg-primary font-semibold text-primary-foreground shadow-sm"
                           : count > 0
                             ? "bg-brand-50 font-medium text-brand-900 hover:bg-brand-100"
-                            : "text-slate-500 hover:bg-muted",
-                        !inMonth && !selected && "opacity-40",
+                            : "text-slate-700 hover:bg-muted",
+                        // Días de otro mes: atenuados pero legibles.
+                        !inMonth && !selected && "font-normal text-slate-500",
                         isToday && !selected && "ring-2 ring-primary/40"
                       )}
                     >
@@ -122,7 +123,7 @@ export function AgendaCalendarDialog({
                         <span
                           className={cn(
                             "absolute right-1 top-1 rounded-full px-1 text-[10px] font-semibold leading-4",
-                            selected ? "bg-white/25 text-white" : "text-brand-700"
+                            selected ? "bg-white text-brand-800" : "text-brand-700"
                           )}
                         >
                           {formatDayCount(count)}

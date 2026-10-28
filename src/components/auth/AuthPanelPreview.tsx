@@ -12,7 +12,7 @@ export function AuthPanelPreview() {
       <div className="relative overflow-hidden rounded-2xl bg-white/95 p-3 text-slate-900 shadow-2xl shadow-teal-950/40 ring-1 ring-white/40 @[52rem]:p-4">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-600">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-700">
               Panel del día
             </p>
             <p className="text-sm font-bold text-slate-900">Resumen operativo</p>
@@ -33,7 +33,7 @@ export function AuthPanelPreview() {
         </div>
 
         <div className="mt-3 @[52rem]:mt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
             Próximo turno
           </p>
           <PreviewAppointment
@@ -60,7 +60,7 @@ function PreviewStat({
   tone: "brand" | "amber" | "violet";
 }) {
   const tones = {
-    brand: "bg-brand-50 text-brand-600",
+    brand: "bg-brand-50 text-brand-700",
     amber: "bg-amber-50 text-amber-600",
     violet: "bg-violet-50 text-violet-600",
   };
