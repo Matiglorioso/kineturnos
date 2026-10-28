@@ -3,11 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import {
   appointmentStatuses,
+  authorizationStatuses,
   helpIntro,
   helpMeta,
   helpSectionNav,
   moduleGuides,
   quickStartSteps,
+  roleGuides,
   supportInfo,
   systemScope,
 } from "@/data/help-content";
@@ -19,12 +21,13 @@ import {
   CircleHelp,
   LifeBuoy,
   ListChecks,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
+    <p className="text-xs font-semibold uppercase tracking-widest text-brand-700">
       {children}
     </p>
   );
@@ -62,7 +65,7 @@ export function ProjectAboutPage() {
         />
         <div className="relative space-y-6">
           <div className="flex flex-wrap gap-2">
-            <Badge className="bg-brand-600 text-white hover:bg-brand-600">
+            <Badge className="bg-brand-700 text-white hover:bg-brand-800">
               Ayuda
             </Badge>
             <Badge variant="outline" className="border-brand-200 text-brand-700">
@@ -74,7 +77,7 @@ export function ProjectAboutPage() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-brand-600">{helpIntro.title}</p>
+            <p className="text-sm font-medium text-brand-700">{helpIntro.title}</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
               {helpMeta.productName}
             </h1>
@@ -90,7 +93,7 @@ export function ProjectAboutPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/agenda"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-800"
             >
               Ir a la agenda
               <ArrowRight className="h-4 w-4" />
@@ -113,7 +116,7 @@ export function ProjectAboutPage() {
           <a
             key={item.id}
             href={`#${item.id}`}
-            className="shrink-0 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-700"
+            className="shrink-0 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-800"
           >
             {item.label}
           </a>
@@ -122,7 +125,7 @@ export function ProjectAboutPage() {
 
       <SectionCard id="inicio">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
             <CircleHelp className="h-6 w-6" />
           </div>
           <div className="space-y-3">
@@ -157,7 +160,7 @@ export function ProjectAboutPage() {
                   key={step}
                   className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm text-slate-700"
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-700 text-xs font-bold text-white">
                     {index + 1}
                   </span>
                   {step}
@@ -179,7 +182,7 @@ export function ProjectAboutPage() {
               key={module.title}
               className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-200/80">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-700 shadow-sm ring-1 ring-slate-200/80">
                 <module.icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 font-semibold text-slate-900">{module.title}</h3>
@@ -220,6 +223,49 @@ export function ProjectAboutPage() {
                 >
                   <p className="font-medium text-slate-900">{status.name}</p>
                   <p className="mt-1 text-sm text-slate-600">{status.description}</p>
+                </li>
+              ))}
+            </ul>
+
+            <h3 className="mt-8 text-lg font-semibold text-slate-900">
+              Situación de las autorizaciones
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Los mismos nombres que se ven en Obras sociales, en la lista de pacientes y en el panel.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {authorizationStatuses.map((status) => (
+                <li
+                  key={status.name}
+                  className="rounded-xl border border-slate-100 bg-white px-4 py-3"
+                >
+                  <p className="font-medium text-slate-900">{status.name}</p>
+                  <p className="mt-1 text-sm text-slate-600">{status.description}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard id="perfiles">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+            <UserRound className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <SectionLabel>Perfiles</SectionLabel>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900">
+              Qué ve cada perfil
+            </h2>
+            <ul className="mt-6 space-y-3">
+              {roleGuides.map((role) => (
+                <li
+                  key={role.name}
+                  className="rounded-xl border border-slate-100 bg-white px-4 py-3"
+                >
+                  <p className="font-medium text-slate-900">{role.name}</p>
+                  <p className="mt-1 text-sm text-slate-600">{role.description}</p>
                 </li>
               ))}
             </ul>

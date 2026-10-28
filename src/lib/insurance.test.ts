@@ -82,7 +82,7 @@ describe("estado de la cobertura del paciente", () => {
     assert.equal(status.kind === "vigente" && status.remaining, 6);
     assert.deepEqual(summarizeCoverage(status, TODAY), {
       tone: "ok",
-      label: "6 de 10 sesiones disponibles · vence 31/12/2026",
+      label: "6 de 10 sesiones disponibles · vence 31-12-2026",
     });
   });
 
@@ -101,7 +101,7 @@ describe("estado de la cobertura del paciente", () => {
     assert.equal(summarizeCoverage(agotada, TODAY).label, "Autorización agotada (10 de 10 sesiones)");
     const vencida = getCoverageStatus(true, [auth({ validUntil: "30-09-2026", validFrom: "01-09-2026" })], TODAY);
     assert.equal(vencida.kind, "vencida");
-    assert.equal(summarizeCoverage(vencida, TODAY).label, "Autorización vencida el 30/09/2026");
+    assert.equal(summarizeCoverage(vencida, TODAY).label, "Autorización vencida el 30-09-2026");
     assert.equal(getCoverageStatus(true, [auth({ state: "rechazada" })], TODAY).kind, "sin-autorizacion");
     assert.equal(summarizeCoverage(getCoverageStatus(true, [], TODAY), TODAY).tone, "alert");
   });

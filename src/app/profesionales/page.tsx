@@ -25,6 +25,9 @@ import { showSuccessToast } from "@/lib/toast";
 import { Professional } from "@/types";
 import { UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { getClinicScheduleLabel } from "@/lib/professional-utils";
+import { usePagination } from "@/hooks/use-pagination";
 
 export default function ProfesionalesPage() {
   const {
@@ -74,6 +77,7 @@ export default function ProfesionalesPage() {
     );
   };
 
+  const pagination = usePagination(professionals, { storageKey: "profesionales" });
   const activeCount = professionals.filter((p) => p.active).length;
   const totalToday = useMemo(
     () =>
@@ -176,7 +180,8 @@ export default function ProfesionalesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Profesionales"
-        description={`${pluralize(professionals.length, "kinesiólogo")} · ${pluralize(activeCount, "activo")} · ${pluralize(totalToday, "turno")} hoy`}
+        // El horario es el mismo para todos: se dice una vez acá y no en cada tarjeta.
+        description={`${pluralize(professionals.length, "kinesiólogo")} · ${pluralize(activeCount, "activo")} · ${pluralize(totalToday, "turno")} hoy · horario del consultorio ${getClinicScheduleLabel()}`}
         actionLabel={
           canManageProfessionals
             ? emptyStateActions.registerProfessional
@@ -197,23 +202,26 @@ export default function ProfesionalesPage() {
           onAction={canManageProfessionals ? openCreateDialog : undefined}
         />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {professionals.map((professional) => (
-            <ProfessionalCard
-              key={professional.id}
-              professional={professional}
-              todayAppointments={getProfessionalTodayCount(
-                appointments,
-                professional.id,
-                today
-              )}
-              onViewDetail={openDetailDialog}
-              onEdit={canManageProfessionals ? openEditDialog : undefined}
-              onToggleActive={
-                canManageProfessionals ? handleToggleActive : undefined
-              }
-            />
-          ))}
+        <div className="space-y-4">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {pagination.items.map((professional) => (
+              <ProfessionalCard
+                key={professional.id}
+                professional={professional}
+                todayAppointments={getProfessionalTodayCount(
+                  appointments,
+                  professional.id,
+                  today
+                )}
+                onViewDetail={openDetailDialog}
+                onEdit={canManageProfessionals ? openEditDialog : undefined}
+                onToggleActive={
+                  canManageProfessionals ? handleToggleActive : undefined
+                }
+              />
+            ))}
+          </div>
+          <ListPagination pagination={pagination} itemLabel="profesionales" />
         </div>
       )}
 

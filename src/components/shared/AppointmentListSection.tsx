@@ -20,7 +20,7 @@ export function AppointmentListSection({
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-brand-600" />
+        <Icon className="h-4 w-4 text-brand-700" />
         <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
           {appointments.length}

@@ -8,6 +8,8 @@ import {
   DataTableRow,
 } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,7 +30,7 @@ import {
   type AuthorizationRequest,
 } from "@/lib/api/insurances-client";
 import { ApiError } from "@/lib/api/fetch-json";
-import { formatAppDate } from "@/lib/date-utils";
+import { APP_DATE_FORMAT, formatAppDate } from "@/lib/date-utils";
 import {
   AUTHORIZATION_STATUS_LABELS,
   AUTHORIZATION_STATUS_PRIORITY,
@@ -124,9 +126,9 @@ function SessionsBar({ used, sessions }: { used: number; sessions: number }) {
 }
 
 function period(item: AuthorizationListItem): string {
-  const from = formatAppDate(item.validFrom, "dd/MM/yy");
+  const from = formatAppDate(item.validFrom, APP_DATE_FORMAT);
   return item.validUntil
-    ? `${from} al ${formatAppDate(item.validUntil, "dd/MM/yy")}`
+    ? `${from} al ${formatAppDate(item.validUntil, APP_DATE_FORMAT)}`
     : `Desde ${from}`;
 }
 
@@ -170,6 +172,10 @@ export function AuthorizationsList({
     () => filterAuthorizations(items ?? [], filters),
     [items, filters],
   );
+  const pagination = usePagination(visible, {
+    storageKey: "autorizaciones",
+    resetKey: JSON.stringify(filters),
+  });
   const hasFilters =
     filters.search.trim() !== "" ||
     filters.insuranceId !== "todas" ||
@@ -315,7 +321,7 @@ export function AuthorizationsList({
             >
               <SelectTrigger
                 aria-label="Situación"
-                className={cn(segment(filters.status !== "todas"), "sm:w-44")}
+                className={cn(segment(filters.status !== "todas"), "sm:w-52")}
               >
                 <SelectValue />
               </SelectTrigger>
@@ -360,7 +366,7 @@ export function AuthorizationsList({
           onAction={() => setFilters(EMPTY_FILTERS)}
         />
       ) : (
-        <>
+        <div className="space-y-4">
           {/* Escritorio: tabla. */}
           <div className="hidden lg:block">
             <TooltipProvider delayDuration={200}>
@@ -375,7 +381,7 @@ export function AuthorizationsList({
                   "Acciones",
                 ]}
               >
-                {visible.map((item) => (
+                {pagination.items.map((item) => (
                   <DataTableRow key={item.id}>
                     <DataTableCell>
                       <p className="font-medium text-slate-900">
@@ -408,7 +414,7 @@ export function AuthorizationsList({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-600 hover:text-brand-700"
+                              className="h-9 w-9 text-slate-600 hover:text-brand-800"
                               aria-label={`Editar autorización de ${item.patientName}`}
                               onClick={() => setEditing(item)}
                             >
@@ -423,7 +429,7 @@ export function AuthorizationsList({
                               asChild
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-600 hover:text-brand-700"
+                              className="h-9 w-9 text-slate-600 hover:text-brand-800"
                             >
                               <Link
                                 href={patientLink(item)}
@@ -448,7 +454,7 @@ export function AuthorizationsList({
             className="grid gap-3 sm:grid-cols-2 lg:hidden"
             aria-label="Autorizaciones"
           >
-            {visible.map((item) => (
+            {pagination.items.map((item) => (
               <li key={item.id} className="surface-card space-y-3 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -488,7 +494,8 @@ export function AuthorizationsList({
               </li>
             ))}
           </ul>
-        </>
+          <ListPagination pagination={pagination} itemLabel="autorizaciones" />
+        </div>
       )}
 
       <AuthorizationDialog

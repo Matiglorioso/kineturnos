@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getClinicScheduleLabel } from "@/lib/professional-utils";
 import { cn, getInitials } from "@/lib/utils";
 import { Professional } from "@/types";
-import { Calendar, Clock, Eye, Pencil, Stethoscope, UserX } from "lucide-react";
+import { Calendar, Eye, Pencil, Stethoscope, UserX } from "lucide-react";
+import { readableAvatarColor } from "@/lib/professional-utils";
 
 interface ProfessionalCardProps {
   professional: Professional;
@@ -23,7 +23,6 @@ export function ProfessionalCard({
   onToggleActive,
   className,
 }: ProfessionalCardProps) {
-  const scheduleLabel = getClinicScheduleLabel();
 
   return (
     <Card
@@ -40,7 +39,7 @@ export function ProfessionalCard({
           <div
             className={cn(
               "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm",
-              professional.avatarColor
+              readableAvatarColor(professional.avatarColor)
             )}
           >
             {getInitials(professional.name)}
@@ -48,9 +47,9 @@ export function ProfessionalCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-semibold text-slate-900">
+                <h2 className="font-semibold text-slate-900">
                   {professional.name}
-                </h3>
+                </h2>
                 <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Stethoscope className="h-3.5 w-3.5" />
                   {professional.specialty}
@@ -80,16 +79,6 @@ export function ProfessionalCard({
                   </span>
                 ))}
               </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 text-sm">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Horario
-              </p>
-              <p className="mt-0.5 font-medium text-slate-700">{scheduleLabel}</p>
             </div>
           </div>
 

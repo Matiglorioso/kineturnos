@@ -9,6 +9,7 @@ import {
   DataTableRow,
 } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ListPagination } from "@/components/ui/ListPagination";
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +23,7 @@ import {
   type InsuranceRequest,
 } from "@/lib/api/insurances-client";
 import { ApiError } from "@/lib/api/fetch-json";
+import { usePagination } from "@/hooks/use-pagination";
 import { pluralize } from "@/lib/pluralize";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -47,6 +49,7 @@ export function InsuranceCatalog({
     insurance: null,
   });
   const [toDelete, setToDelete] = useState<Insurance | null>(null);
+  const pagination = usePagination(insurances, { storageKey: "obras-sociales" });
 
   const save = async (body: InsuranceRequest) => {
     if (dialog.insurance) {
@@ -91,7 +94,7 @@ export function InsuranceCatalog({
           onClick={onClick}
           className={cn(
             "h-9 w-9 text-slate-600",
-            danger ? "hover:text-destructive" : "hover:text-brand-700",
+            danger ? "hover:text-destructive" : "hover:text-brand-800",
           )}
         >
           {icon}
@@ -124,13 +127,13 @@ export function InsuranceCatalog({
           description="Agregá las obras sociales y prepagas con las que trabaja el consultorio."
         />
       ) : (
-        <>
+        <div className="space-y-4">
           <div className="hidden md:block">
             <TooltipProvider delayDuration={200}>
               <DataTable
                 headers={["Obra social", "Pacientes", "Estado", "Acciones"]}
               >
-                {insurances.map((insurance) => (
+                {pagination.items.map((insurance) => (
                   <DataTableRow key={insurance.id}>
                     <DataTableCell>
                       <p className="font-medium text-slate-900">
@@ -181,7 +184,7 @@ export function InsuranceCatalog({
 
           {/* Celular: tarjetas. */}
           <ul className="grid gap-3 md:hidden" aria-label="Obras sociales">
-            {insurances.map((insurance) => (
+            {pagination.items.map((insurance) => (
               <li key={insurance.id} className="surface-card space-y-2 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-semibold text-slate-900">
@@ -233,7 +236,8 @@ export function InsuranceCatalog({
               </li>
             ))}
           </ul>
-        </>
+          <ListPagination pagination={pagination} itemLabel="obras sociales" />
+        </div>
       )}
 
       <InsuranceDialog
