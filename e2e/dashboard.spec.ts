@@ -17,12 +17,12 @@ test.afterAll(cleanupTestData);
 const today = () => parseAppDate(getTodayAppDate())!;
 
 test.describe("panel del consultorio", () => {
-  test("accesos rápidos y atajos para dar de alta", async ({ page }) => {
+  test("atajos para dar de alta: paciente desde el panel y turno desde la barra superior", async ({ page }) => {
     await page.goto("/");
-    const shortcuts = page.getByRole("navigation", { name: "Accesos rápidos" });
-    await expect(shortcuts.getByRole("link")).toHaveCount(4);
-    await shortcuts.getByRole("link", { name: /Obras sociales/ }).click();
-    await expect(page).toHaveURL("/obras-sociales");
+    // "Agendar turno" de la barra superior abre el alta, igual que el del panel.
+    await page.getByRole("banner").getByRole("link", { name: "Agendar turno" }).click();
+    await expect(page.getByRole("dialog", { name: "Agendar turno" })).toBeVisible();
+    await expect(page).toHaveURL("/agenda");
 
     await page.goto("/");
     await page.getByRole("link", { name: "Nuevo paciente" }).click();
