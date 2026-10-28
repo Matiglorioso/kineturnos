@@ -1,8 +1,6 @@
 "use client";
 
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
-import { DashboardShortcuts } from "@/components/dashboard/DashboardShortcuts";
-import { MetricTile } from "@/components/dashboard/MetricTile";
 import { PeriodIndicators } from "@/components/dashboard/PeriodIndicators";
 import { TodayScheduleCard } from "@/components/dashboard/TodayScheduleCard";
 import { DataLoadBanner } from "@/components/shared/DataLoadBanner";
@@ -11,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
 import { usePermissions } from "@/hooks/use-permissions";
-import { computeIndicators, getPeriodRange } from "@/lib/dashboard-indicators";
 import {
   getDaySchedule,
   getNextWorkday,
@@ -21,17 +18,8 @@ import {
   summarizeDay,
 } from "@/lib/dashboard-today";
 import { formatAppDate, getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
-import { siteConfig } from "@/lib/site-config";
 import type { Appointment, AppointmentStatus, Patient } from "@/types";
-import {
-  CalendarCheck,
-  CalendarClock,
-  ClipboardCheck,
-  Plus,
-  ShieldAlert,
-  UserCheck,
-  UserPlus,
-} from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -71,7 +59,7 @@ export default function DashboardPage() {
     refresh: refreshAppointments,
     updateAppointmentStatus,
   } = useAppointments();
-  const { role, can, canSchedule, canManagePatients, isScopedProfessional } = usePermissions();
+  const { can, canSchedule, canManagePatients, isScopedProfessional } = usePermissions();
   const [today] = useState(() => getTodayAppDate());
   const nowMinutes = useNowMinutes();
 
@@ -85,10 +73,6 @@ export default function DashboardPage() {
   const unconfirmed = useMemo(() => getUnconfirmed(appointments, nextWorkday), [appointments, nextWorkday]);
   const coverageIssues = useMemo(() => coverageIssuesOf(patients), [patients]);
   const patientsById = useMemo(() => new Map(patients.map((patient) => [patient.id, patient])), [patients]);
-  const monthAttended = useMemo(
-    () => computeIndicators(appointments, getPeriodRange("mes", today)).attended,
-    [appointments, today]
-  );
 
   const showCoverage = can("insurances:write");
   const firstName = session?.user?.name?.split(" ")[0];
@@ -120,8 +104,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-brand-600">{siteConfig.clinicName}</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {greetingFor(nowMinutes)}
             {firstName ? `, ${firstName}` : ""}
           </h1>
@@ -151,57 +134,12 @@ export default function DashboardPage() {
         )}
       </header>
 
-      <DashboardShortcuts role={role} />
-
-      <section aria-labelledby="hoy-titulo" className="space-y-4">
+      <section aria-labelledby="hoy-titulo">
         <h2 id="hoy-titulo" className="sr-only">
           Hoy
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <MetricTile
-            label="Turnos de hoy"
-            value={daySummary.total}
-            icon={CalendarCheck}
-            tone="brand"
-            hint={`${daySummary.attended} atendidos · ${daySummary.upcoming} por venir`}
-            href="/agenda"
-          />
-          <MetricTile
-            label="Por registrar"
-            value={pendingAttendance.length}
-            icon={ClipboardCheck}
-            tone={pendingAttendance.length ? "amber" : "slate"}
-            hint="asistencia de turnos ya terminados"
-          />
-          <MetricTile
-            label="Por confirmar"
-            value={unconfirmed.length}
-            icon={CalendarClock}
-            tone={unconfirmed.length ? "sky" : "slate"}
-            hint={`para el ${formatAppDate(nextWorkday, "EEEE d/MM")}`}
-          />
-          {showCoverage ? (
-            <MetricTile
-              label="Autorizaciones"
-              value={coverageIssues.length}
-              icon={ShieldAlert}
-              tone={coverageIssues.length ? "red" : "slate"}
-              hint="vencidas, agotadas o por renovar"
-              href="/obras-sociales"
-            />
-          ) : (
-            <MetricTile
-              label="Atendidos este mes"
-              value={monthAttended}
-              icon={UserCheck}
-              tone="emerald"
-              hint="sesiones"
-            />
-          )}
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <TodayScheduleCard schedule={schedule} nowMinutes={nowMinutes} showProfessional={!isScopedProfessional} />
+        {/* Primero lo que hay que hacer; min-w-0 evita que una fila larga ensanche la grilla en celular. */}
+        <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
           <ActionCenterCard
             pendingAttendance={pendingAttendance}
             unconfirmed={unconfirmed}
@@ -211,6 +149,12 @@ export default function DashboardPage() {
             canConfirm={can("appointments:status")}
             showCoverage={showCoverage}
             onStatusChange={handleStatusChange}
+          />
+          <TodayScheduleCard
+            schedule={schedule}
+            summary={daySummary}
+            nowMinutes={nowMinutes}
+            showProfessional={!isScopedProfessional}
           />
         </div>
       </section>

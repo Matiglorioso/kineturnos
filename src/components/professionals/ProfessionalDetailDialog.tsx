@@ -35,6 +35,7 @@ import {
 import Link from "next/link";
 import { useMemo } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
+import { readableAvatarColor } from "@/lib/professional-utils";
 
 interface ProfessionalDetailDialogProps {
   professional: Professional | null;
@@ -81,7 +82,7 @@ export function ProfessionalDetailDialog({
             <div
               className={cn(
                 "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm",
-                activeProfessional.avatarColor
+                readableAvatarColor(activeProfessional.avatarColor)
               )}
             >
               {getInitials(activeProfessional.name)}

@@ -43,7 +43,7 @@ function Group({
           {title} <span className="text-slate-900">{count}</span>
         </h3>
         {more && count > MAX_ITEMS && (
-          <Link href={more.href} className="text-xs font-medium text-brand-600 hover:text-brand-700">
+          <Link href={more.href} className="-my-1 inline-flex min-h-6 items-center rounded-md px-1 text-xs font-medium text-brand-700 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {more.label}
           </Link>
         )}
@@ -79,7 +79,7 @@ export function ActionCenterCard({
     pendingAttendance.length + (showUnconfirmed ? unconfirmed.length : 0) + (showCoverage ? coverageIssues.length : 0);
 
   return (
-    <DashboardCard title="Para hacer" icon={ListChecks} meta={total ? String(total) : undefined} fixedHeight>
+    <DashboardCard title="Para hacer" icon={ListChecks} fixedHeight>
       {total === 0 ? (
         <DashboardEmpty icon={CheckCircle2} text="Todo al día: no hay nada pendiente." />
       ) : (
@@ -137,7 +137,7 @@ export function ActionCenterCard({
             <Group
               title={`Confirmar turnos del ${formatAppDate(unconfirmedDate, "EEEE d/MM")}`}
               count={unconfirmed.length}
-              more={{ label: "Ver en la agenda", href: "/agenda" }}
+              more={{ label: "Ver en la agenda", href: `/agenda?fecha=${unconfirmedDate}` }}
             >
               {unconfirmed.slice(0, MAX_ITEMS).map((appointment) => {
                 const phone = patientsById.get(appointment.patientId)?.phone;
@@ -184,7 +184,7 @@ export function ActionCenterCard({
 
           {showCoverage && coverageIssues.length > 0 && (
             <Group
-              title="Autorizaciones"
+              title="Coberturas por revisar"
               count={coverageIssues.length}
               more={{ label: "Ver todas", href: "/obras-sociales" }}
             >
@@ -195,7 +195,7 @@ export function ActionCenterCard({
                 >
                   <Link
                     href={`/pacientes?q=${encodeURIComponent(patient.dni)}`}
-                    className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900 hover:text-brand-700"
+                    className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900 hover:text-brand-800"
                   >
                     {patient.name}
                     <span className="block truncate text-xs font-normal text-muted-foreground">{patient.insurance}</span>

@@ -9,7 +9,10 @@ import {
 import { AgendaListView } from "@/components/agenda/AgendaListView";
 import { AgendaProfessionalsView } from "@/components/agenda/AgendaProfessionalsView";
 import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
-import { AppointmentActions } from "@/components/appointments/AppointmentActions";
+import {
+  AppointmentActions,
+  type AppointmentActionsVariant,
+} from "@/components/appointments/AppointmentActions";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
 import { DataLoadError } from "@/components/shared/DataLoadError";
@@ -68,6 +71,7 @@ export default function AgendaPage() {
     canSchedule,
     isScopedProfessional,
     professionalId: sessionProfessionalId,
+    isReady: permissionsReady,
   } = usePermissions();
   const [viewMode, setViewMode] = useState<AgendaViewMode>("list");
   const [weekStart, setWeekStart] = useState(() => getWeekStartMonday(new Date()));
@@ -88,6 +92,7 @@ export default function AgendaPage() {
   );
   const [detailOpen, setDetailOpen] = useState(false);
   const [slotPreset, setSlotPreset] = useState<{ professionalId: string; time: string } | null>(null);
+  const [presetPatientId, setPresetPatientId] = useState<string | undefined>();
   const today = getTodayAppDate();
   const selectedListDate = isValidAppDate(listDate)
     ? normalizeAppDate(listDate)
@@ -188,13 +193,25 @@ export default function AgendaPage() {
     setFormDialogOpen(true);
   };
 
-  // Desde el panel ("Agendar turno"): abre el alta y limpia el parámetro de la URL.
+  // Enlaces desde otras pantallas: ?fecha=dd-MM-yyyy abre ese día (panel, "Ver en la
+  // agenda"); ?nuevo=1 abre el alta, con ?paciente= ya elegido (ficha del paciente).
+  // Se leen cuando ya se conoce el perfil (para saber si puede agendar) y después
+  // se limpian de la URL.
   useEffect(() => {
-    if (!canSchedule || new URLSearchParams(window.location.search).get("nuevo") !== "1") return;
-    setEditingAppointment(null);
-    setFormDialogOpen(true);
-    window.history.replaceState(null, "", "/agenda");
-  }, [canSchedule]);
+    if (!permissionsReady) return;
+    const params = new URLSearchParams(window.location.search);
+    const date = params.get("fecha");
+    if (date && isValidAppDate(date)) {
+      setViewMode((mode) => (mode === "week" ? "list" : mode));
+      setListDate(normalizeAppDate(date));
+    }
+    if (canSchedule && params.get("nuevo") === "1") {
+      setEditingAppointment(null);
+      setPresetPatientId(params.get("paciente") ?? undefined);
+      setFormDialogOpen(true);
+    }
+    if (params.size > 0) window.history.replaceState(null, "", "/agenda");
+  }, [permissionsReady, canSchedule]);
 
   const openEditDialog = (appointment: Appointment) => {
     setEditingAppointment(appointment);
@@ -211,6 +228,7 @@ export default function AgendaPage() {
     if (!open) {
       setEditingAppointment(null);
       setSlotPreset(null);
+      setPresetPatientId(undefined);
     }
   };
 
@@ -237,7 +255,7 @@ export default function AgendaPage() {
     }
   };
 
-  const renderActions = (appointment: Appointment, variant: "table" | "card") => (
+  const renderActions = (appointment: Appointment, variant: AppointmentActionsVariant) => (
     <AppointmentActions
       appointment={appointment}
       variant={variant}
@@ -384,6 +402,7 @@ export default function AgendaPage() {
           defaultDate={showsDay ? selectedListDate : today}
           defaultProfessionalId={slotPreset?.professionalId}
           defaultTime={slotPreset?.time}
+          defaultPatientId={presetPatientId}
           editingAppointment={editingAppointment}
         />
       )}
