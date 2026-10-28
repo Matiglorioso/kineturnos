@@ -35,12 +35,12 @@ export function DashboardCard({
     >
       <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <div className="flex min-w-0 items-center gap-2">
-          <Icon className="h-4 w-4 shrink-0 text-brand-600" />
+          <Icon className="h-4 w-4 shrink-0 text-brand-700" />
           <h2 className="truncate font-semibold text-slate-900">{title}</h2>
           {meta && <span className="shrink-0 text-sm text-muted-foreground">· {meta}</span>}
         </div>
         {action && (
-          <Link href={action.href} className="shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">
+          <Link href={action.href} className="-my-1 inline-flex min-h-7 shrink-0 items-center rounded-md px-1 text-sm font-medium text-brand-700 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {action.label}
           </Link>
         )}
