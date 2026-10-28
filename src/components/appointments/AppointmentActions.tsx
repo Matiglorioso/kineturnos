@@ -4,10 +4,13 @@ import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import { Button } from "@/components/ui/button";
 import { formatAppointmentSlotLabel } from "@/lib/datetime-format";
 import {
+  canRegisterAttendance,
   getNextAppointmentStatuses,
+  getQuickStatusAction,
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
+import { getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +23,7 @@ import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import {
   Ban,
+  Check,
   CheckCircle2,
   Eye,
   FileHeart,
@@ -31,13 +35,16 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+/** Tabla y tarjeta llevan la acción rápida; "compact" (bloques de la semana) solo el menú. */
+export type AppointmentActionsVariant = "table" | "card" | "compact";
+
 interface AppointmentActionsProps {
   appointment: Appointment;
   onView: (appointment: Appointment) => void;
   onEdit: (appointment: Appointment) => void;
   onStatusChange: (appointment: Appointment, status: AppointmentStatus) => void;
   onDelete?: (appointment: Appointment) => void;
-  variant?: "table" | "card";
+  variant?: AppointmentActionsVariant;
   canEdit?: boolean;
   canDelete?: boolean;
 }
@@ -77,19 +84,50 @@ export function AppointmentActions({
   const nextStatuses = getNextAppointmentStatuses(appointment.status);
   const isActive = isActiveAppointmentStatus(appointment.status);
   const isFinal = isFinalAppointmentStatus(appointment.status);
+  const today = getTodayAppDate();
+  const attendanceAllowed = canRegisterAttendance(appointment.date, today);
+  const quickAction =
+    variant === "compact" ? null : getQuickStatusAction(appointment, today, getNowAppMinutes());
+  const inline = variant !== "card";
   const showCancel = isActive;
   const showDelete = canDelete && Boolean(onDelete) && isFinal;
 
   return (
-    <>
+    <div
+      className={cn(
+        "flex items-center gap-2",
+        inline ? "justify-end" : "[&>*]:flex-1"
+      )}
+    >
+      {/* La acción más probable a un toque, como en el panel; el resto queda en el menú. */}
+      {quickAction && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={
+            quickAction === "confirmado"
+              ? `Confirmar turno: ${appointment.patientName}`
+              : `Marcar atendido: ${appointment.patientName}`
+          }
+          onClick={() => onStatusChange(appointment, quickAction)}
+        >
+          {quickAction === "confirmado" ? (
+            <Check className="h-4 w-4 text-brand-700" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          )}
+          {quickAction === "confirmado" ? "Confirmar" : "Atendido"}
+        </Button>
+      )}
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
-            variant={variant === "table" ? "ghost" : "outline"}
-            size={variant === "table" ? "icon" : "sm"}
+            variant={inline ? "ghost" : "outline"}
+            size={inline ? "icon" : "sm"}
             className={cn(variant === "card" && "w-full")}
           >
-            {variant === "table" ? (
+            {inline ? (
               <MoreHorizontal className="h-4 w-4" />
             ) : (
               <>
@@ -137,26 +175,42 @@ export function AppointmentActions({
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            disabled={!nextStatuses.includes("atendido")}
-            onSelect={(event) => {
-              event.preventDefault();
-              closeMenuThen(() => onStatusChange(appointment, "atendido"));
-            }}
-          >
-            <CheckCircle2 className="text-emerald-600" />
-            Marcar como atendido
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={!nextStatuses.includes("ausente")}
-            onSelect={(event) => {
-              event.preventDefault();
-              closeMenuThen(() => setAbsentOpen(true));
-            }}
-          >
-            <UserX className="text-slate-500" />
-            Marcar como ausente
-          </DropdownMenuItem>
+          {appointment.status === "pendiente" && (
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                closeMenuThen(() => onStatusChange(appointment, "confirmado"));
+              }}
+            >
+              <Check className="text-brand-700" />
+              Confirmar turno
+            </DropdownMenuItem>
+          )}
+          {/* La asistencia no se ofrece en turnos de días futuros (el servidor la rechazaría). */}
+          {attendanceAllowed && (
+            <>
+              <DropdownMenuItem
+                disabled={!nextStatuses.includes("atendido")}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  closeMenuThen(() => onStatusChange(appointment, "atendido"));
+                }}
+              >
+                <CheckCircle2 className="text-emerald-600" />
+                Marcar como atendido
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!nextStatuses.includes("ausente")}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  closeMenuThen(() => setAbsentOpen(true));
+                }}
+              >
+                <UserX className="text-slate-500" />
+                Marcar como ausente
+              </DropdownMenuItem>
+            </>
+          )}
           {showCancel && (
             <DropdownMenuItem
               onSelect={(event) => {
@@ -191,7 +245,7 @@ export function AppointmentActions({
         open={cancelOpen}
         onOpenChange={setCancelOpen}
         title="Cancelar turno"
-        description={`Se cancelara el turno de ${appointment.patientName} el ${appointmentSlotLabel}. Esta accion no elimina el registro, solo cambia su estado.`}
+        description={`Se cancelará el turno de ${appointment.patientName} el ${appointmentSlotLabel}. Esta acción no elimina el registro, solo cambia su estado.`}
         confirmLabel="Sí, cancelar turno"
         destructive
         onConfirm={() => onStatusChange(appointment, "cancelado")}
@@ -201,7 +255,7 @@ export function AppointmentActions({
         open={absentOpen}
         onOpenChange={setAbsentOpen}
         title="Marcar turno como ausente"
-        description={`Se marcara como ausente el turno de ${appointment.patientName} el ${appointmentSlotLabel}.`}
+        description={`Se marcará como ausente el turno de ${appointment.patientName} el ${appointmentSlotLabel}.`}
         confirmLabel="Sí, marcar ausente"
         onConfirm={() => onStatusChange(appointment, "ausente")}
       />
@@ -210,11 +264,11 @@ export function AppointmentActions({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Eliminar turno permanentemente"
-        description={`Se eliminara de forma permanente el turno de ${appointment.patientName} el ${appointmentSlotLabel}. Esta accion no se puede deshacer.`}
+        description={`Se eliminará de forma permanente el turno de ${appointment.patientName} el ${appointmentSlotLabel}. Esta acción no se puede deshacer.`}
         confirmLabel="Sí, eliminar turno"
         destructive
         onConfirm={() => onDelete?.(appointment)}
       />
-    </>
+    </div>
   );
 }
