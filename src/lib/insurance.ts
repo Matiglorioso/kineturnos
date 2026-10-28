@@ -1,5 +1,5 @@
 import type { ParseResult } from "@/lib/api/parse-result";
-import { compareAppDates, formatAppDate, isValidAppDate, normalizeAppDate } from "@/lib/date-utils";
+import { APP_DATE_FORMAT, compareAppDates, formatAppDate, isValidAppDate, normalizeAppDate } from "@/lib/date-utils";
 
 export const PARTICULAR = "Particular";
 
@@ -113,7 +113,7 @@ export function getCoverageStatus(
 }
 
 function shortDate(date: string): string {
-  return formatAppDate(date, "dd/MM/yyyy");
+  return formatAppDate(date, APP_DATE_FORMAT);
 }
 
 /** Días entre hoy y el vencimiento (0 = vence hoy). */

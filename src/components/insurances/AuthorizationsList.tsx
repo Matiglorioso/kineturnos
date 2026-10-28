@@ -8,6 +8,8 @@ import {
   DataTableRow,
 } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,7 +30,7 @@ import {
   type AuthorizationRequest,
 } from "@/lib/api/insurances-client";
 import { ApiError } from "@/lib/api/fetch-json";
-import { formatAppDate } from "@/lib/date-utils";
+import { APP_DATE_FORMAT, formatAppDate } from "@/lib/date-utils";
 import {
   AUTHORIZATION_STATUS_LABELS,
   AUTHORIZATION_STATUS_PRIORITY,
@@ -124,9 +126,9 @@ function SessionsBar({ used, sessions }: { used: number; sessions: number }) {
 }
 
 function period(item: AuthorizationListItem): string {
-  const from = formatAppDate(item.validFrom, "dd/MM/yy");
+  const from = formatAppDate(item.validFrom, APP_DATE_FORMAT);
   return item.validUntil
-    ? `${from} al ${formatAppDate(item.validUntil, "dd/MM/yy")}`
+    ? `${from} al ${formatAppDate(item.validUntil, APP_DATE_FORMAT)}`
     : `Desde ${from}`;
 }
 
@@ -159,17 +161,26 @@ export function AuthorizationsList({
     void load();
   }, [load]);
 
-  const counts = useMemo(() => {
+  // Los contadores respetan la búsqueda y la obra social: así cierran con los resultados.
+  const { counts, countsTotal } = useMemo(() => {
+    const scoped = filterAuthorizations(items ?? [], {
+      ...filters,
+      status: "todas",
+    });
     const result = new Map<AuthorizationStatus, number>();
-    for (const item of items ?? [])
+    for (const item of scoped)
       result.set(item.status, (result.get(item.status) ?? 0) + 1);
-    return result;
-  }, [items]);
+    return { counts: result, countsTotal: scoped.length };
+  }, [items, filters]);
 
   const visible = useMemo(
     () => filterAuthorizations(items ?? [], filters),
     [items, filters],
   );
+  const pagination = usePagination(visible, {
+    storageKey: "autorizaciones",
+    resetKey: JSON.stringify(filters),
+  });
   const hasFilters =
     filters.search.trim() !== "" ||
     filters.insuranceId !== "todas" ||
@@ -190,7 +201,15 @@ export function AuthorizationsList({
         : "bg-transparent text-muted-foreground hover:text-foreground",
     );
 
-  const patientLink = (item: AuthorizationListItem) =>
+  const chip = (active: boolean) =>
+    cn(
+      "inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-sm transition-colors",
+      active
+        ? "border-primary bg-primary/5 font-medium text-slate-900"
+        : "border-slate-200 bg-white text-slate-700 hover:bg-muted",
+    );
+
+  const patientLink =(item: AuthorizationListItem) =>
     `/pacientes?q=${encodeURIComponent(item.patientDni)}`;
 
   if (error) {
@@ -217,14 +236,26 @@ export function AuthorizationsList({
 
   return (
     <div className="space-y-4">
-      {/* Resumen: cada contador filtra por esa situación. */}
+      {/* Único filtro por situación: cada chip muestra cuántas hay y filtra por ella. */}
       <div
         role="group"
-        aria-label="Resumen de autorizaciones"
+        aria-label="Situación"
         className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap"
       >
-        {AUTHORIZATION_STATUS_PRIORITY.filter((status) =>
-          counts.get(status),
+        <button
+          type="button"
+          aria-pressed={filters.status === "todas"}
+          onClick={() =>
+            setFilters((current) => ({ ...current, status: "todas" }))
+          }
+          className={chip(filters.status === "todas")}
+        >
+          Todas
+          <span className="font-semibold">{countsTotal}</span>
+        </button>
+        {/* Las situaciones sin autorizaciones no se muestran, salvo la elegida (para poder salir). */}
+        {AUTHORIZATION_STATUS_PRIORITY.filter(
+          (status) => counts.get(status) || filters.status === status,
         ).map((status) => {
           const active = filters.status === status;
           return (
@@ -238,12 +269,7 @@ export function AuthorizationsList({
                   status: active ? "todas" : status,
                 }))
               }
-              className={cn(
-                "inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-sm transition-colors",
-                active
-                  ? "border-primary bg-primary/5 font-medium text-slate-900"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-muted",
-              )}
+              className={chip(active)}
             >
               <span
                 className={cn(
@@ -252,7 +278,7 @@ export function AuthorizationsList({
                 )}
               />
               {AUTHORIZATION_STATUS_LABELS[status]}
-              <span className="font-semibold">{counts.get(status)}</span>
+              <span className="font-semibold">{counts.get(status) ?? 0}</span>
             </button>
           );
         })}
@@ -304,30 +330,6 @@ export function AuthorizationsList({
                 ))}
               </SelectContent>
             </Select>
-            <Select
-              value={filters.status}
-              onValueChange={(next) =>
-                setFilters((current) => ({
-                  ...current,
-                  status: next as AuthorizationListFilters["status"],
-                }))
-              }
-            >
-              <SelectTrigger
-                aria-label="Situación"
-                className={cn(segment(filters.status !== "todas"), "sm:w-44")}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas las situaciones</SelectItem>
-                {AUTHORIZATION_STATUS_PRIORITY.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {AUTHORIZATION_STATUS_LABELS[status]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             {hasFilters && (
               <button
                 type="button"
@@ -360,7 +362,7 @@ export function AuthorizationsList({
           onAction={() => setFilters(EMPTY_FILTERS)}
         />
       ) : (
-        <>
+        <div className="space-y-4">
           {/* Escritorio: tabla. */}
           <div className="hidden lg:block">
             <TooltipProvider delayDuration={200}>
@@ -375,7 +377,7 @@ export function AuthorizationsList({
                   "Acciones",
                 ]}
               >
-                {visible.map((item) => (
+                {pagination.items.map((item) => (
                   <DataTableRow key={item.id}>
                     <DataTableCell>
                       <p className="font-medium text-slate-900">
@@ -408,7 +410,7 @@ export function AuthorizationsList({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-600 hover:text-brand-700"
+                              className="h-9 w-9 text-slate-600 hover:text-brand-800"
                               aria-label={`Editar autorización de ${item.patientName}`}
                               onClick={() => setEditing(item)}
                             >
@@ -423,7 +425,7 @@ export function AuthorizationsList({
                               asChild
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-600 hover:text-brand-700"
+                              className="h-9 w-9 text-slate-600 hover:text-brand-800"
                             >
                               <Link
                                 href={patientLink(item)}
@@ -448,7 +450,7 @@ export function AuthorizationsList({
             className="grid gap-3 sm:grid-cols-2 lg:hidden"
             aria-label="Autorizaciones"
           >
-            {visible.map((item) => (
+            {pagination.items.map((item) => (
               <li key={item.id} className="surface-card space-y-3 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -488,7 +490,8 @@ export function AuthorizationsList({
               </li>
             ))}
           </ul>
-        </>
+          <ListPagination pagination={pagination} itemLabel="autorizaciones" />
+        </div>
       )}
 
       <AuthorizationDialog

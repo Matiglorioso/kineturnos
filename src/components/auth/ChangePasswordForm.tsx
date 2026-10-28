@@ -96,7 +96,7 @@ export function ChangePasswordForm() {
         <div className="mb-4 flex justify-center lg:hidden">
           <Logo size="lg" />
         </div>
-        <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 lg:mx-0">
+        <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-700 lg:mx-0">
           <KeyRound className="h-5 w-5" />
         </span>
         <h1 className="text-2xl font-semibold text-slate-900">
@@ -167,7 +167,7 @@ export function ChangePasswordForm() {
 
       <div className="flex items-center justify-center gap-4 text-sm lg:justify-start">
         {!forced && (
-          <Link href="/" className="inline-flex items-center gap-1.5 font-medium text-brand-600 hover:underline">
+          <Link href="/" className="inline-flex items-center gap-1.5 font-medium text-brand-700 hover:underline">
             <ArrowLeft className="h-4 w-4" />
             Volver
           </Link>

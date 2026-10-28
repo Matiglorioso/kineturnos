@@ -144,14 +144,14 @@ export function NewProfessionalDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
               {isEditing ? (
                 <Pencil className="h-4 w-4" />
               ) : (
                 <UserPlus className="h-4 w-4" />
               )}
             </span>
-            {isEditing ? "Editar profesional" : "Registrar profesional"}
+            {isEditing ? "Editar profesional" : "Nuevo profesional"}
           </DialogTitle>
           <DialogDescription>
             {isEditing

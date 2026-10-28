@@ -1,4 +1,6 @@
-import { AppointmentStatus } from "@/types";
+import { compareAppDates } from "@/lib/date-utils";
+import { normalizeTime, timeToMinutes } from "@/lib/time-utils";
+import { Appointment, AppointmentStatus } from "@/types";
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   pendiente: "Pendiente",
@@ -72,4 +74,26 @@ export function canTransitionAppointmentStatus(
 
 export function getAppointmentStatusLabel(status: AppointmentStatus): string {
   return APPOINTMENT_STATUS_LABELS[status];
+}
+
+/** La asistencia (atendido / ausente) se registra el día del turno o después, nunca antes. */
+export function canRegisterAttendance(date: string, today: string): boolean {
+  return compareAppDates(date, today) <= 0;
+}
+
+/**
+ * Acción de un toque que se ofrece en la agenda, igual que en el panel: si el
+ * turno ya empezó, registrar que vino; si todavía no y está pendiente, confirmarlo.
+ */
+export function getQuickStatusAction(
+  appointment: Pick<Appointment, "date" | "time" | "status">,
+  today: string,
+  nowMinutes: number
+): "atendido" | "confirmado" | null {
+  if (!isActiveAppointmentStatus(appointment.status)) return null;
+  const day = compareAppDates(appointment.date, today);
+  const started =
+    day < 0 || (day === 0 && timeToMinutes(normalizeTime(appointment.time)) <= nowMinutes);
+  if (started) return "atendido";
+  return appointment.status === "pendiente" ? "confirmado" : null;
 }

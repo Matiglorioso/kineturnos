@@ -58,6 +58,10 @@ export function AgendaFilters({
     (value.patientId !== "todos" ? 1 : 0) +
     (showProfessional && value.professionalId !== "todos" ? 1 : 0);
 
+  const statusLabel = APPOINTMENT_STATUS_FILTERS.find((filter) => filter.value === value.status)?.label;
+  const patientLabel = sortedPatients.find((patient) => patient.id === value.patientId)?.name;
+  const professionalLabel = professionals.find((professional) => professional.id === value.professionalId)?.name;
+
   const segment = (active: boolean) =>
     cn(
       "h-9 min-w-0 flex-1 gap-1.5 rounded-lg border-0 px-3 text-sm font-medium shadow-none focus:ring-2 sm:flex-none",
@@ -70,11 +74,11 @@ export function AgendaFilters({
     <div
       role="group"
       aria-label="Filtros de la agenda"
-      className="flex w-full flex-wrap items-center gap-1 rounded-xl bg-muted p-1 sm:w-auto sm:flex-nowrap"
+      className="grid w-full grid-cols-1 gap-1 rounded-xl bg-muted p-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"
     >
       <Select value={value.status} onValueChange={(next) => set("status", next)}>
         <SelectTrigger aria-label="Estado" className={cn(segment(value.status !== "todos"), "sm:w-44")}>
-          <SelectValue />
+          <SelectValue>{value.status === "todos" ? "Todos los estados" : statusLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {APPOINTMENT_STATUS_FILTERS.map((filter) => (
@@ -87,7 +91,7 @@ export function AgendaFilters({
 
       <Select value={value.patientId} onValueChange={(next) => set("patientId", next)}>
         <SelectTrigger aria-label="Paciente" className={cn(segment(value.patientId !== "todos"), "sm:w-48")}>
-          <SelectValue />
+          <SelectValue>{value.patientId === "todos" ? "Todos los pacientes" : patientLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="todos">Todos los pacientes</SelectItem>
@@ -108,7 +112,9 @@ export function AgendaFilters({
             aria-label="Profesional"
             className={cn(segment(value.professionalId !== "todos"), "sm:w-52")}
           >
-            <SelectValue />
+            <SelectValue>
+              {value.professionalId === "todos" ? "Todos los profesionales" : professionalLabel}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos los profesionales</SelectItem>
@@ -133,9 +139,10 @@ export function AgendaFilters({
               professionalId: showProfessional ? "todos" : value.professionalId,
             })
           }
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          className="flex h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:w-9"
         >
           <X className="h-4 w-4" />
+          <span className="sm:hidden">Limpiar filtros</span>
         </button>
       )}
     </div>
