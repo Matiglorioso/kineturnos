@@ -11,9 +11,11 @@ import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import { Input } from "@/components/ui/input";
+import { ListPagination } from "@/components/ui/ListPagination";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAppointments } from "@/hooks/use-appointments";
 import { useInsurances } from "@/hooks/use-insurances";
+import { usePagination } from "@/hooks/use-pagination";
 import { usePatients } from "@/hooks/use-patients";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
@@ -99,6 +101,10 @@ function PacientesPageContent() {
     () => filterAndSortPatients(patients, { search, insurance, sort }),
     [patients, search, insurance, sort]
   );
+  const pagination = usePagination(filtered, {
+    storageKey: "pacientes",
+    resetKey: `${search}|${insurance}|${sort}`,
+  });
   const insuranceOptions = useMemo(() => getInsuranceOptions(patients), [patients]);
   const isFiltering = search.trim() !== "" || insurance !== ALL_INSURANCES;
   const clearFilters = () => {
@@ -256,6 +262,7 @@ function PacientesPageContent() {
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-10"
+            aria-label="Buscar pacientes"
             placeholder="Buscar por nombre, DNI, CUIL, teléfono u obra social…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -301,15 +308,15 @@ function PacientesPageContent() {
           onSecondaryAction={isFiltering ? clearFilters : undefined}
         />
       ) : (
-        <>
+        <div className="space-y-4">
           <div className="hidden lg:block">
             <PatientTable
-              patients={filtered}
+              patients={pagination.items}
               onViewDetail={openPatientDetail}
             />
           </div>
           <div className="grid gap-4 lg:hidden">
-            {filtered.map((patient) => (
+            {pagination.items.map((patient) => (
               <PatientCard
                 key={patient.id}
                 patient={patient}
@@ -320,7 +327,8 @@ function PacientesPageContent() {
               />
             ))}
           </div>
-        </>
+          <ListPagination pagination={pagination} itemLabel="pacientes" />
+        </div>
       )}
 
       {canManagePatients && (

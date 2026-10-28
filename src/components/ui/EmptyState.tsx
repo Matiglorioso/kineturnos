@@ -104,7 +104,7 @@ export function EmptyState({
       >
         <div
           className={cn(
-            "flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100/90 text-brand-600 shadow-sm ring-4 ring-brand-50/80",
+            "flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100/90 text-brand-700 shadow-sm ring-4 ring-brand-50/80",
             styles.iconBox
           )}
         >

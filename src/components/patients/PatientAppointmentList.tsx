@@ -1,4 +1,8 @@
+"use client";
+
 import { StatusBadge } from "@/components/appointments/StatusBadge";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 import { Appointment } from "@/types";
 import { formatAppointmentListLine } from "@/lib/datetime-format";
 import { cn } from "@/lib/utils";
@@ -13,9 +17,11 @@ export function PatientAppointmentList({
   appointments,
   className,
 }: PatientAppointmentListProps) {
+  const pagination = usePagination(appointments, { storageKey: "turnos-ficha" });
+
   return (
     <div className={cn("space-y-3", className)}>
-      {appointments.map((appointment) => {
+      {pagination.items.map((appointment) => {
         const { dateLabel, timeLabel } = formatAppointmentListLine(
           appointment.date,
           appointment.time
@@ -34,12 +40,12 @@ export function PatientAppointmentList({
                     <span>{dateLabel}</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    <Clock className="h-3.5 w-3.5 text-slate-500" />
                     {timeLabel}
                   </span>
                 </div>
                 <p className="flex items-center gap-1.5 text-sm text-slate-700">
-                  <Stethoscope className="h-4 w-4 text-slate-400" />
+                  <Stethoscope className="h-4 w-4 text-slate-500" />
                   {appointment.professionalName}
                 </p>
                 <span className="inline-block rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -51,6 +57,7 @@ export function PatientAppointmentList({
           </div>
         );
       })}
+      <ListPagination pagination={pagination} itemLabel="turnos" />
     </div>
   );
 }

@@ -9,7 +9,7 @@ interface InfoRowProps {
 export function InfoRow({ icon: Icon, label, value }: InfoRowProps) {
   return (
     <div className="flex items-start gap-3 rounded-xl bg-muted/40 px-4 py-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-brand-600 shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-brand-700 shadow-sm">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0">

@@ -28,6 +28,8 @@ import type { AppUser } from "@/types";
 import { Search, UserCog, UserPlus, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 
 const STATUS_OPTIONS: { value: UserListOptions["status"]; label: string }[] = [
   { value: "todos", label: "Todos los estados" },
@@ -66,6 +68,7 @@ export default function UsuariosPage() {
   }, [isLoading, users]);
 
   const filtered = useMemo(() => filterUsers(users, options), [users, options]);
+  const pagination = usePagination(filtered, { storageKey: "usuarios", resetKey: JSON.stringify(options) });
   const activeCount = users.filter((user) => user.active).length;
   const isFiltering = options.search.trim() !== "" || options.role !== ALL_ROLES || options.status !== "todos";
 
@@ -217,18 +220,21 @@ export default function UsuariosPage() {
           onSecondaryAction={isFiltering ? () => setOptions(DEFAULT_USER_LIST_OPTIONS) : undefined}
         />
       ) : (
-        <UserList
-          users={filtered}
-          currentUserId={actor.id}
-          canManage={(user) => canManageUser(actor.role, user)}
-          onEdit={(user) => {
-            setEditingUser(user);
-            setPresetProfessionalId(null);
-            setDialogOpen(true);
-          }}
-          onResetPassword={setToReset}
-          onToggleActive={(user) => (user.active ? setToDeactivate(user) : void setActive(user, true))}
-        />
+        <div className="space-y-4">
+          <UserList
+            users={pagination.items}
+            currentUserId={actor.id}
+            canManage={(user) => canManageUser(actor.role, user)}
+            onEdit={(user) => {
+              setEditingUser(user);
+              setPresetProfessionalId(null);
+              setDialogOpen(true);
+            }}
+            onResetPassword={setToReset}
+            onToggleActive={(user) => (user.active ? setToDeactivate(user) : void setActive(user, true))}
+          />
+          <ListPagination pagination={pagination} itemLabel="usuarios" />
+        </div>
       )}
 
       <UserDialog
