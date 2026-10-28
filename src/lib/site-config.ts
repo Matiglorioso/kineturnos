@@ -46,7 +46,7 @@ export const pageMetadata = {
   obrasSociales: {
     title: "Obras sociales",
     description:
-      "Catálogo de obras sociales y planilla de asistencia mensual para la facturación.",
+      "Autorizaciones de sesiones, catálogo de obras sociales y planilla de asistencia mensual para la facturación.",
   },
   usuarios: {
     title: "Usuarios",

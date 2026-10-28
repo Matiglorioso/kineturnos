@@ -140,7 +140,7 @@ export function NewPatientDialog({
                 <UserPlus className="h-4 w-4" />
               )}
             </span>
-            {isEditing ? "Editar paciente" : "Registrar paciente"}
+            {isEditing ? "Editar paciente" : "Nuevo paciente"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
