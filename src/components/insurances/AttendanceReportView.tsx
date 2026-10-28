@@ -9,6 +9,8 @@ import {
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 import {
   Select,
   SelectContent,
@@ -23,7 +25,7 @@ import { formatAppDate, getTodayAppDate } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
 import type { AttendanceReport, Insurance } from "@/types";
 import { AlertTriangle, ClipboardList, Printer } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function currentMonth(): string {
   const [, month, year] = getTodayAppDate().split("-");
@@ -75,6 +77,14 @@ export function AttendanceReportView({
       cancelled = true;
     };
   }, [insuranceId, month]);
+
+  const rows = useMemo(() => report?.rows ?? [], [report]);
+  const pagination = usePagination(rows, {
+    storageKey: "planilla-asistencia",
+    resetKey: `${insuranceId}|${month}`,
+  });
+  // En pantalla se pagina; al imprimir sale la planilla completa.
+  const shownRows = useMemo(() => new Set(pagination.items), [pagination.items]);
 
   return (
     <div className="space-y-4">
@@ -167,7 +177,10 @@ export function AttendanceReportView({
               ]}
             >
               {report.rows.map((row) => (
-                <DataTableRow key={row.patientId}>
+                <DataTableRow
+                  key={row.patientId}
+                  className={shownRows.has(row) ? undefined : "hidden print:table-row"}
+                >
                   <DataTableCell className="font-medium text-slate-900">
                     {row.patientName}
                   </DataTableCell>
@@ -209,7 +222,7 @@ export function AttendanceReportView({
             className="grid gap-3 md:hidden print:hidden"
             aria-label="Pacientes de la planilla"
           >
-            {report.rows.map((row) => (
+            {pagination.items.map((row) => (
               <li key={row.patientId} className="surface-card space-y-2 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -249,6 +262,7 @@ export function AttendanceReportView({
               </li>
             ))}
           </ul>
+          <ListPagination pagination={pagination} itemLabel="pacientes" />
         </section>
       ) : null}
     </div>

@@ -44,6 +44,35 @@ test.describe("lista de pacientes: orden y filtro por obra social", () => {
   });
 });
 
+test.describe("lista de pacientes: paginación", () => {
+  test("muestra 10 por página, pasa de página y deja elegir la cantidad", async ({ page }) => {
+    const tag = `Pag${Date.now().toString(36)}`;
+    for (let index = 0; index < 12; index += 1) {
+      await createPatient(uniqueName(tag));
+    }
+
+    await page.goto("/pacientes");
+    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(tag);
+    const rows = page.getByRole("table").getByRole("row").filter({ hasText: tag });
+    const pages = page.getByRole("navigation", { name: "Páginas de pacientes" });
+    await expect(pages.getByText("1–10 de 12 pacientes")).toBeVisible();
+    await expect(rows).toHaveCount(10);
+
+    await pages.getByRole("button", { name: "Página siguiente" }).click();
+    await expect(pages.getByText("11–12 de 12 pacientes")).toBeVisible();
+    await expect(rows).toHaveCount(2);
+
+    await selectOption(pages, page, "Por página", "25");
+    await expect(pages.getByText("1–12 de 12 pacientes")).toBeVisible();
+    await expect(rows).toHaveCount(12);
+
+    // La cantidad elegida se recuerda al volver a la lista.
+    await page.reload();
+    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(tag);
+    await expect(rows).toHaveCount(12);
+  });
+});
+
 test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
   test("se cargan al editar, se validan y se ven en la ficha", async ({ page }) => {
     const patient = await createPatient(uniqueName("Cuil"));

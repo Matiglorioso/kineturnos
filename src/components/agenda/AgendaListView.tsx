@@ -1,6 +1,8 @@
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { StatusBadge } from "@/components/appointments/StatusBadge";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 import { emptyStateActions, type EmptyStatePreset } from "@/lib/empty-states";
 import {
   Table,
@@ -35,6 +37,9 @@ export function AgendaListView({
   showClearFilters,
   onClearFilters,
 }: AgendaListViewProps) {
+  // Al cambiar de día vuelve a la primera página (los filtros ya cambian la lista).
+  const pagination = usePagination(appointments, { storageKey: "agenda-dia", resetKey: dateLabel });
+
   if (appointments.length === 0) {
     return (
       <EmptyStateFromPreset
@@ -73,7 +78,7 @@ export function AgendaListView({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {appointments.map((appointment) => (
+            {pagination.items.map((appointment) => (
               <TableRow key={appointment.id} className="hover:bg-muted/30">
                 <TableCell>
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
@@ -104,7 +109,7 @@ export function AgendaListView({
       </div>
 
       <div className="grid gap-4 lg:hidden">
-        {appointments.map((appointment) => (
+        {pagination.items.map((appointment) => (
           <AppointmentCard
             key={appointment.id}
             appointment={appointment}
@@ -112,6 +117,8 @@ export function AgendaListView({
           />
         ))}
       </div>
+
+      <ListPagination pagination={pagination} itemLabel="turnos" />
     </div>
   );
 }
