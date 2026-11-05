@@ -53,7 +53,7 @@ export const moduleGuides: {
     summary: "Turnos por día, por semana o por profesional, con filtros por estado, paciente y profesional.",
     tips: [
       `Los turnos duran 1 hora, entre las ${CLINIC_OPENING_TIME} y las ${CLINIC_CLOSING_TIME}, en los días que atiende cada profesional; el sistema no deja superponer turnos.`,
-      "Cada turno tiene a mano la acción más probable: Confirmar si está pendiente, Atendido si ya empezó. El resto (ausente, cancelar, editar, historia clínica) está en el menú «⋯».",
+      "El estado se cambia tocando su etiqueta (por ejemplo «Confirmado»): se elige Confirmado, Atendido, Ausente o Cancelado. Editar, la historia clínica y eliminar están en el menú «⋯»; en la vista Semana, también el estado.",
       "La vista Profesionales muestra una columna por profesional: un horario libre abre el alta con profesional y hora ya elegidos.",
     ],
   },

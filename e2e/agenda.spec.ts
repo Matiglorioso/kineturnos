@@ -84,7 +84,7 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await expect(dialog).toBeVisible();
   });
 
-  test("confirma un turno pendiente con un toque desde la agenda", async ({ page }) => {
+  test("confirma un turno pendiente desde su etiqueta de estado", async ({ page }) => {
     const professional = await createProfessional(uniqueName("Prof"));
     const patient = await createPatient(uniqueName("Pac"));
     const date = futureWorkday(15);
@@ -93,12 +93,14 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await page.goto("/agenda");
     await goToAgendaDate(page, date);
     const row = page.getByRole("row").filter({ hasText: patient.nombre });
-    await row.getByRole("button", { name: `Confirmar turno: ${patient.nombre}` }).click();
+    // Una sola etiqueta: el estado es también el control para cambiarlo.
+    await row.getByRole("button", { name: /^Estado: Pendiente/ }).click();
+    await page.getByRole("menuitem", { name: "Confirmado" }).click();
     await expect(row).toContainText("Confirmado");
-    // Ya confirmado y en el futuro: no queda acción rápida ni asistencia para registrar.
-    await expect(row.getByRole("button", { name: /^(Confirmar turno|Marcar atendido):/ })).toHaveCount(0);
-    await row.getByRole("button", { name: "Acciones del turno" }).click();
-    await expect(page.getByRole("menuitem", { name: "Marcar como atendido" })).toHaveCount(0);
+    // Ya confirmado y en el futuro: no se ofrece registrar asistencia.
+    await row.getByRole("button", { name: /^Estado: Confirmado/ }).click();
+    await expect(page.getByRole("menuitem", { name: "Cancelado" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Atendido" })).toHaveCount(0);
   });
 
   test("confirmar, atender y recién ahí eliminar un turno", async ({ page }) => {
@@ -127,15 +129,15 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await expect(page.getByText("Turno actualizado")).toBeVisible();
     await expect(row).toContainText("Confirmado");
 
-    // Confirmado → Atendido.
-    await openActions();
-    await page.getByRole("menuitem", { name: "Marcar como atendido" }).click();
+    // Confirmado → Atendido, desde la etiqueta de estado.
+    await row.getByRole("button", { name: /^Estado: Confirmado/ }).click();
+    await page.getByRole("menuitem", { name: "Atendido" }).click();
     await expect(page.getByText("Sesión atendida")).toBeVisible();
     await expect(row).toContainText("Atendido");
 
-    // Estado final: no ofrece otros cambios de estado, pero sí eliminar.
+    // Estado final: la etiqueta ya no se puede cambiar, pero sí eliminar el turno.
+    await expect(row.getByRole("button", { name: /^Estado:/ })).toHaveCount(0);
     await openActions();
-    await expect(page.getByRole("menuitem", { name: "Marcar como ausente" })).toBeDisabled();
     await expect(page.getByRole("menuitem", { name: "Cancelar turno" })).toHaveCount(0);
     await page.getByRole("menuitem", { name: "Eliminar turno" }).click();
     await page.getByRole("button", { name: "Sí, eliminar turno" }).click();

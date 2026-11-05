@@ -10,7 +10,7 @@ import {
   FINAL_APPOINTMENT_STATUSES,
   getAppointmentStatusLabel,
   getNextAppointmentStatuses,
-  getQuickStatusAction,
+  getStatusMenuOptions,
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
@@ -100,27 +100,32 @@ describe("máquina de estados (diagrama de estados de la tesis)", () => {
   }
 });
 
-describe("acción rápida de la agenda", () => {
+describe("opciones de la etiqueta de estado", () => {
   const today = "28-10-2026";
-  const at = (date: string, time: string, status: AppointmentStatus) => ({ date, time, status });
+  const at = (date: string, status: AppointmentStatus) => ({ date, status });
 
-  it("pendiente que todavía no empezó: confirmar", () => {
-    assert.equal(getQuickStatusAction(at("29-10-2026", "09:00", "pendiente"), today, 600), "confirmado");
-    assert.equal(getQuickStatusAction(at(today, "15:00", "pendiente"), today, 600), "confirmado");
+  it("pendiente de hoy o antes: confirmar, asistencia y cancelar", () => {
+    assert.deepEqual(getStatusMenuOptions(at(today, "pendiente"), today), [
+      "confirmado",
+      "atendido",
+      "ausente",
+      "cancelado",
+    ]);
+    assert.deepEqual(getStatusMenuOptions(at("27-10-2026", "confirmado"), today), [
+      "atendido",
+      "ausente",
+      "cancelado",
+    ]);
   });
 
-  it("confirmado que todavía no empezó: nada", () => {
-    assert.equal(getQuickStatusAction(at("29-10-2026", "09:00", "confirmado"), today, 600), null);
-  });
-
-  it("ya empezó (hoy o antes): registrar que vino", () => {
-    assert.equal(getQuickStatusAction(at(today, "10:00", "confirmado"), today, 600), "atendido");
-    assert.equal(getQuickStatusAction(at("27-10-2026", "17:00", "pendiente"), today, 0), "atendido");
+  it("en días futuros no ofrece asistencia", () => {
+    assert.deepEqual(getStatusMenuOptions(at("29-10-2026", "pendiente"), today), ["confirmado", "cancelado"]);
+    assert.deepEqual(getStatusMenuOptions(at("29-10-2026", "confirmado"), today), ["cancelado"]);
   });
 
   it("estados finales: nada", () => {
     for (const status of FINAL_APPOINTMENT_STATUSES) {
-      assert.equal(getQuickStatusAction(at("27-10-2026", "09:00", status), today, 600), null);
+      assert.deepEqual(getStatusMenuOptions(at("27-10-2026", status), today), []);
     }
   });
 });

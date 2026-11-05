@@ -22,6 +22,8 @@ interface AgendaListViewProps {
   /** El día mostrado es hoy. */
   isToday?: boolean;
   renderActions: (appointment: Appointment, variant: AppointmentActionsVariant) => React.ReactNode;
+  /** Etiqueta de estado; por defecto, solo lectura. */
+  renderStatus?: (appointment: Appointment) => React.ReactNode;
   onCreateAppointment?: () => void;
   emptyPreset: EmptyStatePreset;
   showClearFilters?: boolean;
@@ -33,6 +35,7 @@ export function AgendaListView({
   dateLabel,
   isToday = false,
   renderActions,
+  renderStatus = (appointment) => <StatusBadge status={appointment.status} />,
   onCreateAppointment,
   emptyPreset,
   showClearFilters,
@@ -98,7 +101,7 @@ export function AgendaListView({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={appointment.status} />
+                  {renderStatus(appointment)}
                 </TableCell>
                 <TableCell className="text-right">
                   {renderActions(appointment, "table")}
@@ -114,6 +117,7 @@ export function AgendaListView({
           <AppointmentCard
             key={appointment.id}
             appointment={appointment}
+            status={renderStatus(appointment)}
             actions={renderActions(appointment, "card")}
           />
         ))}
