@@ -13,6 +13,7 @@ import {
   AppointmentActions,
   type AppointmentActionsVariant,
 } from "@/components/appointments/AppointmentActions";
+import { AppointmentStatusMenu } from "@/components/appointments/AppointmentStatusMenu";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
 import { DataLoadError } from "@/components/shared/DataLoadError";
@@ -255,10 +256,15 @@ export default function AgendaPage() {
     }
   };
 
-  const renderActions = (appointment: Appointment, variant: AppointmentActionsVariant) => (
+  const renderActions = (
+    appointment: Appointment,
+    variant: AppointmentActionsVariant,
+    statusInMenu = false
+  ) => (
     <AppointmentActions
       appointment={appointment}
       variant={variant}
+      statusInMenu={statusInMenu}
       onView={openDetailDialog}
       onEdit={openEditDialog}
       onStatusChange={handleStatusChange}
@@ -368,6 +374,9 @@ export default function AgendaPage() {
           dateLabel={selectedListDateLabel}
           isToday={selectedListDate === today}
           renderActions={renderActions}
+          renderStatus={(appointment) => (
+            <AppointmentStatusMenu appointment={appointment} onStatusChange={handleStatusChange} />
+          )}
           onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
           showClearFilters={hasActiveFilters && appointments.length > 0}
@@ -381,8 +390,9 @@ export default function AgendaPage() {
           onNextWeek={() => setWeekStart((prev) => shiftWeek(prev, 1))}
           onCurrentWeek={() => setWeekStart(getWeekStartMonday(new Date()))}
           onAppointmentClick={openDetailDialog}
+          // En la semana la etiqueta es chica y está dentro del bloque: el estado se cambia desde "⋯".
           renderActions={(appointment, variant = "card") =>
-            renderActions(appointment, variant)
+            renderActions(appointment, variant, true)
           }
           onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}

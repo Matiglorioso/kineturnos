@@ -6,11 +6,10 @@ import { formatAppointmentSlotLabel } from "@/lib/datetime-format";
 import {
   canRegisterAttendance,
   getNextAppointmentStatuses,
-  getQuickStatusAction,
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
-import { getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
+import { getTodayAppDate } from "@/lib/date-utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +34,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/** Tabla y tarjeta llevan la acción rápida; "compact" (bloques de la semana) solo el menú. */
 export type AppointmentActionsVariant = "table" | "card" | "compact";
 
 interface AppointmentActionsProps {
@@ -47,6 +45,11 @@ interface AppointmentActionsProps {
   variant?: AppointmentActionsVariant;
   canEdit?: boolean;
   canDelete?: boolean;
+  /**
+   * Cambios de estado en este menú. Donde la etiqueta de estado ya es el control
+   * (AppointmentStatusMenu) van ahí y no se repiten acá.
+   */
+  statusInMenu?: boolean;
 }
 
 function runAfterDropdownClose(action: () => void) {
@@ -62,6 +65,7 @@ export function AppointmentActions({
   variant = "table",
   canEdit = true,
   canDelete = false,
+  statusInMenu = false,
 }: AppointmentActionsProps) {
   const router = useRouter();
   const { can } = usePermissions();
@@ -85,11 +89,9 @@ export function AppointmentActions({
   const isActive = isActiveAppointmentStatus(appointment.status);
   const isFinal = isFinalAppointmentStatus(appointment.status);
   const today = getTodayAppDate();
-  const attendanceAllowed = canRegisterAttendance(appointment.date, today);
-  const quickAction =
-    variant === "compact" ? null : getQuickStatusAction(appointment, today, getNowAppMinutes());
+  const attendanceAllowed = statusInMenu && canRegisterAttendance(appointment.date, today);
   const inline = variant !== "card";
-  const showCancel = isActive;
+  const showCancel = statusInMenu && isActive;
   const showDelete = canDelete && Boolean(onDelete) && isFinal;
 
   return (
@@ -99,27 +101,6 @@ export function AppointmentActions({
         inline ? "justify-end" : "[&>*]:flex-1"
       )}
     >
-      {/* La acción más probable a un toque, como en el panel; el resto queda en el menú. */}
-      {quickAction && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label={
-            quickAction === "confirmado"
-              ? `Confirmar turno: ${appointment.patientName}`
-              : `Marcar atendido: ${appointment.patientName}`
-          }
-          onClick={() => onStatusChange(appointment, quickAction)}
-        >
-          {quickAction === "confirmado" ? (
-            <Check className="h-4 w-4 text-brand-700" />
-          ) : (
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          )}
-          {quickAction === "confirmado" ? "Confirmar" : "Atendido"}
-        </Button>
-      )}
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -174,8 +155,8 @@ export function AppointmentActions({
               Editar
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
-          {appointment.status === "pendiente" && (
+          {(statusInMenu || showDelete) && <DropdownMenuSeparator />}
+          {statusInMenu && appointment.status === "pendiente" && (
             <DropdownMenuItem
               onSelect={(event) => {
                 event.preventDefault();
@@ -225,7 +206,7 @@ export function AppointmentActions({
           )}
           {showDelete && (
             <>
-              <DropdownMenuSeparator />
+              {statusInMenu && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault();

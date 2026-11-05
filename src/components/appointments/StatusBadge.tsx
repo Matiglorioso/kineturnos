@@ -22,12 +22,15 @@ interface StatusBadgeProps {
   status: AppointmentStatus;
   showIcon?: boolean;
   className?: string;
+  /** Al final de la etiqueta (la flecha cuando es un menú). */
+  trailing?: React.ReactNode;
 }
 
 export function StatusBadge({
   status,
   showIcon = true,
   className,
+  trailing,
 }: StatusBadgeProps) {
   const config = statusConfig[status];
   const Icon = config.icon;
@@ -36,6 +39,7 @@ export function StatusBadge({
     <Badge variant={config.variant} className={cn("gap-1.5 py-1", className)}>
       {showIcon && <Icon className="h-3 w-3" />}
       {config.label}
+      {trailing}
     </Badge>
   );
 }

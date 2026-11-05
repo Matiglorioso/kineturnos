@@ -11,6 +11,8 @@ interface AppointmentCardProps {
   variant?: "default" | "compact";
   className?: string;
   actions?: ReactNode;
+  /** Reemplaza la etiqueta de estado (p. ej. por AppointmentStatusMenu). */
+  status?: ReactNode;
 }
 
 export function AppointmentCard({
@@ -18,6 +20,7 @@ export function AppointmentCard({
   variant = "default",
   className,
   actions,
+  status,
 }: AppointmentCardProps) {
   const dateFormatted = formatAppDate(appointment.date);
 
@@ -42,7 +45,7 @@ export function AppointmentCard({
             {appointment.sessionType}
           </p>
         </div>
-        <StatusBadge status={appointment.status} />
+        {status ?? <StatusBadge status={appointment.status} />}
       </div>
     );
   }
@@ -66,7 +69,7 @@ export function AppointmentCard({
             <p className="text-xs text-slate-500">{appointment.sessionType}</p>
           </div>
         </div>
-        <StatusBadge status={appointment.status} />
+        {status ?? <StatusBadge status={appointment.status} />}
       </div>
 
       <div className="space-y-2 border-t border-slate-100 pt-4">
