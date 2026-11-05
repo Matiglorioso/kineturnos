@@ -39,7 +39,7 @@ test.describe("lista de pacientes: orden y filtro por obra social", () => {
     await selectOption(controls, page, "Ordenar por", "DNI (menor a mayor)");
     await expect(rows.first()).toContainText(low.nombre);
 
-    await controls.getByRole("button", { name: "Quitar filtro de obra social" }).click();
+    await controls.getByRole("button", { name: "Quitar filtros" }).click();
     await expect(table.getByRole("row").filter({ hasText: other.nombre })).toBeVisible();
   });
 });
