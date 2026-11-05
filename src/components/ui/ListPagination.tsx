@@ -22,17 +22,29 @@ interface ListPaginationProps {
   >;
   /** Qué se lista, en plural ("pacientes"), para el texto "1–10 de 57 pacientes". */
   itemLabel: string;
+  /** En singular ("paciente"), para "1 paciente". */
+  itemLabelSingular: string;
   className?: string;
 }
 
-/** Pie de una lista: cuántos se ven, cantidad por página y navegación entre páginas. */
-export function ListPagination({ pagination, itemLabel, className }: ListPaginationProps) {
+/**
+ * Pie de una lista: es el único lugar donde se muestra la cantidad. Con pocos elementos,
+ * solo el total; con más, cuántos se ven, cantidad por página y navegación entre páginas.
+ */
+export function ListPagination({ pagination, itemLabel, itemLabelSingular, className }: ListPaginationProps) {
   const { page, pageCount, pageSize, total, from, to, setPage, setPageSize } = pagination;
   const ref = useRef<HTMLElement>(null);
   const sizeLabelId = useId();
 
-  // Con pocos elementos no hay nada que paginar ni elegir.
-  if (total <= PAGE_SIZE_OPTIONS[0]) return null;
+  if (total === 0) return null;
+  // Con pocos elementos no hay nada que paginar ni elegir: solo el total.
+  if (total <= PAGE_SIZE_OPTIONS[0]) {
+    return (
+      <p className={cn("pt-1 text-sm text-muted-foreground print:hidden", className)} aria-live="polite">
+        {total} {total === 1 ? itemLabelSingular : itemLabel}
+      </p>
+    );
+  }
 
   const goTo = (next: number) => {
     setPage(next);

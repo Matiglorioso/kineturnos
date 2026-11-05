@@ -22,7 +22,6 @@ import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
 import { countPatientAppointments } from "@/lib/patient-appointments";
-import { pluralize } from "@/lib/pluralize";
 import {
   ALL_INSURANCES,
   ALL_STATUSES,
@@ -283,10 +282,6 @@ function PacientesPageContent() {
             status={status}
             onStatusChange={setStatus}
           />
-          <p className="shrink-0 text-sm text-muted-foreground" aria-live="polite">
-            {/* La cantidad se muestra una sola vez: sin filtros, cuántos pacientes hay. */}
-            {pluralize(filtered.length, isFiltering ? "resultado" : "paciente")}
-          </p>
         </div>
       </div>
 
@@ -334,7 +329,7 @@ function PacientesPageContent() {
               />
             ))}
           </div>
-          <ListPagination pagination={pagination} itemLabel="pacientes" />
+          <ListPagination pagination={pagination} itemLabel="pacientes" itemLabelSingular="paciente" />
         </div>
       )}
 

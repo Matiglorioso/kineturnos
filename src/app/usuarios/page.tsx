@@ -19,7 +19,6 @@ import {
   type UserWithTemporaryPassword,
 } from "@/lib/api/users-client";
 import { getRoleLabel } from "@/lib/auth/roles";
-import { pluralize } from "@/lib/pluralize";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { buildUserFormValues, canManageUser, USER_ROLES, type UserFormValues } from "@/lib/user-form";
 import { ALL_ROLES, DEFAULT_USER_LIST_OPTIONS, filterUsers, type UserListOptions } from "@/lib/user-list";
@@ -69,7 +68,6 @@ export default function UsuariosPage() {
 
   const filtered = useMemo(() => filterUsers(users, options), [users, options]);
   const pagination = usePagination(filtered, { storageKey: "usuarios", resetKey: JSON.stringify(options) });
-  const activeCount = users.filter((user) => user.active).length;
   const isFiltering = options.search.trim() !== "" || options.role !== ALL_ROLES || options.status !== "todos";
 
   if (isLoading || !actor) {
@@ -133,7 +131,7 @@ export default function UsuariosPage() {
     <div className="space-y-6">
       <PageHeader
         title="Usuarios"
-        description={`${pluralize(users.length, "usuario")} · ${pluralize(activeCount, "activo")}`}
+        description="Accesos del personal del consultorio."
         actionLabel="Nuevo usuario"
         actionIcon={UserPlus}
         onAction={openCreate}
@@ -201,9 +199,6 @@ export default function UsuariosPage() {
               </button>
             )}
           </div>
-          <p className="shrink-0 text-sm text-muted-foreground" aria-live="polite">
-            {pluralize(filtered.length, "resultado")}
-          </p>
         </div>
       </div>
 
@@ -233,7 +228,7 @@ export default function UsuariosPage() {
             onResetPassword={setToReset}
             onToggleActive={(user) => (user.active ? setToDeactivate(user) : void setActive(user, true))}
           />
-          <ListPagination pagination={pagination} itemLabel="usuarios" />
+          <ListPagination pagination={pagination} itemLabel="usuarios" itemLabelSingular="usuario" />
         </div>
       )}
 

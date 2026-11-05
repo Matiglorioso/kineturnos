@@ -108,8 +108,7 @@ export function InsuranceCatalog({
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {pluralize(insurances.length, "obra social", "obras sociales")}. Las
-          inactivas no se ofrecen al cargar un paciente.
+          Las obras sociales inactivas no se ofrecen al cargar un paciente.
         </p>
         <Button
           type="button"
@@ -236,7 +235,7 @@ export function InsuranceCatalog({
               </li>
             ))}
           </ul>
-          <ListPagination pagination={pagination} itemLabel="obras sociales" />
+          <ListPagination pagination={pagination} itemLabel="obras sociales" itemLabelSingular="obra social" />
         </div>
       )}
 
