@@ -89,9 +89,9 @@ export function countAppointmentsByDay(appointments: { date: string }[]): Map<st
   return counts;
 }
 
-/** Etiqueta de la cantidad en un día: hasta 9, después "9+". */
+/** Etiqueta de la cantidad en un día: el número real (un día lleno pasa de 20), con tope en "99+". */
 export function formatDayCount(count: number): string {
-  return count > 9 ? "9+" : String(count);
+  return count > 99 ? "99+" : String(count);
 }
 
 /** Nombre accesible de un día: "viernes 16 de octubre de 2026, 3 turnos". */
