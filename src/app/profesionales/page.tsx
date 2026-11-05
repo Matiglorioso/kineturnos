@@ -20,7 +20,6 @@ import {
   countProfessionalAppointments,
   getProfessionalTodayCount,
 } from "@/lib/professional-utils";
-import { pluralize } from "@/lib/pluralize";
 import { showSuccessToast } from "@/lib/toast";
 import { Professional } from "@/types";
 import { UserPlus } from "lucide-react";
@@ -78,17 +77,6 @@ export default function ProfesionalesPage() {
   };
 
   const pagination = usePagination(professionals, { storageKey: "profesionales" });
-  const activeCount = professionals.filter((p) => p.active).length;
-  const totalToday = useMemo(
-    () =>
-      professionals.reduce(
-        (sum, professional) =>
-          sum +
-          getProfessionalTodayCount(appointments, professional.id, today),
-        0
-      ),
-    [professionals, appointments, today]
-  );
 
   const openCreateDialog = () => {
     setEditingProfessional(null);
@@ -181,7 +169,7 @@ export default function ProfesionalesPage() {
       <PageHeader
         title="Profesionales"
         // El horario es el mismo para todos: se dice una vez acá y no en cada tarjeta.
-        description={`${pluralize(professionals.length, "kinesiólogo")} · ${pluralize(activeCount, "activo")} · ${pluralize(totalToday, "turno")} hoy · horario del consultorio ${getClinicScheduleLabel()}`}
+        description={`El equipo de kinesiólogos. Horario del consultorio: ${getClinicScheduleLabel()}.`}
         actionLabel={
           canManageProfessionals
             ? emptyStateActions.registerProfessional
@@ -221,7 +209,7 @@ export default function ProfesionalesPage() {
               />
             ))}
           </div>
-          <ListPagination pagination={pagination} itemLabel="profesionales" />
+          <ListPagination pagination={pagination} itemLabel="profesionales" itemLabelSingular="profesional" />
         </div>
       )}
 

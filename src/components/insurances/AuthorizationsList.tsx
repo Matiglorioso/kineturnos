@@ -37,7 +37,6 @@ import {
   filterAuthorizations,
   type AuthorizationListFilters,
 } from "@/lib/insurance";
-import { pluralize } from "@/lib/pluralize";
 import { showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type {
@@ -344,12 +343,6 @@ export function AuthorizationsList({
               </button>
             )}
           </div>
-          <p
-            className="shrink-0 text-sm text-muted-foreground"
-            aria-live="polite"
-          >
-            {pluralize(visible.length, "resultado")}
-          </p>
         </div>
       </div>
 
@@ -490,7 +483,7 @@ export function AuthorizationsList({
               </li>
             ))}
           </ul>
-          <ListPagination pagination={pagination} itemLabel="autorizaciones" />
+          <ListPagination pagination={pagination} itemLabel="autorizaciones" itemLabelSingular="autorización" />
         </div>
       )}
 

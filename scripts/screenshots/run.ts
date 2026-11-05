@@ -139,7 +139,7 @@ async function main() {
       {
         file: "profesionales-desktop.png",
         path: "/profesionales",
-        prepare: (p) => p.getByText(/kinesiólogos · \d+ activos/).waitFor(),
+        prepare: (p) => p.getByRole("navigation", { name: "Páginas de profesionales" }).or(p.getByText(/^\d+ profesionales?$/)).first().waitFor(),
       },
       { file: "usuarios-desktop.png", path: "/usuarios", prepare: (p) => p.getByRole("table").getByRole("row").nth(1).waitFor() },
     ];
@@ -167,12 +167,12 @@ async function main() {
           await p.getByRole("tablist", { name: "Profesionales del día" }).waitFor();
         },
       },
-      { file: "pacientes.png", path: "/pacientes", prepare: (p) => p.getByText(/registrados · \d+ activos/).waitFor() },
+      { file: "pacientes.png", path: "/pacientes", prepare: (p) => p.getByRole("navigation", { name: "Páginas de pacientes" }).waitFor() },
       { file: "historia-clinica.png", path: historia, prepare: (p) => p.getByRole("list", { name: "Alertas clínicas" }).waitFor() },
       {
         file: "profesionales.png",
         path: "/profesionales",
-        prepare: (p) => p.getByText(/kinesiólogos · \d+ activos/).waitFor(),
+        prepare: (p) => p.getByRole("navigation", { name: "Páginas de profesionales" }).or(p.getByText(/^\d+ profesionales?$/)).first().waitFor(),
       },
       { file: "usuarios.png", path: "/usuarios", prepare: (p) => p.getByRole("list", { name: "Usuarios" }).waitFor() },
     ];
