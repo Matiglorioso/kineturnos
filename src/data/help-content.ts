@@ -145,6 +145,7 @@ export const authorizationStatuses: {
   { name: "En trámite", description: "Pedida a la obra social y todavía sin aprobar." },
   { name: "Agotada", description: "Ya se usaron todas las sesiones autorizadas." },
   { name: "Vencida", description: "Pasó su fecha de vencimiento." },
+  { name: "Rechazada", description: "La obra social no la aprobó." },
   { name: "Sin autorización", description: "El paciente tiene obra social pero no hay ninguna autorización cargada." },
 ];
 
