@@ -30,7 +30,7 @@ import {
   type AuthorizationRequest,
 } from "@/lib/api/insurances-client";
 import { ApiError } from "@/lib/api/fetch-json";
-import { formatAppDate } from "@/lib/date-utils";
+import { APP_DATE_FORMAT, formatAppDate } from "@/lib/date-utils";
 import {
   AUTHORIZATION_STATUS_LABELS,
   AUTHORIZATION_STATUS_PRIORITY,
@@ -126,9 +126,9 @@ function SessionsBar({ used, sessions }: { used: number; sessions: number }) {
 }
 
 function period(item: AuthorizationListItem): string {
-  const from = formatAppDate(item.validFrom, "dd/MM/yy");
+  const from = formatAppDate(item.validFrom, APP_DATE_FORMAT);
   return item.validUntil
-    ? `${from} al ${formatAppDate(item.validUntil, "dd/MM/yy")}`
+    ? `${from} al ${formatAppDate(item.validUntil, APP_DATE_FORMAT)}`
     : `Desde ${from}`;
 }
 
@@ -321,7 +321,7 @@ export function AuthorizationsList({
             >
               <SelectTrigger
                 aria-label="Situación"
-                className={cn(segment(filters.status !== "todas"), "sm:w-44")}
+                className={cn(segment(filters.status !== "todas"), "sm:w-52")}
               >
                 <SelectValue />
               </SelectTrigger>

@@ -8,6 +8,11 @@ import { hashPassword } from "@/lib/auth/password";
 import { addDays } from "date-fns";
 import type { EstadoTurno, PrismaClient } from "@prisma/client";
 
+/** Parte de un email sin tildes ni mayúsculas ("Martín" → "martin"). */
+function emailPart(value: string): string {
+  return value.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
 const FIRST = [
   "Ana", "Juan", "María", "Carlos", "Lucía", "Diego", "Sofía", "Martín", "Valentina", "Tomás", "Camila", "Lucas",
   "Julieta", "Mateo", "Florencia", "Nicolás", "Agustina", "Federico", "Rocío", "Gonzalo", "Micaela", "Ignacio",
@@ -84,7 +89,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
     apellido: item.last,
     matricula: `MP ${4210 + index * 37}`,
     matriculaNormalizada: `MP${4210 + index * 37}`,
-    email: `${item.first.toLowerCase()}.${item.last.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")}@sanmarsalud.com`,
+    email: `${emailPart(item.first)}.${emailPart(item.last)}@sanmarsalud.com`,
     telefono: `+54 351 15${String(5000000 + index * 13579).slice(0, 7)}`,
     especialidad: item.specialty,
     diasAtencion: item.days,
@@ -111,7 +116,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
       dniNormalizado: dni,
       fechaNacimiento: dbDate(birth),
       telefono: `+54 351 15${String(4000000 + index * 7919).slice(0, 7)}`,
-      email: `${first.toLowerCase()}.${last.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")}@mail.com`,
+      email: `${emailPart(first)}.${emailPart(last)}@mail.com`,
       obraSocial: insurance?.nombre ?? "Particular",
       obraSocialId: insurance?.id ?? null,
       nroAfiliado: insurance ? `${60000000 + index * 97}/0${index % 3}` : null,
