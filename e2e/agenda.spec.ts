@@ -147,7 +147,7 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
 });
 
 test.describe("día y filtros de la agenda", () => {
-  test("la tira de días muestra cuántos turnos hay y el filtro por paciente se aplica y se quita", async ({ page }) => {
+  test("la tira de días muestra cuántos turnos hay y los filtros se aplican y se quitan", async ({ page }) => {
     const professional = await createProfessional(uniqueName("Prof"));
     const first = await createPatient(uniqueName("Uno"));
     const second = await createPatient(uniqueName("Dos"));
@@ -168,15 +168,21 @@ test.describe("día y filtros de la agenda", () => {
     await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
     await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
 
-    const filters = page.getByRole("group", { name: "Filtros de la agenda" });
-    await selectOption(filters, page, "Paciente", first.nombre);
+    // Buscador de paciente: filtra mientras se escribe y se borra con la ✕.
+    const filters = page.getByRole("search", { name: "Filtros de la agenda" });
+    await filters.getByRole("textbox", { name: "Buscar paciente" }).fill(first.nombre);
     await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
     await expect(rows.filter({ hasText: second.nombre })).toHaveCount(0);
+    await filters.getByRole("button", { name: "Borrar búsqueda" }).click();
+    await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
 
-    // El filtro activo queda marcado en el selector y se quita con la X.
-    await expect(filters.getByRole("combobox", { name: "Paciente" })).toContainText(first.nombre);
-    await filters.getByRole("button", { name: "Limpiar filtros" }).click();
-    await expect(filters.getByRole("combobox", { name: "Paciente" })).toContainText("Todos los pacientes");
+    // Estado y profesional, desde "Filtros"; lo aplicado queda como etiqueta que se quita con la ✕.
+    await filters.getByRole("button", { name: /^Filtros/ }).click();
+    await page.getByRole("menuitemradio", { name: "Cancelado" }).click();
+    await page.keyboard.press("Escape");
+    await expect(rows.filter({ hasText: first.nombre })).toHaveCount(0);
+    await page.getByRole("button", { name: "Quitar filtro: Cancelado" }).click();
+    await expect(rows.filter({ hasText: first.nombre })).toBeVisible();
     await expect(rows.filter({ hasText: second.nombre })).toBeVisible();
   });
 });
