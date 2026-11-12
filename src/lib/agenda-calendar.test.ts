@@ -76,6 +76,8 @@ describe("calendario de la agenda", () => {
     assert.equal(counts.get("19-10-2026"), 1);
     assert.equal(counts.get("20-10-2026"), undefined);
     assert.equal(formatDayCount(9), "9");
-    assert.equal(formatDayCount(12), "9+");
+    // Un día lleno tiene más de 20 turnos: se muestra el número real.
+    assert.equal(formatDayCount(21), "21");
+    assert.equal(formatDayCount(120), "99+");
   });
 });

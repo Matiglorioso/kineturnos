@@ -33,7 +33,8 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
   const stripRef = useRef<HTMLDivElement>(null);
   const selectedMonth = getCalendarMonth(value);
   const tabs = getMonthTabs(getCalendarMonth(today), selectedMonth);
-  const days = getMonthDays(selectedMonth);
+  // El consultorio no atiende los domingos: no se muestran, salvo que sea el día elegido.
+  const days = getMonthDays(selectedMonth).filter((date) => !isSunday(date) || date === value);
 
   // Mantiene el día elegido a la vista (centrado) al cambiar de día o de mes.
   useEffect(() => {
@@ -124,7 +125,6 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
             const count = counts.get(date) ?? 0;
             const selected = date === value;
             const isToday = date === today;
-            const sunday = isSunday(date);
             return (
               <button
                 key={date}
@@ -138,9 +138,7 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : count > 0
                       ? "text-slate-900 hover:bg-brand-50"
-                      : "text-slate-500 hover:bg-muted",
-                  // Domingo: atenuado pero legible (sin transparencia, que baja el contraste).
-                  sunday && !selected && "text-slate-500"
+                      : "text-slate-500 hover:bg-muted"
                 )}
               >
                 <span className="text-[11px] font-medium uppercase">
