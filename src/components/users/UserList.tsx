@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatLastLogin } from "@/lib/user-list";
 import { cn, getInitials } from "@/lib/utils";
 import type { AppUser } from "@/types";
-import { KeyRound, Lock, Pencil, Stethoscope, UserCheck, UserX, type LucideIcon } from "lucide-react";
+import { KeyRound, Lock, Pencil, UserCheck, UserX, type LucideIcon } from "lucide-react";
 
 export interface UserActions {
   onEdit: (user: AppUser) => void;
@@ -136,7 +136,7 @@ export function UserList({ users, currentUserId, canManage, ...actions }: UserLi
   return (
     <TooltipProvider delayDuration={200}>
       <div className="hidden lg:block">
-        <DataTable headers={["Usuario", "Perfil", "Profesional vinculado", "Último ingreso", "Estado", "Acciones"]}>
+        <DataTable headers={["Usuario", "Perfil", "Último ingreso", "Estado", "Acciones"]}>
           {users.map((user) => (
             <DataTableRow key={user.id}>
               <DataTableCell>
@@ -145,7 +145,6 @@ export function UserList({ users, currentUserId, canManage, ...actions }: UserLi
               <DataTableCell>
                 <UserRoleBadge role={user.role} />
               </DataTableCell>
-              <DataTableCell className="text-slate-600">{user.professionalName ?? "—"}</DataTableCell>
               <DataTableCell>
                 <LastLogin user={user} />
               </DataTableCell>
@@ -191,15 +190,6 @@ export function UserList({ users, currentUserId, canManage, ...actions }: UserLi
                   <LastLogin user={user} />
                 </dd>
               </div>
-              {user.professionalName && (
-                <div className="col-span-2 min-w-0">
-                  <dt className="text-xs text-muted-foreground">Profesional vinculado</dt>
-                  <dd className="mt-1 flex items-center gap-1.5 truncate text-slate-700">
-                    <Stethoscope className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-                    {user.professionalName}
-                  </dd>
-                </div>
-              )}
             </dl>
             <div className="flex justify-end border-t border-slate-100 pt-2">
               <UserActionButtons
