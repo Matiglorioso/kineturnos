@@ -102,7 +102,7 @@ function CurrentItem({
             <Button
               type="button"
               variant="link"
-              className="mt-1 h-auto p-0 text-brand-700 print:hidden"
+              className="-mx-1 mt-1 h-auto min-h-6 px-1 py-0.5 text-brand-700 print:hidden"
               onClick={onAdd}
             >
               Cargarlo en una evolución

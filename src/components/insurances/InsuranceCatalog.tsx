@@ -91,7 +91,7 @@ export function InsuranceCatalog({
           onClick={onClick}
           className={cn(
             "h-9 w-9 text-slate-600",
-            danger ? "hover:text-destructive" : "hover:text-brand-700",
+            danger ? "hover:text-destructive" : "hover:text-brand-800",
           )}
         >
           {icon}

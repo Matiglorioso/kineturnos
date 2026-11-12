@@ -93,7 +93,7 @@ export function LoginForm() {
         <div className="mb-4 flex justify-center lg:hidden">
           <Logo size="lg" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
           {siteConfig.clinicName}
         </p>
         <h1 className="mt-1.5 text-2xl font-semibold text-slate-900 lg:text-[1.65rem]">
@@ -178,19 +178,19 @@ export function LoginForm() {
           ¿Olvidaste tu contraseña? Pedile a Administración que te la restablezca o{" "}
           <a
             href={getSupportMailto()}
-            className="font-medium text-brand-600 hover:underline"
+            className="font-medium text-brand-700 hover:underline"
           >
             contactá soporte
           </a>
           <span className="hidden lg:inline"> · </span>
-          <Link href="/ayuda" className="font-medium text-brand-600 hover:underline lg:inline">
+          <Link href="/ayuda" className="font-medium text-brand-700 hover:underline lg:inline">
             Ayuda
           </Link>
         </p>
         <p className="text-xs leading-relaxed">
           <a
             href={getSupportMailto()}
-            className="break-all font-medium text-brand-600 hover:underline lg:break-normal"
+            className="break-all font-medium text-brand-700 hover:underline lg:break-normal"
           >
             {siteConfig.supportEmail}
           </a>

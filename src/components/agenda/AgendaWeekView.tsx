@@ -224,7 +224,7 @@ export function AgendaWeekView({
                     </span>
                   </h3>
                   {header.isToday && (
-                    <span className="text-xs font-medium text-brand-600">Hoy</span>
+                    <span className="text-xs font-medium text-brand-700">Hoy</span>
                   )}
                 </div>
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">

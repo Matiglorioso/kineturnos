@@ -50,7 +50,7 @@ function IconAction({
             onClick={onClick}
             className={cn(
               "h-9 w-9 text-slate-600",
-              tone === "danger" ? "hover:bg-red-50 hover:text-red-600" : "hover:text-brand-700"
+              tone === "danger" ? "hover:bg-red-50 hover:text-red-600" : "hover:text-brand-800"
             )}
           >
             <Icon className="h-4 w-4" />
@@ -195,7 +195,7 @@ export function UserList({ users, currentUserId, canManage, ...actions }: UserLi
                 <div className="col-span-2 min-w-0">
                   <dt className="text-xs text-muted-foreground">Profesional vinculado</dt>
                   <dd className="mt-1 flex items-center gap-1.5 truncate text-slate-700">
-                    <Stethoscope className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <Stethoscope className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                     {user.professionalName}
                   </dd>
                 </div>

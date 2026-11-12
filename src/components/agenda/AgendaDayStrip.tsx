@@ -138,8 +138,9 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : count > 0
                       ? "text-slate-900 hover:bg-brand-50"
-                      : "text-slate-400 hover:bg-muted",
-                  sunday && !selected && "opacity-60"
+                      : "text-slate-500 hover:bg-muted",
+                  // Domingo: atenuado pero legible (sin transparencia, que baja el contraste).
+                  sunday && !selected && "text-slate-500"
                 )}
               >
                 <span className="text-[11px] font-medium uppercase">
@@ -156,7 +157,7 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
                     <span
                       className={cn(
                         "rounded-full px-1.5 text-[10px] font-semibold leading-4",
-                        selected ? "bg-white/25 text-white" : "bg-brand-100 text-brand-800"
+                        selected ? "bg-white text-brand-800" : "bg-brand-100 text-brand-800"
                       )}
                     >
                       {formatDayCount(count)}

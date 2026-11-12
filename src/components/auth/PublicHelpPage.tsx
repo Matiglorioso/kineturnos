@@ -20,7 +20,7 @@ export function PublicHelpPage() {
           <div className="mb-5 flex justify-center sm:justify-start lg:hidden">
             <Logo size="lg" />
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
             {siteConfig.clinicName}
           </p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">

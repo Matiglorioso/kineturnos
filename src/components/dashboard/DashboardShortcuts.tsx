@@ -56,7 +56,7 @@ export function DashboardShortcuts({ role }: { role: RolUsuario | undefined }) {
                 <span className="block truncate font-semibold text-slate-900">{title}</span>
                 <span className="block truncate text-xs text-muted-foreground">{description}</span>
               </span>
-              <ArrowRight className="hidden h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-brand-600 sm:block" />
+              <ArrowRight className="hidden h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-brand-700 sm:block" />
             </Link>
           </li>
         ))}

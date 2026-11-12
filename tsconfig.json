@@ -31,13 +31,15 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-perf/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-perf/types/**/*.ts"
+    ".next-demo/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "prisma",
-    ".next-perf"
+    ".next-perf",
+    ".next-demo"
   ]
 }
