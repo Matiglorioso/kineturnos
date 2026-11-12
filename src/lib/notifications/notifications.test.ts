@@ -171,7 +171,9 @@ describe("plantillas de correo", () => {
     const email = buildAppointmentEmail("cancelacion", data);
     assert.match(email.subject, /^Turno cancelado/);
     assert.ok(!email.text.includes("Sesión:"));
-    assert.ok(!email.html.includes("<table"));
+    // El diseño usa tablas para el armado; lo que no va es el detalle del turno.
+    assert.ok(!email.html.includes(">Sesión<"));
+    assert.match(email.html, /Turno cancelado/);
   });
 
   it("confirmación y recordatorio", () => {
