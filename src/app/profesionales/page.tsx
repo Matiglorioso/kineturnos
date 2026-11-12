@@ -26,6 +26,7 @@ import { Professional } from "@/types";
 import { UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ListPagination } from "@/components/ui/ListPagination";
+import { getClinicScheduleLabel } from "@/lib/professional-utils";
 import { usePagination } from "@/hooks/use-pagination";
 
 export default function ProfesionalesPage() {
@@ -179,7 +180,8 @@ export default function ProfesionalesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Profesionales"
-        description={`${pluralize(professionals.length, "kinesiólogo")} · ${pluralize(activeCount, "activo")} · ${pluralize(totalToday, "turno")} hoy`}
+        // El horario es el mismo para todos: se dice una vez acá y no en cada tarjeta.
+        description={`${pluralize(professionals.length, "kinesiólogo")} · ${pluralize(activeCount, "activo")} · ${pluralize(totalToday, "turno")} hoy · horario del consultorio ${getClinicScheduleLabel()}`}
         actionLabel={
           canManageProfessionals
             ? emptyStateActions.registerProfessional

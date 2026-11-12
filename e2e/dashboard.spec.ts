@@ -26,7 +26,7 @@ test.describe("panel del consultorio", () => {
 
     await page.goto("/");
     await page.getByRole("link", { name: "Nuevo paciente" }).click();
-    await expect(page.getByRole("dialog", { name: "Registrar paciente" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Nuevo paciente" })).toBeVisible();
     await expect(page).toHaveURL("/pacientes");
   });
 

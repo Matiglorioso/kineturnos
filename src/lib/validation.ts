@@ -1,6 +1,7 @@
 /** Validación de campos de formulario (email, obligatorios). */
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Sin tildes ni eñes: "martín@…" se aceptaba y después el correo no llegaba.
+const EMAIL_REGEX = /^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
 export function isValidEmail(value: string): boolean {
   const trimmed = value.trim();

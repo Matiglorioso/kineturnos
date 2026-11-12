@@ -151,7 +151,7 @@ export function NewProfessionalDialog({
                 <UserPlus className="h-4 w-4" />
               )}
             </span>
-            {isEditing ? "Editar profesional" : "Registrar profesional"}
+            {isEditing ? "Editar profesional" : "Nuevo profesional"}
           </DialogTitle>
           <DialogDescription>
             {isEditing

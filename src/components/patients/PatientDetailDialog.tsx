@@ -197,8 +197,9 @@ export function PatientDetailDialog({
         {(onEdit || onToggleStatus || onDeleteRequest) && (
           <DialogFooter className="flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="w-full text-xs text-muted-foreground sm:max-w-[45%]">
+              {/* El total se desglosa para que cierre con las dos listas de arriba. */}
               {totalAppointments > 0
-                ? `Este paciente tiene ${pluralize(totalAppointments, "turno")} ${totalAppointments === 1 ? "registrado" : "registrados"}.`
+                ? `${pluralize(totalAppointments, "turno")} en total: ${pluralize(upcoming.length, "próximo")} y ${past.length} en el historial.`
                 : "Este paciente no tiene turnos registrados."}
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
