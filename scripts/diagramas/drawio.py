@@ -208,7 +208,7 @@ def arquitectura():
     pres = d.box(36, 98, 1350, 186, "", "")
     d.text(50, 110, 700, 22, "<b>CAPA DE PRESENTACIÓN (Cliente — navegador web)</b>", "fontSize=13;")
     d.box(108, 148, 530, 86,
-          "<b>Interfaz Administrador</b><br>Agenda (día, semana y por profesional), pacientes, historia clínica,<br>"
+          "<b>Interfaz Administrador</b><br>Agenda (por día y por profesional), pacientes, historia clínica,<br>"
           "obras sociales y autorizaciones, profesionales, usuarios y panel de indicadores")
     d.box(783, 148, 530, 86,
           "<b>Interfaz Profesional</b><br>Agenda propia, registro de asistencia<br>e historia clínica de sus pacientes")

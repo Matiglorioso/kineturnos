@@ -50,10 +50,10 @@ export const moduleGuides: {
   {
     icon: CalendarDays,
     title: "Agenda",
-    summary: "Turnos por día, por semana o por profesional, con filtros por estado, paciente y profesional.",
+    summary: "Turnos por día o por profesional. Se busca por paciente y, desde «Filtros», por estado y profesional.",
     tips: [
       `Los turnos duran 1 hora, entre las ${CLINIC_OPENING_TIME} y las ${CLINIC_CLOSING_TIME}, en los días que atiende cada profesional; el sistema no deja superponer turnos.`,
-      "El estado se cambia tocando su etiqueta (por ejemplo «Confirmado»): se elige Confirmado, Atendido, Ausente o Cancelado. Editar, la historia clínica y eliminar están en el menú «⋯»; en la vista Semana, también el estado.",
+      "El estado se cambia tocando su etiqueta (por ejemplo «Confirmado»): se elige Confirmado, Atendido, Ausente o Cancelado. Editar, la historia clínica y eliminar están en el menú «⋯».",
       "La vista Profesionales muestra una columna por profesional: un horario libre abre el alta con profesional y hora ya elegidos.",
     ],
   },

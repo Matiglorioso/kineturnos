@@ -69,14 +69,6 @@ async function main() {
         prepare: (p) => p.getByRole("group", { name: "Vista de la agenda" }).waitFor(),
       },
       {
-        file: "agenda-semana-desktop.png",
-        path: "/agenda",
-        prepare: async (p) => {
-          await view(p, "Semana");
-          await p.getByText("Vista semanal").waitFor();
-        },
-      },
-      {
         file: "agenda-profesionales-desktop.png",
         path: "/agenda",
         prepare: async (p) => {
@@ -150,14 +142,6 @@ async function main() {
         file: "agenda.png",
         path: "/agenda",
         prepare: (p) => p.getByRole("group", { name: "Vista de la agenda" }).waitFor(),
-      },
-      {
-        file: "agenda-semana.png",
-        path: "/agenda",
-        prepare: async (p) => {
-          await view(p, "Semana");
-          await p.getByText("Vista semanal").waitFor();
-        },
       },
       {
         file: "agenda-profesionales.png",

@@ -70,7 +70,7 @@ Las fases 2 y 4 se implementaron en orden inverso al planificado: las notificaci
 
 | Requerimiento | Fase | Estado |
 |---|---|---|
-| RF01 a RF04 – Turnos, disponibilidad, agenda (día, semana, profesional) y filtros | 1 y cierre | ✅ |
+| RF01 a RF04 – Turnos, disponibilidad, agenda (día y profesional) y filtros | 1 y cierre | ✅ |
 | RF05 – Notificaciones por correo | 4 | ✅ |
 | RF06 – Datos de pacientes | 1 | ✅ |
 | RF07 – Obra social del paciente | 3 | ✅ |

@@ -54,22 +54,11 @@ export const emptyStates = {
       description:
         "No hay sesiones programadas para el día seleccionado. Podés agendar una nueva o elegir otra fecha.",
     },
-    noWeek: {
-      icon: CalendarDays,
-      title: "Semana sin turnos",
-      description:
-        "No hay turnos en esta semana con los filtros actuales. Navegá a otra semana o agendá uno nuevo.",
-    },
     noFilterResults: {
       icon: CalendarX2,
       title: "Ningún turno con estos filtros",
       description:
         "Cambiá el estado o el profesional seleccionado, o limpiá los filtros para ver más resultados.",
-    },
-    dayInline: {
-      icon: CalendarClock,
-      title: "Sin turnos",
-      description: "Este día no tiene sesiones programadas.",
     },
   },
   dashboard: {

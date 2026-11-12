@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 const capabilities = [
-  { icon: CalendarDays, title: "Agenda diaria y semanal" },
+  { icon: CalendarDays, title: "Agenda diaria y por profesional" },
   { icon: Users, title: "Pacientes e historial" },
   { icon: Stethoscope, title: "Profesionales y horarios" },
   { icon: ShieldCheck, title: "Acceso seguro del equipo" },

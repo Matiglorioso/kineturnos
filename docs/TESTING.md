@@ -22,7 +22,7 @@ Objetivos del plan: ≥ 80 % de líneas en la lógica de `src/lib` ✅ (98,1 %);
 
 | Nivel | Qué prueba | Herramientas | Dónde | Comando |
 |---|---|---|---|---|
-| Unitario | Lógica pura de `src/lib`: validaciones, fechas y zona horaria, slots, permisos, parsers de la API, mapeo de errores a HTTP, calendario semanal, métricas | `node:test` + `tsx`, `c8` para cobertura | `src/lib/**/*.test.ts` | `npm test`, `npm run test:coverage` |
+| Unitario | Lógica pura de `src/lib`: validaciones, fechas y zona horaria, slots, permisos, parsers de la API, mapeo de errores a HTTP, filtros de la agenda, métricas | `node:test` + `tsx`, `c8` para cobertura | `src/lib/**/*.test.ts` | `npm test`, `npm run test:coverage` |
 | Integración | API real contra Postgres: CRUD, 409 por duplicados y solapamientos, concurrencia, sesión y permisos por rol con login real, sincronización, seeds y scripts destructivos (en una base descartable) | `node:test`, `fetch`, Prisma | `tests/integration/*.int.test.ts` | `npm run test:int` |
 | E2E | Flujos de usuario en Chromium: login, agendar, estados, permisos, mobile | Playwright | `e2e/*.spec.ts` | `npm run test:e2e` |
 
