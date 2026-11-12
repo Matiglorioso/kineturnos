@@ -79,7 +79,7 @@ export function ActionCenterCard({
     pendingAttendance.length + (showUnconfirmed ? unconfirmed.length : 0) + (showCoverage ? coverageIssues.length : 0);
 
   return (
-    <DashboardCard title="Para hacer" icon={ListChecks} meta={total ? String(total) : undefined} fixedHeight>
+    <DashboardCard title="Para hacer" icon={ListChecks} fixedHeight>
       {total === 0 ? (
         <DashboardEmpty icon={CheckCircle2} text="Todo al día: no hay nada pendiente." />
       ) : (
@@ -184,7 +184,7 @@ export function ActionCenterCard({
 
           {showCoverage && coverageIssues.length > 0 && (
             <Group
-              title="Autorizaciones"
+              title="Coberturas por revisar"
               count={coverageIssues.length}
               more={{ label: "Ver todas", href: "/obras-sociales" }}
             >

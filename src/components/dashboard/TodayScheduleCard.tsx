@@ -3,23 +3,29 @@ import { DashboardCard, DashboardEmpty } from "@/components/dashboard/DashboardC
 import { isActiveAppointmentStatus } from "@/lib/appointment-status";
 import { normalizeTime, timeToMinutes } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
+import type { TodaySummary } from "@/lib/dashboard-today";
 import type { Appointment } from "@/types";
 import { CalendarCheck, CalendarDays } from "lucide-react";
 
 interface TodayScheduleCardProps {
   schedule: Appointment[];
+  summary: TodaySummary;
   nowMinutes: number;
   /** El rol Profesional ve solo su agenda: no hace falta el nombre del profesional. */
   showProfessional: boolean;
 }
 
 /** Turnos de hoy por horario; el que está en curso se resalta. */
-export function TodayScheduleCard({ schedule, nowMinutes, showProfessional }: TodayScheduleCardProps) {
+export function TodayScheduleCard({ schedule, summary, nowMinutes, showProfessional }: TodayScheduleCardProps) {
   return (
     <DashboardCard
       title="Agenda de hoy"
       icon={CalendarDays}
-      meta={schedule.length ? `${schedule.length} ${schedule.length === 1 ? "turno" : "turnos"}` : undefined}
+      meta={
+        schedule.length
+          ? `${schedule.length} ${schedule.length === 1 ? "turno" : "turnos"} · ${summary.attended} atendidos · ${summary.upcoming} por venir`
+          : undefined
+      }
       action={{ label: "Ver agenda", href: "/agenda" }}
       fixedHeight
     >
