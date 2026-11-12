@@ -50,10 +50,10 @@ export const moduleGuides: {
   {
     icon: CalendarDays,
     title: "Agenda",
-    summary: "Turnos por día, por semana o por profesional, con filtros por estado, paciente y profesional.",
+    summary: "Turnos por día o por profesional. Se busca por paciente y, desde «Filtros», por estado y profesional.",
     tips: [
       `Los turnos duran 1 hora, entre las ${CLINIC_OPENING_TIME} y las ${CLINIC_CLOSING_TIME}, en los días que atiende cada profesional; el sistema no deja superponer turnos.`,
-      "Cada turno tiene a mano la acción más probable: Confirmar si está pendiente, Atendido si ya empezó. El resto (ausente, cancelar, editar, historia clínica) está en el menú «⋯».",
+      "El estado se cambia tocando su etiqueta (por ejemplo «Confirmado»): se elige Confirmado, Atendido, Ausente o Cancelado. Editar, la historia clínica y eliminar están en el menú «⋯».",
       "La vista Profesionales muestra una columna por profesional: un horario libre abre el alta con profesional y hora ya elegidos.",
     ],
   },
@@ -145,6 +145,7 @@ export const authorizationStatuses: {
   { name: "En trámite", description: "Pedida a la obra social y todavía sin aprobar." },
   { name: "Agotada", description: "Ya se usaron todas las sesiones autorizadas." },
   { name: "Vencida", description: "Pasó su fecha de vencimiento." },
+  { name: "Rechazada", description: "La obra social no la aprobó." },
   { name: "Sin autorización", description: "El paciente tiene obra social pero no hay ninguna autorización cargada." },
 ];
 

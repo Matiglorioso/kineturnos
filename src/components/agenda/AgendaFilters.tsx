@@ -1,149 +1,160 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { APPOINTMENT_STATUS_FILTERS } from "@/lib/appointment-status";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { APPOINTMENT_STATUS_FILTERS, getAppointmentStatusLabel } from "@/lib/appointment-status";
 import { cn } from "@/lib/utils";
-import type { AppointmentStatus, Patient, Professional } from "@/types";
-import { X } from "lucide-react";
-import { useMemo } from "react";
+import type { AppointmentStatus, Professional } from "@/types";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 export type AgendaFilterValues = {
   status: AppointmentStatus | "todos";
-  patientId: string;
+  /** Texto a buscar en el nombre del paciente. */
+  patientQuery: string;
   professionalId: string;
 };
 
 export const EMPTY_AGENDA_FILTERS: AgendaFilterValues = {
   status: "todos",
-  patientId: "todos",
+  patientQuery: "",
   professionalId: "todos",
 };
 
 interface AgendaFiltersProps {
   value: AgendaFilterValues;
   onChange: (value: AgendaFilterValues) => void;
-  patients: Patient[];
   professionals: Professional[];
   /** El profesional solo ve su agenda: no se ofrece el filtro por profesional. */
   showProfessional: boolean;
+  className?: string;
 }
 
 /**
- * Filtros de la agenda con el mismo estilo que el selector Lista/Semana: un
- * bloque gris con un segmento por filtro; el filtro activo se marca en blanco.
+ * Buscador de paciente y un botón "Filtros" (estado y profesional). Lo que se
+ * filtra se ve debajo como etiquetas que se quitan con la ✕.
  */
 export function AgendaFilters({
   value,
   onChange,
-  patients,
   professionals,
   showProfessional,
+  className,
 }: AgendaFiltersProps) {
-  const sortedPatients = useMemo(
-    () => [...patients].sort((a, b) => a.name.localeCompare(b.name, "es")),
-    [patients]
-  );
+  const set = <K extends keyof AgendaFilterValues>(key: K, next: AgendaFilterValues[K]) =>
+    onChange({ ...value, [key]: next });
 
-  const set = (key: keyof AgendaFilterValues, next: string) =>
-    onChange({ ...value, [key]: next } as AgendaFilterValues);
-
-  const activeCount =
-    (value.status !== "todos" ? 1 : 0) +
-    (value.patientId !== "todos" ? 1 : 0) +
-    (showProfessional && value.professionalId !== "todos" ? 1 : 0);
-
-  const statusLabel = APPOINTMENT_STATUS_FILTERS.find((filter) => filter.value === value.status)?.label;
-  const patientLabel = sortedPatients.find((patient) => patient.id === value.patientId)?.name;
-  const professionalLabel = professionals.find((professional) => professional.id === value.professionalId)?.name;
-
-  const segment = (active: boolean) =>
-    cn(
-      "h-9 min-w-0 flex-1 gap-1.5 rounded-lg border-0 px-3 text-sm font-medium shadow-none focus:ring-2 sm:flex-none",
-      active
-        ? "bg-background text-foreground shadow-sm"
-        : "bg-transparent text-muted-foreground hover:text-foreground"
-    );
+  const professionalName = professionals.find((item) => item.id === value.professionalId)?.name;
+  const active = [
+    value.status !== "todos" && {
+      key: "status",
+      label: getAppointmentStatusLabel(value.status as AppointmentStatus),
+      clear: () => set("status", "todos"),
+    },
+    showProfessional &&
+      value.professionalId !== "todos" && {
+        key: "professional",
+        label: professionalName ?? "Profesional",
+        clear: () => set("professionalId", "todos"),
+      },
+  ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
 
   return (
-    <div
-      role="group"
-      aria-label="Filtros de la agenda"
-      className="grid w-full grid-cols-1 gap-1 rounded-xl bg-muted p-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"
-    >
-      <Select value={value.status} onValueChange={(next) => set("status", next)}>
-        <SelectTrigger aria-label="Estado" className={cn(segment(value.status !== "todos"), "sm:w-44")}>
-          <SelectValue>{value.status === "todos" ? "Todos los estados" : statusLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {APPOINTMENT_STATUS_FILTERS.map((filter) => (
-            <SelectItem key={filter.value} value={filter.value}>
-              {filter.value === "todos" ? "Todos los estados" : filter.label}
-            </SelectItem>
+    <div className={cn("space-y-2", className)}>
+      <div role="search" aria-label="Filtros de la agenda" className="flex gap-2">
+        <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="h-10 pl-10 pr-9"
+            aria-label="Buscar paciente"
+            placeholder="Buscar paciente…"
+            value={value.patientQuery}
+            onChange={(event) => set("patientQuery", event.target.value)}
+          />
+          {value.patientQuery && (
+            <button
+              type="button"
+              aria-label="Borrar búsqueda"
+              onClick={() => set("patientQuery", "")}
+              className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-10 shrink-0 gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtros
+              {active.length > 0 && (
+                <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+              )}
+              {active.length > 0 && <span className="sr-only"> (con filtros aplicados)</span>}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-[70vh] w-60 overflow-y-auto">
+            <DropdownMenuLabel>Estado</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={value.status}
+              onValueChange={(next) => set("status", next as AgendaFilterValues["status"])}
+            >
+              {APPOINTMENT_STATUS_FILTERS.map((filter) => (
+                <DropdownMenuRadioItem key={filter.value} value={filter.value}>
+                  {filter.value === "todos" ? "Todos los estados" : filter.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+
+            {showProfessional && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Profesional</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={value.professionalId}
+                  onValueChange={(next) => set("professionalId", next)}
+                >
+                  <DropdownMenuRadioItem value="todos">Todos los profesionales</DropdownMenuRadioItem>
+                  {professionals.map((professional) => (
+                    <DropdownMenuRadioItem key={professional.id} value={professional.id}>
+                      {professional.name}
+                      {!professional.active ? " (inactivo)" : ""}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {active.length > 0 && (
+        <ul aria-label="Filtros aplicados" className="flex flex-wrap gap-2">
+          {active.map((filter) => (
+            <li key={filter.key}>
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 py-0.5 pl-3 pr-1 text-sm text-brand-800">
+                {filter.label}
+                <button
+                  type="button"
+                  aria-label={`Quitar filtro: ${filter.label}`}
+                  onClick={filter.clear}
+                  className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-brand-100"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            </li>
           ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={value.patientId} onValueChange={(next) => set("patientId", next)}>
-        <SelectTrigger aria-label="Paciente" className={cn(segment(value.patientId !== "todos"), "sm:w-48")}>
-          <SelectValue>{value.patientId === "todos" ? "Todos los pacientes" : patientLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="todos">Todos los pacientes</SelectItem>
-          {sortedPatients.map((patient) => (
-            <SelectItem key={patient.id} value={patient.id}>
-              {patient.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {showProfessional && (
-        <Select
-          value={value.professionalId}
-          onValueChange={(next) => set("professionalId", next)}
-        >
-          <SelectTrigger
-            aria-label="Profesional"
-            className={cn(segment(value.professionalId !== "todos"), "sm:w-52")}
-          >
-            <SelectValue>
-              {value.professionalId === "todos" ? "Todos los profesionales" : professionalLabel}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos los profesionales</SelectItem>
-            {professionals.map((professional) => (
-              <SelectItem key={professional.id} value={professional.id}>
-                {professional.name}
-                {!professional.active ? " (inactivo)" : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {activeCount > 0 && (
-        <button
-          type="button"
-          aria-label="Limpiar filtros"
-          title="Limpiar filtros"
-          onClick={() =>
-            onChange({
-              ...EMPTY_AGENDA_FILTERS,
-              professionalId: showProfessional ? "todos" : value.professionalId,
-            })
-          }
-          className="flex h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:w-9"
-        >
-          <X className="h-4 w-4" />
-          <span className="sm:hidden">Limpiar filtros</span>
-        </button>
+        </ul>
       )}
     </div>
   );
