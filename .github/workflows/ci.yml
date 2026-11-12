@@ -100,7 +100,8 @@ jobs:
 
   e2e:
     name: E2E (Playwright)
-    runs-on: ubuntu-latest
+    # Fijo: Playwright todavía no soporta Chromium en ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
