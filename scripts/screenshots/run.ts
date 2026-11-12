@@ -91,7 +91,7 @@ async function main() {
           // Próximo día hábil de lunes a viernes (Laura Méndez no atiende sábados).
           let day = addDays(new Date(), 1);
           while (day.getDay() === 0 || day.getDay() === 6) day = addDays(day, 1);
-          const date = dialog.getByLabel("Fecha");
+          const date = dialog.getByRole("textbox", { name: /^Fecha/ });
           await date.fill(format(day, "dd-MM-yyyy"));
           await date.press("Tab");
           await dialog.getByRole("combobox", { name: "Horario" }).click();
@@ -115,7 +115,7 @@ async function main() {
       {
         file: "autorizaciones-desktop.png",
         path: "/obras-sociales",
-        prepare: (p) => p.getByRole("group", { name: "Resumen de autorizaciones" }).waitFor(),
+        prepare: (p) => p.getByRole("group", { name: "Situación" }).waitFor(),
         fullPage: false,
       },
       {
