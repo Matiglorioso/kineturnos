@@ -291,7 +291,9 @@ export async function updateAppointmentInDb(
 
 export async function updateAppointmentStatusInDb(
   id: string,
-  status: AppointmentStatus
+  status: AppointmentStatus,
+  /** false cuando el propio paciente confirma o cancela desde el correo: la página ya se lo informa. */
+  { notifyPatient = true }: { notifyPatient?: boolean } = {}
 ): Promise<Appointment> {
   const existing = await getAppointmentByIdFromDb(id);
   if (!existing) {
@@ -319,6 +321,7 @@ export async function updateAppointmentStatusInDb(
       // Al pasar a atendido se descuenta una sesión de la autorización vigente.
       await assignSessionForAppointment(tx, updated);
 
+      if (!notifyPatient) return { record: updated, notificationIds: [] as string[] };
       const patientEmail = await getPatientEmail(existing.patientId, tx);
       const notificationIds = await enqueueAppointmentNotifications(
         tx,

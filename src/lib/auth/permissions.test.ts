@@ -128,6 +128,7 @@ describe("route-access", () => {
       "/login",
       "/ayuda",
       "/ayuda/turnos",
+      "/turno/abc.def/confirmar",
       "/api/auth/session",
       "/api/health/db",
       "/api/cron/notificaciones",

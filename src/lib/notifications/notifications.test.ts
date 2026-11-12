@@ -119,6 +119,21 @@ const data: AppointmentNotificationData = {
 };
 
 describe("plantillas de correo", () => {
+  it("alta y recordatorio: botones para confirmar y cancelar desde el correo", () => {
+    const links = { confirmUrl: "https://kt.app/turno/tok/confirmar", cancelUrl: "https://kt.app/turno/tok/cancelar" };
+    const email = buildAppointmentEmail("recordatorio", { ...data, status: "pendiente" }, links);
+    assert.match(email.text, /Confirmar turno: https:\/\/kt\.app\/turno\/tok\/confirmar/);
+    assert.match(email.text, /Cancelar turno: https:\/\/kt\.app\/turno\/tok\/cancelar/);
+    assert.match(email.html, /href="https:\/\/kt\.app\/turno\/tok\/confirmar"/);
+    assert.match(email.text, /hasta 2 horas antes/);
+
+    // Ya confirmado: solo cancelar. Sin enlaces, el cierre de siempre.
+    const onlyCancel = buildAppointmentEmail("creacion", data, { cancelUrl: links.cancelUrl });
+    assert.doesNotMatch(onlyCancel.html, /Confirmar turno/);
+    assert.match(onlyCancel.html, /Cancelar turno/);
+    assert.doesNotMatch(buildAppointmentEmail("creacion", data).html, /Cancelar turno/);
+  });
+
   it("creación: asunto con fecha larga y detalle del turno", () => {
     const email = buildAppointmentEmail("creacion", data);
     assert.equal(
@@ -156,7 +171,9 @@ describe("plantillas de correo", () => {
     const email = buildAppointmentEmail("cancelacion", data);
     assert.match(email.subject, /^Turno cancelado/);
     assert.ok(!email.text.includes("Sesión:"));
-    assert.ok(!email.html.includes("<table"));
+    // El diseño usa tablas para el armado; lo que no va es el detalle del turno.
+    assert.ok(!email.html.includes(">Sesión<"));
+    assert.match(email.html, /Turno cancelado/);
   });
 
   it("confirmación y recordatorio", () => {
