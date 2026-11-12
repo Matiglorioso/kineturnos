@@ -10,7 +10,7 @@ import { useInsurances } from "@/hooks/use-insurances";
 import { pageMetadata } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ClipboardList, FileCheck2, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Tab = "autorizaciones" | "catalogo" | "planilla";
 
@@ -23,6 +23,15 @@ const TABS: { value: Tab; label: string; shortLabel: string; icon: typeof Shield
 export default function ObrasSocialesPage() {
   const { insurances, isLoading, error, refresh } = useInsurances();
   const [tab, setTab] = useState<Tab>("autorizaciones");
+
+  // Atajo del panel: ?pestana=planilla abre esa pestaña; después se limpia la URL.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("pestana");
+    if (requested && TABS.some((item) => item.value === requested)) {
+      setTab(requested as Tab);
+      window.history.replaceState(null, "", "/obras-sociales");
+    }
+  }, []);
 
   if (isLoading && insurances.length === 0) {
     return <PageLoadingState title="Obras sociales" />;
