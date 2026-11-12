@@ -22,13 +22,14 @@ import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
 import { countPatientAppointments } from "@/lib/patient-appointments";
-import { pluralize } from "@/lib/pluralize";
 import {
   ALL_INSURANCES,
+  ALL_STATUSES,
   DEFAULT_PATIENT_LIST_OPTIONS,
   filterAndSortPatients,
   getInsuranceOptions,
   type PatientSort,
+  type PatientStatusFilter,
 } from "@/lib/patient-list";
 import { showSuccessToast } from "@/lib/toast";
 import { Patient } from "@/types";
@@ -68,6 +69,7 @@ function PacientesPageContent() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<PatientSort>(DEFAULT_PATIENT_LIST_OPTIONS.sort);
   const [insurance, setInsurance] = useState(ALL_INSURANCES);
+  const [status, setStatus] = useState<PatientStatusFilter>(ALL_STATUSES);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -98,21 +100,21 @@ function PacientesPageContent() {
   }, [patientToDelete, appointments]);
 
   const filtered = useMemo(
-    () => filterAndSortPatients(patients, { search, insurance, sort }),
-    [patients, search, insurance, sort]
+    () => filterAndSortPatients(patients, { search, insurance, status, sort }),
+    [patients, search, insurance, status, sort]
   );
   const pagination = usePagination(filtered, {
     storageKey: "pacientes",
-    resetKey: `${search}|${insurance}|${sort}`,
+    resetKey: `${search}|${insurance}|${status}|${sort}`,
   });
   const insuranceOptions = useMemo(() => getInsuranceOptions(patients), [patients]);
-  const isFiltering = search.trim() !== "" || insurance !== ALL_INSURANCES;
+  const isFiltering =
+    search.trim() !== "" || insurance !== ALL_INSURANCES || status !== ALL_STATUSES;
   const clearFilters = () => {
     setSearch("");
     setInsurance(ALL_INSURANCES);
+    setStatus(ALL_STATUSES);
   };
-
-  const activeCount = patients.filter((p) => p.status === "activo").length;
 
   const openDialog = () => {
     setEditingPatient(null);
@@ -249,7 +251,7 @@ function PacientesPageContent() {
     <div className="space-y-6">
       <PageHeader
         title="Pacientes"
-        description={`${pluralize(patients.length, "registrado")} · ${pluralize(activeCount, "activo")}`}
+        description="Datos, cobertura, turnos e historia clínica de cada paciente."
         actionLabel={
           canManagePatients ? emptyStateActions.registerPatient : undefined
         }
@@ -257,8 +259,9 @@ function PacientesPageContent() {
         onAction={canManagePatients ? openDialog : undefined}
       />
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full lg:max-w-md">
+      {/* Con tres filtros, el buscador va en su propia fila salvo en pantallas muy anchas. */}
+      <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
+        <div className="relative w-full 2xl:max-w-md">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-10"
@@ -276,10 +279,9 @@ function PacientesPageContent() {
             insurance={insurance}
             onInsuranceChange={setInsurance}
             insuranceOptions={insuranceOptions}
+            status={status}
+            onStatusChange={setStatus}
           />
-          <p className="shrink-0 text-sm text-muted-foreground" aria-live="polite">
-            {pluralize(filtered.length, "resultado")}
-          </p>
         </div>
       </div>
 
@@ -327,7 +329,7 @@ function PacientesPageContent() {
               />
             ))}
           </div>
-          <ListPagination pagination={pagination} itemLabel="pacientes" />
+          <ListPagination pagination={pagination} itemLabel="pacientes" itemLabelSingular="paciente" />
         </div>
       )}
 
