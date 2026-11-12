@@ -1,11 +1,11 @@
 "use client";
 
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
+import { DashboardShortcuts, type DashboardShortcut } from "@/components/dashboard/DashboardShortcuts";
 import { PeriodIndicators } from "@/components/dashboard/PeriodIndicators";
 import { TodayScheduleCard } from "@/components/dashboard/TodayScheduleCard";
 import { DataLoadBanner } from "@/components/shared/DataLoadBanner";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
-import { Button } from "@/components/ui/button";
 import { useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -17,11 +17,12 @@ import {
   greetingFor,
   summarizeDay,
 } from "@/lib/dashboard-today";
+import { summarizeCoverageAlerts, summarizeMonthInsuranceSessions } from "@/lib/dashboard-shortcuts";
+import { pluralize } from "@/lib/pluralize";
 import { formatAppDate, getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
 import type { Appointment, AppointmentStatus, Patient } from "@/types";
-import { Plus, UserPlus } from "lucide-react";
+import { CalendarDays, ClipboardList, FileCheck2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 /** Minutos del día en el consultorio, actualizados cada minuto (turno en curso, asistencia por registrar). */
@@ -59,7 +60,7 @@ export default function DashboardPage() {
     refresh: refreshAppointments,
     updateAppointmentStatus,
   } = useAppointments();
-  const { can, canSchedule, canManagePatients, isScopedProfessional } = usePermissions();
+  const { can, isScopedProfessional } = usePermissions();
   const [today] = useState(() => getTodayAppDate());
   const nowMinutes = useNowMinutes();
 
@@ -75,6 +76,49 @@ export default function DashboardPage() {
   const patientsById = useMemo(() => new Map(patients.map((patient) => [patient.id, patient])), [patients]);
 
   const showCoverage = can("insurances:write");
+  const coverageAlerts = useMemo(() => summarizeCoverageAlerts(patients), [patients]);
+  const monthSessions = useMemo(
+    () => summarizeMonthInsuranceSessions(appointments, patients, today),
+    [appointments, patients, today]
+  );
+  const monthName = formatAppDate(today, "MMMM");
+
+  // Atajos: cada uno muestra el dato que importa de su sección. Obras sociales es solo de Administración.
+  const shortcuts: DashboardShortcut[] = [
+    {
+      href: "/agenda",
+      icon: CalendarDays,
+      title: isScopedProfessional ? "Mis turnos de hoy" : "Agenda de hoy",
+      value: pluralize(daySummary.total, "turno"),
+      detail: daySummary.total ? `${daySummary.attended} atendidos · ${daySummary.upcoming} por venir` : "Sin turnos",
+    },
+    ...(showCoverage
+      ? [
+          {
+            href: "/obras-sociales",
+            icon: FileCheck2,
+            title: "Autorizaciones",
+            value: coverageAlerts.toResolve
+              ? `${coverageAlerts.toResolve} sin cobertura`
+              : "Todo en orden",
+            detail: coverageAlerts.toRenew ? `${coverageAlerts.toRenew} por renovar o en trámite` : undefined,
+            tone: coverageAlerts.toResolve ? ("alert" as const) : undefined,
+          },
+          {
+            href: "/obras-sociales?pestana=planilla",
+            icon: ClipboardList,
+            title: `Planilla de ${monthName}`,
+            value: pluralize(monthSessions.total, "sesión", "sesiones"),
+            detail: monthSessions.byInsurance.length
+              ? monthSessions.byInsurance
+                  .slice(0, 3)
+                  .map((item) => `${item.name} ${item.count}`)
+                  .join(" · ")
+              : "Sin sesiones con obra social",
+          },
+        ]
+      : []),
+  ];
   const firstName = session?.user?.name?.split(" ")[0];
   const handleStatusChange = async (appointment: Appointment, status: AppointmentStatus) => {
     await updateAppointmentStatus(appointment, status);
@@ -112,27 +156,9 @@ export default function DashboardPage() {
             {formatAppDate(today, "EEEE d 'de' MMMM 'de' yyyy")}
           </p>
         </div>
-        {(canSchedule || canManagePatients) && (
-          <div className="grid grid-cols-2 gap-2 sm:flex">
-            {canManagePatients && (
-              <Button asChild variant="outline">
-                <Link href="/pacientes?nuevo=1">
-                  <UserPlus className="h-4 w-4" />
-                  Nuevo paciente
-                </Link>
-              </Button>
-            )}
-            {canSchedule && (
-              <Button asChild>
-                <Link href="/agenda?nuevo=1">
-                  <Plus className="h-4 w-4" />
-                  Agendar turno
-                </Link>
-              </Button>
-            )}
-          </div>
-        )}
       </header>
+
+      <DashboardShortcuts shortcuts={shortcuts} />
 
       <section aria-labelledby="hoy-titulo">
         <h2 id="hoy-titulo" className="sr-only">
@@ -152,7 +178,6 @@ export default function DashboardPage() {
           />
           <TodayScheduleCard
             schedule={schedule}
-            summary={daySummary}
             nowMinutes={nowMinutes}
             showProfessional={!isScopedProfessional}
           />
