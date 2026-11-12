@@ -17,17 +17,22 @@ test.afterAll(cleanupTestData);
 const today = () => parseAppDate(getTodayAppDate())!;
 
 test.describe("panel del consultorio", () => {
-  test("atajos para dar de alta: paciente desde el panel y turno desde la barra superior", async ({ page }) => {
+  test("atajos con datos a la agenda, las autorizaciones y la planilla; un solo Agendar turno", async ({ page }) => {
     await page.goto("/");
-    // "Agendar turno" de la barra superior abre el alta, igual que el del panel.
+    // "Agendar turno" está una sola vez: en la barra superior.
+    await expect(page.getByRole("link", { name: "Agendar turno" })).toHaveCount(1);
     await page.getByRole("banner").getByRole("link", { name: "Agendar turno" }).click();
     await expect(page.getByRole("dialog", { name: "Agendar turno" })).toBeVisible();
     await expect(page).toHaveURL("/agenda");
 
     await page.goto("/");
-    await page.getByRole("link", { name: "Nuevo paciente" }).click();
-    await expect(page.getByRole("dialog", { name: "Nuevo paciente" })).toBeVisible();
-    await expect(page).toHaveURL("/pacientes");
+    const shortcuts = page.getByRole("navigation", { name: "Atajos" });
+    await expect(shortcuts.getByRole("link", { name: /Agenda de hoy.*turnos?/ })).toBeVisible();
+    await expect(shortcuts.getByRole("link", { name: /^Autorizaciones/ })).toBeVisible();
+
+    await shortcuts.getByRole("link", { name: /^Planilla de / }).click();
+    await expect(page).toHaveURL("/obras-sociales");
+    await expect(page.getByRole("tab", { name: /Planilla/ })).toHaveAttribute("aria-selected", "true");
   });
 
   test("Para hacer: registra la asistencia y confirma turnos sin salir del panel", async ({ page }) => {
