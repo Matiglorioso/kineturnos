@@ -6,7 +6,7 @@ const SHORT_LABELS: Record<PatientCoverage["kind"], string> = {
   particular: "Particular",
   "sin-autorizacion": "Sin autorización",
   pendiente: "En trámite",
-  vigente: "Autorizada",
+  vigente: "Vigente",
   agotada: "Agotada",
   vencida: "Vencida",
 };

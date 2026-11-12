@@ -2,7 +2,7 @@ import { listHourlySlotOptions, getHourlySlotStarts } from "@/lib/appointment-sl
 import { areSameAppDay, getNowAppMinutes, isTodayAppDate } from "@/lib/date-utils";
 import { professionalWorksOnDay } from "@/lib/professional-schedule";
 import { minutesToTime, normalizeTime, timeToMinutes } from "@/lib/time-utils";
-import { sortAppointmentsByTime } from "@/lib/week-calendar";
+import { sortAppointmentsByTime } from "@/lib/agenda-list";
 import type { Appointment, Professional } from "@/types";
 
 /**

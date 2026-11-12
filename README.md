@@ -22,7 +22,7 @@ Sistema web para organizar turnos, pacientes y profesionales en consultorios de 
 
 ## Descripción
 
-**KineTurnos** es una aplicación full-stack para la operación diaria de un consultorio kinesiológico: panel de control, agenda por día o semana, fichas de pacientes y gestión del equipo profesional.
+**KineTurnos** es una aplicación full-stack para la operación diaria de un consultorio kinesiológico: panel de control, agenda por día y por profesional, fichas de pacientes y gestión del equipo profesional.
 
 La aplicación prioriza **claridad de flujos**, **feedback inmediato** (toasts, estados vacíos, confirmaciones) y una **experiencia responsive** (mobile, tablet y desktop), con **persistencia en PostgreSQL (Neon)** vía API REST y Prisma.
 
@@ -53,8 +53,8 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - **Indicadores (RF16)** de esta semana, este mes o el mes anterior, comparados con el período anterior: sesiones atendidas, pacientes atendidos, tasa de cancelación y de ausentismo, evolución y turnos por profesional
 
 ### Agenda
-- Vistas por **día**, por **semana** (lun–sáb) y por **profesional** (RF03): el día de todos los profesionales en columnas, con los horarios libres a un toque de "Agendar turno" (en celular, un profesional a la vez)
-- Filtros por estado, paciente y profesional
+- Vistas por **día** y por **profesional** (RF03): el día de todos los profesionales en columnas, con los horarios libres a un toque de "Agendar turno" (en celular, un profesional a la vez)
+- Búsqueda por paciente y filtros por estado y profesional
 - Creación, edición y cambio de estado de turnos
 - Validación de solapamientos y horarios del profesional
 - **Correos al paciente** al crear, confirmar, reprogramar o cancelar un turno, y recordatorio 24 h antes ([`docs/NOTIFICACIONES.md`](docs/NOTIFICACIONES.md))
@@ -102,9 +102,9 @@ Datos de demostración, con nombres ficticios.
 |:---:|:---:|
 | ![Panel](./docs/screenshots/dashboard-desktop.png) | ![Agenda del día](./docs/screenshots/agenda-dia-desktop.png) |
 
-| Agenda semanal | Agenda por profesional |
+| Agenda por profesional | |
 |:---:|:---:|
-| ![Agenda semanal](./docs/screenshots/agenda-semana-desktop.png) | ![Agenda por profesional](./docs/screenshots/agenda-profesionales-desktop.png) |
+| ![Agenda por profesional](./docs/screenshots/agenda-profesionales-desktop.png) | |
 
 | Pacientes | Historia clínica |
 |:---:|:---:|
@@ -124,9 +124,9 @@ Datos de demostración, con nombres ficticios.
 |:---:|:---:|:---:|:---:|
 | ![Panel](./docs/screenshots/dashboard.png) | ![Agenda](./docs/screenshots/agenda.png) | ![Agenda por profesional](./docs/screenshots/agenda-profesionales.png) | ![Historia clínica](./docs/screenshots/historia-clinica.png) |
 
-| Agenda semanal | Pacientes | Profesionales | Usuarios |
-|:---:|:---:|:---:|:---:|
-| ![Agenda semanal](./docs/screenshots/agenda-semana.png) | ![Pacientes](./docs/screenshots/pacientes.png) | ![Profesionales](./docs/screenshots/profesionales.png) | ![Usuarios](./docs/screenshots/usuarios.png) |
+| Pacientes | Profesionales | Usuarios |
+|:---:|:---:|:---:|
+| ![Pacientes](./docs/screenshots/pacientes.png) | ![Profesionales](./docs/screenshots/profesionales.png) | ![Usuarios](./docs/screenshots/usuarios.png) |
 
 _Se regeneran con `npm run screenshots`: crea una base descartable con datos de demostración, compila la app y captura con Playwright._
 
@@ -295,7 +295,7 @@ kineturnos/
 └── src/
     ├── app/                # Rutas App Router
     │   ├── page.tsx        # Dashboard (/)
-    │   ├── agenda/         # Agenda lista y semanal
+    │   ├── agenda/         # Agenda por día y por profesional
     │   ├── pacientes/      # Gestión de pacientes
     │   ├── profesionales/  # Gestión de kinesiólogos
     │   ├── proyecto/       # Ayuda (requiere login)
@@ -332,7 +332,7 @@ kineturnos/
 |---|---|
 | UI / UX responsive | ✅ Completo |
 | CRUD pacientes, profesionales y turnos | ✅ Completo |
-| Agenda por día, semana y profesional (RF03) | ✅ Completo |
+| Agenda por día y por profesional (RF03) | ✅ Completo |
 | Validación de horarios y solapamientos | ✅ Completo (cliente + servidor) |
 | PostgreSQL (Neon) + Prisma | ✅ Completo |
 | API REST + hooks conectados a DB | ✅ Completo |
