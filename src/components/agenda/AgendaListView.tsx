@@ -119,7 +119,7 @@ export function AgendaListView({
         ))}
       </div>
 
-      <ListPagination pagination={pagination} itemLabel="turnos" />
+      <ListPagination pagination={pagination} itemLabel="turnos" itemLabelSingular="turno" />
     </div>
   );
 }

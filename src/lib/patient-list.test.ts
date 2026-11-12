@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { Patient } from "@/types";
 import {
   ALL_INSURANCES,
+  ALL_STATUSES,
   DEFAULT_PATIENT_LIST_OPTIONS,
   filterAndSortPatients,
   getInsuranceOptions,
@@ -40,6 +41,25 @@ const names = (options: Partial<PatientListOptions>) =>
   );
 
 describe("orden de la lista de pacientes", () => {
+  it("por defecto, por apellido; sin apellido cargado usa la última palabra del nombre", () => {
+    assert.deepEqual(names({}), ["Martín Acosta", "Ángela Ruiz", "Carlos Ruiz", "ana Torres"]);
+    assert.deepEqual(names({ sort: "apellido-desc" }), [
+      "ana Torres",
+      "Carlos Ruiz",
+      "Ángela Ruiz",
+      "Martín Acosta",
+    ]);
+    // El apellido cargado manda: "de la Fuente" ordena por "de la Fuente", no por "Fuente".
+    const withSurname = [
+      patient({ name: "Laura de la Fuente", firstName: "Laura", lastName: "de la Fuente" }),
+      patient({ name: "Pedro Esquivel" }),
+    ];
+    assert.deepEqual(
+      filterAndSortPatients(withSurname, DEFAULT_PATIENT_LIST_OPTIONS).map((item) => item.name),
+      ["Laura de la Fuente", "Pedro Esquivel"]
+    );
+  });
+
   it("por nombre, sin importar mayúsculas ni tildes", () => {
     assert.deepEqual(names({ sort: "nombre-asc" }), [
       "ana Torres",
@@ -81,8 +101,14 @@ describe("filtro por obra social y búsqueda", () => {
   });
 
   it("filtra por obra social exacta", () => {
-    assert.deepEqual(names({ insurance: "OSDE 210" }), ["ana Torres", "Carlos Ruiz"]);
+    assert.deepEqual(names({ insurance: "OSDE 210" }), ["Carlos Ruiz", "ana Torres"]);
     assert.equal(names({ insurance: ALL_INSURANCES }).length, 4);
+  });
+
+  it("filtra por estado", () => {
+    assert.deepEqual(names({ status: "inactivo" }), ["Martín Acosta"]);
+    assert.equal(names({ status: "activo" }).length, 3);
+    assert.equal(names({ status: ALL_STATUSES }).length, 4);
   });
 
   it("combina búsqueda, obra social y orden", () => {

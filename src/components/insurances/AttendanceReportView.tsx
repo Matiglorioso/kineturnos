@@ -262,7 +262,7 @@ export function AttendanceReportView({
               </li>
             ))}
           </ul>
-          <ListPagination pagination={pagination} itemLabel="pacientes" />
+          <ListPagination pagination={pagination} itemLabel="pacientes" itemLabelSingular="paciente" />
         </section>
       ) : null}
     </div>
