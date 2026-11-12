@@ -19,6 +19,9 @@ export type AppointmentNotificationData = {
 
 export type EmailContent = { subject: string; html: string; text: string };
 
+/** Enlaces para que el paciente confirme o cancele desde el correo (alta y recordatorio). */
+export type AppointmentEmailLinks = { confirmUrl?: string; cancelUrl: string };
+
 function formatLongDate(date: string): string {
   const label = formatAppDate(date, "EEEE d 'de' MMMM 'de' yyyy");
   return label.charAt(0).toUpperCase() + label.slice(1);
@@ -100,12 +103,29 @@ function getCopy(
   }
 }
 
+function button(href: string, label: string, primary: boolean): string {
+  const colors = primary
+    ? "background:#0f766e;color:#ffffff;border:1px solid #0f766e"
+    : "background:#ffffff;color:#b91c1c;border:1px solid #fca5a5";
+  return (
+    `<a href="${escapeHtml(href)}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 18px;` +
+    `border-radius:8px;font-weight:600;text-decoration:none;${colors}">${escapeHtml(label)}</a>`
+  );
+}
+
 /** Arma asunto, HTML y texto plano del correo al paciente. */
 export function buildAppointmentEmail(
   type: AppointmentNotificationType,
-  data: AppointmentNotificationData
+  data: AppointmentNotificationData,
+  links?: AppointmentEmailLinks
 ): EmailContent {
   const copy = getCopy(type, data);
+  // Con enlaces, el paciente responde desde el correo: el cierre se lo indica.
+  const closing = links
+    ? links.confirmUrl
+      ? "Confirmá tu asistencia o, si no podés venir, cancelá el turno desde acá (hasta 2 horas antes):"
+      : "Si no podés venir, cancelá el turno desde acá (hasta 2 horas antes):"
+    : copy.closing;
   const details: [string, string][] = [
     ["Fecha", formatLongDate(data.date)],
     ["Hora", `${normalizeTime(data.time)} h`],
@@ -124,7 +144,13 @@ export function buildAppointmentEmail(
       ? ["", ...details.map(([label, value]) => `${label}: ${value}`)]
       : []),
     "",
-    copy.closing,
+    closing,
+    ...(links
+      ? [
+          ...(links.confirmUrl ? [`Confirmar turno: ${links.confirmUrl}`] : []),
+          `Cancelar turno: ${links.cancelUrl}`,
+        ]
+      : []),
     "",
     signature,
   ].join("\n");
@@ -142,7 +168,11 @@ export function buildAppointmentEmail(
     `<p>${escapeHtml(greeting)}</p>` +
     `<p>${escapeHtml(copy.intro)}</p>` +
     (copy.showDetails ? `<table style="border-collapse:collapse;margin:12px 0">${detailRows}</table>` : "") +
-    `<p>${escapeHtml(copy.closing)}</p>` +
+    `<p>${escapeHtml(closing)}</p>` +
+    (links
+      ? `<p>${links.confirmUrl ? button(links.confirmUrl, "Confirmar turno", true) : ""}` +
+        `${button(links.cancelUrl, "Cancelar turno", false)}</p>`
+      : "") +
     `<p style="margin-top:24px;color:#64748b">${escapeHtml(signature)}</p>` +
     `</div>`;
 

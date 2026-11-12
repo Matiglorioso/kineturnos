@@ -95,13 +95,16 @@ export function createPageMetadata(
   };
 }
 
+/** URL pública de la app (metadatos y enlaces de los correos). */
+export function getSiteUrl(env: Record<string, string | undefined> = process.env): string {
+  return (
+    env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    (env.NODE_ENV === "production" ? siteConfig.url : "http://localhost:3000")
+  );
+}
+
 export const rootMetadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ??
-      (process.env.NODE_ENV === "production"
-        ? siteConfig.url
-        : "http://localhost:3000")
-  ),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: `${siteConfig.name} | ${siteConfig.tagline}`,
     template: `%s | ${siteConfig.name}`,

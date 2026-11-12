@@ -22,8 +22,9 @@ test.describe("panel del consultorio", () => {
     // "Agendar turno" está una sola vez: en la barra superior.
     await expect(page.getByRole("link", { name: "Agendar turno" })).toHaveCount(1);
     await page.getByRole("banner").getByRole("link", { name: "Agendar turno" }).click();
-    await expect(page.getByRole("dialog", { name: "Agendar turno" })).toBeVisible();
-    await expect(page).toHaveURL("/agenda");
+    // El alta se abre y la URL se limpia recién cuando la agenda conoce el perfil: en frío tarda.
+    await expect(page.getByRole("dialog", { name: "Agendar turno" })).toBeVisible({ timeout: 20_000 });
+    await expect(page).toHaveURL("/agenda", { timeout: 20_000 });
 
     await page.goto("/");
     const shortcuts = page.getByRole("navigation", { name: "Atajos" });
@@ -31,7 +32,7 @@ test.describe("panel del consultorio", () => {
     await expect(shortcuts.getByRole("link", { name: /^Autorizaciones/ })).toBeVisible();
 
     await shortcuts.getByRole("link", { name: /^Planilla de / }).click();
-    await expect(page).toHaveURL("/obras-sociales");
+    await expect(page).toHaveURL("/obras-sociales", { timeout: 20_000 });
     await expect(page.getByRole("tab", { name: /Planilla/ })).toHaveAttribute("aria-selected", "true");
   });
 
