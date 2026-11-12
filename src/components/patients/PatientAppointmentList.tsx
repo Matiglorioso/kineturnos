@@ -1,4 +1,8 @@
+"use client";
+
 import { StatusBadge } from "@/components/appointments/StatusBadge";
+import { ListPagination } from "@/components/ui/ListPagination";
+import { usePagination } from "@/hooks/use-pagination";
 import { Appointment } from "@/types";
 import { formatAppointmentListLine } from "@/lib/datetime-format";
 import { cn } from "@/lib/utils";
@@ -13,9 +17,11 @@ export function PatientAppointmentList({
   appointments,
   className,
 }: PatientAppointmentListProps) {
+  const pagination = usePagination(appointments, { storageKey: "turnos-ficha" });
+
   return (
     <div className={cn("space-y-3", className)}>
-      {appointments.map((appointment) => {
+      {pagination.items.map((appointment) => {
         const { dateLabel, timeLabel } = formatAppointmentListLine(
           appointment.date,
           appointment.time
@@ -51,6 +57,7 @@ export function PatientAppointmentList({
           </div>
         );
       })}
+      <ListPagination pagination={pagination} itemLabel="turnos" />
     </div>
   );
 }
