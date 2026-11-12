@@ -2,7 +2,8 @@ import type { RolUsuario } from "@prisma/client";
 import { canAccessPage } from "@/lib/auth/permissions";
 
 export function isPublicPath(pathname: string): boolean {
-  const publicPaths = ["/login", "/ayuda"];
+  // /turno: confirmar o cancelar desde el correo (el enlace firmado autoriza).
+  const publicPaths = ["/login", "/ayuda", "/turno"];
 
   return (
     publicPaths.some(

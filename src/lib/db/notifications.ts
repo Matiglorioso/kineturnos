@@ -7,11 +7,19 @@ import {
   REMINDER_HOURS_BEFORE,
   type AppointmentNotificationType,
 } from "@/lib/notifications/events";
+import {
+  buildAppointmentLinkUrls,
+  createAppointmentLinkToken,
+  getAppointmentLinkSecret,
+} from "@/lib/appointment-links";
+import { isActiveAppointmentStatus } from "@/lib/appointment-status";
 import { sendEmail, type MailerConfig, getMailerConfig } from "@/lib/notifications/mailer";
 import {
   buildAppointmentEmail,
+  type AppointmentEmailLinks,
   type AppointmentNotificationData,
 } from "@/lib/notifications/templates";
+import { getSiteUrl } from "@/lib/site-config";
 import { prisma, type DbClient } from "@/lib/prisma";
 import type { Appointment } from "@/types";
 import { Prisma } from "@prisma/client";
@@ -161,6 +169,21 @@ function retryableWhere(now: Date): Prisma.NotificacionWhereInput {
   };
 }
 
+/** Correos que llevan los botones de confirmar y cancelar: el alta y el recordatorio de un turno activo. */
+const TYPES_WITH_PATIENT_LINKS: AppointmentNotificationType[] = ["creacion", "recordatorio"];
+
+function patientLinksFor(
+  type: AppointmentNotificationType,
+  appointmentId: string,
+  data: AppointmentNotificationData
+): AppointmentEmailLinks | undefined {
+  if (!TYPES_WITH_PATIENT_LINKS.includes(type) || !isActiveAppointmentStatus(data.status)) return undefined;
+  const secret = getAppointmentLinkSecret();
+  if (!secret) return undefined;
+  const token = createAppointmentLinkToken({ appointmentId, date: data.date, time: data.time }, secret);
+  return buildAppointmentLinkUrls(getSiteUrl(), token, data.status);
+}
+
 /**
  * Envía las notificaciones indicadas (o todas las pendientes/reintentables).
  * Cada una se "reclama" con un update condicional antes de mandarla, así el
@@ -199,7 +222,7 @@ export async function dispatchNotifications(
     const result = candidate.destinatario
       ? await sendEmail(
           {
-            ...buildAppointmentEmail(candidate.tipo, data),
+            ...buildAppointmentEmail(candidate.tipo, data, patientLinksFor(candidate.tipo, candidate.turnoId, data)),
             to: candidate.destinatario,
             toName: data.patientName,
           },
