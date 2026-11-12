@@ -1,3 +1,4 @@
+import type { AppointmentActionsVariant } from "@/components/appointments/AppointmentActions";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { StatusBadge } from "@/components/appointments/StatusBadge";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
@@ -20,7 +21,7 @@ interface AgendaListViewProps {
   dateLabel: string;
   /** El día mostrado es hoy. */
   isToday?: boolean;
-  renderActions: (appointment: Appointment, variant: "table" | "card") => React.ReactNode;
+  renderActions: (appointment: Appointment, variant: AppointmentActionsVariant) => React.ReactNode;
   onCreateAppointment?: () => void;
   emptyPreset: EmptyStatePreset;
   showClearFilters?: boolean;

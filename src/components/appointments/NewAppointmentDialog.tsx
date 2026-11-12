@@ -1,5 +1,7 @@
 "use client";
 
+import { AgendaCalendarDialog } from "@/components/agenda/AgendaCalendarDialog";
+import { PatientCombobox } from "@/components/patients/PatientCombobox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,10 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { countAppointmentsByDay } from "@/lib/agenda-calendar";
 import { SESSION_TYPES } from "@/lib/appointment-constants";
 import {
   APPOINTMENT_STATUS_LABELS,
   getNextAppointmentStatuses,
+  isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
 import { listHourlySlotOptionsForForm } from "@/lib/appointment-slots";
@@ -32,7 +36,6 @@ import {
   type AppointmentFormErrors,
 } from "@/lib/appointment-validation";
 import {
-  APP_DATE_FORMAT,
   getTodayAppDate,
   isValidAppDate,
   normalizeAppDate,
@@ -46,7 +49,7 @@ import {
   Professional,
   SessionType,
 } from "@/types";
-import { AlertTriangle, CalendarPlus, Pencil } from "lucide-react";
+import { AlertTriangle, CalendarDays, CalendarPlus, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
@@ -73,15 +76,17 @@ interface NewAppointmentDialogProps {
   /** Alta desde un hueco libre de la vista por profesional: profesional y hora ya elegidos. */
   defaultProfessionalId?: string;
   defaultTime?: string;
+  /** Alta desde la ficha del paciente: paciente ya elegido. */
+  defaultPatientId?: string;
   editingAppointment?: Appointment | null;
 }
 
 function buildInitialForm(
   defaultDate: string,
-  defaults: { professionalId?: string; time?: string } = {}
+  defaults: { professionalId?: string; time?: string; patientId?: string } = {}
 ): NewAppointmentFormValues {
   return {
-    patientId: "",
+    patientId: defaults.patientId ?? "",
     professionalId: defaults.professionalId ?? "",
     date: defaultDate,
     time: defaults.time ?? "",
@@ -115,8 +120,10 @@ export function NewAppointmentDialog({
   defaultDate,
   defaultProfessionalId,
   defaultTime,
+  defaultPatientId,
   editingAppointment = null,
 }: NewAppointmentDialogProps) {
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const isEditing = Boolean(editingAppointment);
   // Máquina de estados: un turno final no se reprograma (solo tipo y observaciones).
   const isFinalEditing = Boolean(
@@ -159,10 +166,16 @@ export function NewAppointmentDialog({
       setForm(buildFormFromAppointment(editingAppointment));
       setErrors({});
     } else {
-      setForm(buildInitialForm(defaultDate, { professionalId: defaultProfessionalId, time: defaultTime }));
+      setForm(
+        buildInitialForm(defaultDate, {
+          professionalId: defaultProfessionalId,
+          time: defaultTime,
+          patientId: defaultPatientId,
+        })
+      );
       setErrors({});
     }
-  }, [open, defaultDate, defaultProfessionalId, defaultTime, editingAppointment]);
+  }, [open, defaultDate, defaultProfessionalId, defaultTime, defaultPatientId, editingAppointment]);
 
   // Estados posibles: los que admite la fecha y, al editar, las transiciones
   // permitidas desde el estado actual del turno.
@@ -170,7 +183,9 @@ export function NewAppointmentDialog({
     const byDate = getStatusOptionsForAppointmentDate(
       form.date || getTodayAppDate()
     );
-    if (!editingAppointment) return byDate;
+    // Un turno nuevo nace pendiente o confirmado (o, si ya pasó, con la asistencia
+    // registrada); cancelado de entrada no tiene sentido.
+    if (!editingAppointment) return byDate.filter((status) => status !== "cancelado");
 
     const reachable = [
       editingAppointment.status,
@@ -198,6 +213,19 @@ export function NewAppointmentDialog({
   const selectedProfessional = useMemo(
     () => professionals.find((item) => item.id === form.professionalId),
     [professionals, form.professionalId]
+  );
+
+  // Para el calendario de la fecha: cuántos turnos tiene ya el profesional elegido cada día.
+  const professionalDayCounts = useMemo(
+    () =>
+      countAppointmentsByDay(
+        existingAppointments.filter(
+          (appointment) =>
+            isActiveAppointmentStatus(appointment.status) &&
+            (!form.professionalId || appointment.professionalId === form.professionalId)
+        )
+      ),
+    [existingAppointments, form.professionalId]
   );
 
   const hourlySlotOptions = useMemo(
@@ -334,22 +362,14 @@ export function NewAppointmentDialog({
               required
               error={errors.patientId}
             >
-              <Select
+              <PatientCombobox
+                id="patientId"
+                patients={patients}
                 value={form.patientId}
-                onValueChange={(value) => updateField("patientId", value)}
+                onChange={(value) => updateField("patientId", value)}
                 disabled={isFinalEditing}
-              >
-                <SelectTrigger id="patientId">
-                  <SelectValue placeholder="Seleccionar paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                invalid={Boolean(errors.patientId)}
+              />
             </FormField>
 
             <FormField
@@ -397,21 +417,34 @@ export function NewAppointmentDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField id="date" label="Fecha" required error={errors.date}>
-              <Input
-                id="date"
-                type="text"
-                inputMode="numeric"
-                placeholder={APP_DATE_FORMAT}
-                value={form.date}
-                disabled={isFinalEditing}
-                onChange={(e) => updateField("date", e.target.value)}
-                onBlur={(e) => {
-                  const value = e.target.value.trim();
-                  if (isValidAppDate(value)) {
-                    updateField("date", normalizeAppDate(value));
-                  }
-                }}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="date"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="dd-mm-aaaa"
+                  value={form.date}
+                  disabled={isFinalEditing}
+                  onChange={(e) => updateField("date", e.target.value)}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (isValidAppDate(value)) {
+                      updateField("date", normalizeAppDate(value));
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
+                  aria-label="Elegir la fecha en el calendario"
+                  disabled={isFinalEditing}
+                  onClick={() => setCalendarOpen(true)}
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </Button>
+              </div>
             </FormField>
 
             <FormField
@@ -532,10 +565,22 @@ export function NewAppointmentDialog({
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isEditing ? "Guardar cambios" : "Confirmar turno"}
+              {isEditing ? "Guardar cambios" : "Agendar turno"}
             </Button>
           </DialogFooter>
         </form>
+
+        <AgendaCalendarDialog
+          open={calendarOpen}
+          onOpenChange={setCalendarOpen}
+          value={isValidAppDate(form.date) ? normalizeAppDate(form.date) : getTodayAppDate()}
+          today={getTodayAppDate()}
+          counts={professionalDayCounts}
+          onSelect={(date) => {
+            updateField("date", date);
+            setCalendarOpen(false);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
