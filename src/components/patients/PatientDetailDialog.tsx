@@ -28,6 +28,7 @@ import {
   Cake,
   Calendar,
   CalendarClock,
+  CalendarPlus,
   FileHeart,
   History,
   IdCard,
@@ -64,7 +65,7 @@ export function PatientDetailDialog({
   onCoverageChange,
 }: PatientDetailDialogProps) {
   const { activeEntity: activePatient } = useDisplayEntity(patient, open);
-  const { can } = usePermissions();
+  const { can, canSchedule } = usePermissions();
 
   const { upcoming, past, totalAppointments } = useMemo(() => {
     if (!activePatient) {
@@ -93,7 +94,7 @@ export function PatientDetailDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-lg font-bold text-white shadow-sm">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-700 text-lg font-bold text-white shadow-sm">
               {getInitials(activePatient.name)}
             </div>
             <div className="min-w-0 flex-1 text-left">
@@ -105,6 +106,16 @@ export function PatientDetailDialog({
                 <PatientStatusBadge
                   active={activePatient.status === "activo"}
                 />
+                {canSchedule && activePatient.status === "activo" && (
+                  <Button asChild size="sm">
+                    <Link
+                      href={`/agenda?nuevo=1&paciente=${encodeURIComponent(activePatient.id)}`}
+                    >
+                      <CalendarPlus className="h-4 w-4" />
+                      Agendar turno
+                    </Link>
+                  </Button>
+                )}
                 {can("clinical:read") && (
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/pacientes/${encodeURIComponent(activePatient.id)}/historia`}>

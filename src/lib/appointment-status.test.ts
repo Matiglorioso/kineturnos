@@ -5,10 +5,12 @@ import {
   APPOINTMENT_STATUS_FILTERS,
   APPOINTMENT_STATUS_FORM_OPTIONS,
   APPOINTMENT_STATUS_LABELS,
+  canRegisterAttendance,
   canTransitionAppointmentStatus,
   FINAL_APPOINTMENT_STATUSES,
   getAppointmentStatusLabel,
   getNextAppointmentStatuses,
+  getQuickStatusAction,
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
@@ -96,4 +98,37 @@ describe("máquina de estados (diagrama de estados de la tesis)", () => {
       }
     });
   }
+});
+
+describe("acción rápida de la agenda", () => {
+  const today = "28-10-2026";
+  const at = (date: string, time: string, status: AppointmentStatus) => ({ date, time, status });
+
+  it("pendiente que todavía no empezó: confirmar", () => {
+    assert.equal(getQuickStatusAction(at("29-10-2026", "09:00", "pendiente"), today, 600), "confirmado");
+    assert.equal(getQuickStatusAction(at(today, "15:00", "pendiente"), today, 600), "confirmado");
+  });
+
+  it("confirmado que todavía no empezó: nada", () => {
+    assert.equal(getQuickStatusAction(at("29-10-2026", "09:00", "confirmado"), today, 600), null);
+  });
+
+  it("ya empezó (hoy o antes): registrar que vino", () => {
+    assert.equal(getQuickStatusAction(at(today, "10:00", "confirmado"), today, 600), "atendido");
+    assert.equal(getQuickStatusAction(at("27-10-2026", "17:00", "pendiente"), today, 0), "atendido");
+  });
+
+  it("estados finales: nada", () => {
+    for (const status of FINAL_APPOINTMENT_STATUSES) {
+      assert.equal(getQuickStatusAction(at("27-10-2026", "09:00", status), today, 600), null);
+    }
+  });
+});
+
+describe("canRegisterAttendance", () => {
+  it("hoy y días pasados sí; días futuros no", () => {
+    assert.equal(canRegisterAttendance("28-10-2026", "28-10-2026"), true);
+    assert.equal(canRegisterAttendance("01-10-2026", "28-10-2026"), true);
+    assert.equal(canRegisterAttendance("29-10-2026", "28-10-2026"), false);
+  });
 });
