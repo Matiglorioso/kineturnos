@@ -36,13 +36,18 @@ export async function createScratchApp(prefix: string, port: number): Promise<Sc
   const baseUrl = process.env.DATABASE_URL;
   if (!baseUrl) throw new Error("Falta DATABASE_URL (.env.local).");
 
+  // Neon tarda unos segundos en reactivarse después de un rato sin uso: el
+  // timeout de conexión por defecto de Prisma (5 s) no alcanza.
+  const serverUrl = new URL(baseUrl);
+  if (!serverUrl.searchParams.has("connect_timeout")) serverUrl.searchParams.set("connect_timeout", "20");
+
   const name = `${prefix}_${Date.now()}`;
-  const pooled = new URL(baseUrl);
+  const pooled = new URL(serverUrl.toString());
   pooled.pathname = `/${name}`;
   const direct = new URL(pooled.toString());
   direct.hostname = direct.hostname.replace("-pooler", "");
 
-  const admin = new PrismaClient();
+  const admin = new PrismaClient({ datasourceUrl: serverUrl.toString() });
   console.log(`Base descartable: ${name}`);
   await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
   run("npx", ["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: direct.toString() }, "migrate deploy");

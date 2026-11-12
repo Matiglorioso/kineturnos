@@ -55,6 +55,8 @@ npx prisma migrate dev --name <nombre>   # crear una migración nueva
 
 **Agenda por profesional (RF03):** tercera vista de `/agenda` (solo Administración; el Profesional ya ve solo la suya). `buildProfessionalDayGrid` (`src/lib/agenda-professionals.ts`) arma una columna por profesional activo que atiende ese día (más cualquiera con turnos visibles ese día) y una celda por bloque de 1 h: `turnos` (con los filtros aplicados; los cancelados solo si se filtra por ese estado), `libre` (según `listHourlySlotOptions` sobre todos los turnos), `ocupado` u `pasado`. Un hueco libre abre `NewAppointmentDialog` con `defaultProfessionalId`/`defaultTime`. En celular (`AgendaProfessionalsView`), pestañas con un profesional a la vez.
 
+**Listas paginadas:** las listas se cargan enteras y se paginan en el cliente con `usePagination` (`src/hooks/use-pagination.ts`, lógica en `src/lib/pagination.ts`) y el pie `ListPagination`: 10 por página por defecto (10/25/50/100, recordado por lista en `localStorage`) y vuelta a la página 1 al cambiar búsqueda o filtros (`resetKey`). Con 10 o menos no se muestra. La planilla de asistencia pagina en pantalla pero imprime completa. Las vistas de calendario (semana, por profesional) no se paginan.
+
 **Sincronización desnormalizada:** los turnos guardan `paciente_nombre` y `profesional_nombre` (`src/lib/db/sync.ts` los propaga al renombrar). `pacientes.ultimo_turno` = último turno **atendido** con fecha ≤ hoy; se recalcula al escribir (`recomputePatientLastAppointment`) y al leer (`getPatientLastAppointmentDate`), con el mismo criterio.
 
 ## Reglas de dominio
