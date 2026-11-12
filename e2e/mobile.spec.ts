@@ -38,7 +38,7 @@ test.describe("mobile (390 px)", () => {
     const agendaLink = page.getByRole("link", { name: "Agenda", exact: true });
     await expect(agendaLink).toBeHidden();
 
-    await page.getByRole("button", { name: "Abrir menu" }).click();
+    await page.getByRole("button", { name: "Abrir menú" }).click();
     await expect(agendaLink).toBeVisible();
 
     await agendaLink.click();

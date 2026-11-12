@@ -8,6 +8,7 @@ import { cn, getInitials } from "@/lib/utils";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { Plus, Stethoscope } from "lucide-react";
 import { useEffect, useState } from "react";
+import { readableAvatarColor } from "@/lib/professional-utils";
 
 const STATUS_STYLES: Record<AppointmentStatus, { card: string; dot: string }> = {
   pendiente: { card: "border-l-amber-400 bg-amber-50/90 hover:bg-amber-50", dot: "bg-amber-500" },
@@ -88,13 +89,13 @@ function Cell({
         type="button"
         onClick={() => onFreeSlotClick(column.professional.id, cell.time)}
         aria-label={`Agendar con ${column.professional.name} a las ${cell.time}`}
-        className="flex h-full w-full items-center gap-1.5 rounded-lg border border-dashed border-slate-200 px-2.5 text-sm text-slate-400 transition-colors hover:border-brand-300 hover:bg-brand-50/60 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="flex h-full w-full items-center gap-1.5 rounded-lg border border-dashed border-slate-200 px-2.5 text-sm text-slate-500 transition-colors hover:border-brand-300 hover:bg-brand-50/60 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         <Plus className="h-3.5 w-3.5" />
         Libre
       </button>
     ) : (
-      <div className="flex h-full items-center rounded-lg border border-dashed border-slate-200 px-2.5 text-sm text-slate-400">
+      <div className="flex h-full items-center rounded-lg border border-dashed border-slate-200 px-2.5 text-sm text-slate-500">
         Libre
       </div>
     );
@@ -102,7 +103,7 @@ function Cell({
 
   return (
     <div
-      className="flex h-full items-center rounded-lg bg-slate-50 px-2.5 text-xs text-slate-400"
+      className="flex h-full items-center rounded-lg bg-slate-50 px-2.5 text-xs text-slate-500"
       aria-label={cell.kind === "ocupado" ? "Ocupado" : "No disponible"}
     >
       {cell.kind === "ocupado" ? "Ocupado" : "—"}
@@ -116,7 +117,7 @@ function ColumnHeader({ column, className }: { column: ProfessionalDayColumn; cl
       <span
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold text-white",
-          column.professional.avatarColor
+          readableAvatarColor(column.professional.avatarColor)
         )}
       >
         {getInitials(column.professional.name)}

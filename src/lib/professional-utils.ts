@@ -41,6 +41,23 @@ export const PROFESSIONAL_AVATAR_COLORS = [
   "bg-rose-500",
 ] as const;
 
+/**
+ * Fondo del avatar con contraste suficiente para las iniciales en blanco (≥ 4,5:1).
+ * Los colores guardados son los tonos 500 de la paleta; se muestran en su tono oscuro.
+ */
+const READABLE_AVATAR_COLORS: Record<string, string> = {
+  "bg-brand-500": "bg-brand-700",
+  "bg-sky-500": "bg-sky-700",
+  "bg-violet-500": "bg-violet-600",
+  "bg-emerald-500": "bg-emerald-700",
+  "bg-amber-500": "bg-amber-700",
+  "bg-rose-500": "bg-rose-600",
+};
+
+export function readableAvatarColor(color: string): string {
+  return READABLE_AVATAR_COLORS[color] ?? color;
+}
+
 export function buildProfessionalName(
   firstName: string,
   lastName: string

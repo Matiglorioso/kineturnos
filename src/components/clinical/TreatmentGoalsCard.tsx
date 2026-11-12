@@ -141,7 +141,7 @@ export function TreatmentGoalsCard({
               }}
               placeholder="Por ejemplo: volver a correr sin dolor"
               maxLength={CLINICAL_GOAL_MAX_LENGTH}
-              className="h-9 placeholder:text-slate-400"
+              className="h-9 placeholder:text-slate-500"
             />
             <Button
               type="submit"

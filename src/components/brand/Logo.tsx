@@ -70,12 +70,12 @@ export function Logo({
         <div className="min-w-0">
           <p className={cn("tracking-tight text-slate-900", styles.title)}>
             <span>Kine</span>
-            <span className="text-brand-600">Turnos</span>
+            <span className="text-brand-700">Turnos</span>
           </p>
           {showTagline && (
             <p
               className={cn(
-                "font-medium uppercase tracking-widest text-brand-600/90",
+                "font-medium uppercase tracking-widest text-brand-700/90",
                 styles.tagline
               )}
             >
