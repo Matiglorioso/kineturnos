@@ -22,6 +22,7 @@ import {
   Users,
   X,
   ShieldCheck,
+  History,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -66,6 +67,11 @@ const navigation = [
     name: "Usuarios",
     href: "/usuarios",
     icon: UserCog,
+  },
+  {
+    name: "Auditoría",
+    href: "/auditoria",
+    icon: History,
   },
 ];
 

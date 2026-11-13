@@ -45,6 +45,8 @@ const EVOLUTIONS = [
 export interface DemoData {
   password: string;
   adminEmail: string;
+  /** Acceso técnico: es el único perfil que ve la auditoría. */
+  superadminEmail: string;
   professionalEmail: string;
   /** Paciente con historia clínica completa (alertas, objetivos, evoluciones). */
   featuredPatientId: string;
@@ -303,6 +305,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
   return {
     password,
     adminEmail,
+    superadminEmail: "soporte@kineturnos.app",
     professionalEmail,
     featuredPatientId: featured.id,
     featuredPatientName: featured.nombre,

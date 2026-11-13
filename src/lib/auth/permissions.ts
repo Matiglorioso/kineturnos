@@ -15,9 +15,11 @@ export type Permission =
   | "clinical:audit"
   | "insurances:read"
   | "insurances:write"
-  | "users:manage";
+  | "users:manage"
+  | "audit:read";
 
-const ALL_PERMISSIONS: Permission[] = [
+/** Todo el consultorio. La auditoría del sistema queda aparte: por ahora solo la ve el Superadmin. */
+const ADMIN_PERMISSIONS: Permission[] = [
   "appointments:read",
   "appointments:write",
   "appointments:status",
@@ -35,15 +37,16 @@ const ALL_PERMISSIONS: Permission[] = [
   "users:manage",
 ];
 
+
 /**
  * Perfiles de la tesis: Administrador (dueños y recepción) gestiona todo el
  * consultorio; Profesional ve su agenda y registra asistencia. Superadmin es
- * el acceso técnico del equipo de desarrollo: todo lo del Administrador, y a
- * futuro las tareas de mantenimiento.
+ * el acceso técnico del equipo de desarrollo: todo lo del Administrador y,
+ * por ahora solo él, el registro de auditoría.
  */
 const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
-  superadmin: ALL_PERMISSIONS,
-  admin: ALL_PERMISSIONS,
+  superadmin: [...ADMIN_PERMISSIONS, "audit:read"],
+  admin: ADMIN_PERMISSIONS,
   profesional: [
     "appointments:read",
     "appointments:status",
@@ -66,6 +69,7 @@ const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
     "/profesionales",
     "/obras-sociales",
     "/usuarios",
+    "/auditoria",
     "/proyecto",
     "/cambiar-contrasena",
   ],

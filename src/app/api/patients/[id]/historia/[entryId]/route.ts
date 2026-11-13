@@ -8,6 +8,7 @@ import {
   parseClinicalEntryInput,
 } from "@/lib/clinical-history";
 import { hasClinicalAccess, updateClinicalEntryInDb } from "@/lib/db/clinical-history";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
 
+    const before = await readAuditSnapshot("historia_clinica", entryId);
     const entry = await updateClinicalEntryInDb(id, entryId, parsed.input, user);
+    await auditWrite(auditContextFor(user, request), "historia_clinica", "modificacion", entryId, before);
     return NextResponse.json({ data: entry });
   } catch (error) {
     return handleWriteError(error, "No se pudo actualizar el registro de la historia clínica.");

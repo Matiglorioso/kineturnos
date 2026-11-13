@@ -2,6 +2,7 @@ import { handleWriteError } from "@/lib/api/handle-write-error";
 import { parseUserWriteInput } from "@/lib/api/parse-user-body";
 import { requireApiPermission } from "@/lib/auth/require-session";
 import { updateUserInDb } from "@/lib/db/users";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
 
+    const before = await readAuditSnapshot("usuario", id);
     const user = await updateUserInDb(access.session.user, id, parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "usuario", "modificacion", id, before);
     return NextResponse.json({ data: user });
   } catch (error) {
     return handleWriteError(error, "No se pudo actualizar el usuario.");

@@ -8,6 +8,7 @@ import {
   getOwnProfessionalId,
   requireApiPermission,
 } from "@/lib/auth/require-session";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
     }
 
     const patient = await createPatientInDb(parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "paciente", "alta", patient.id, null);
     return NextResponse.json({ data: patient }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo registrar el paciente.");

@@ -11,6 +11,7 @@ import {
   getOwnProfessionalId,
   requireApiPermission,
 } from "@/lib/auth/require-session";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     }
 
     const appointment = await createAppointmentInDb(parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "turno", "alta", appointment.id, null);
     return NextResponse.json({ data: appointment }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo agendar el turno.");

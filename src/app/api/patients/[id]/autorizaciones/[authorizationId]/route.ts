@@ -2,6 +2,7 @@ import { handleWriteError } from "@/lib/api/handle-write-error";
 import { requireApiPermission } from "@/lib/auth/require-session";
 import { deleteAuthorizationFromDb, updateAuthorizationInDb } from "@/lib/db/insurances";
 import { parseAuthorizationInput } from "@/lib/insurance";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +21,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!parsed.input) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
-    return NextResponse.json({
-      data: await updateAuthorizationInDb(id, authorizationId, parsed.input),
-    });
+    const before = await readAuditSnapshot("autorizacion", authorizationId);
+    const authorization = await updateAuthorizationInDb(id, authorizationId, parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "autorizacion", "modificacion", authorizationId, before);
+    return NextResponse.json({ data: authorization });
   } catch (error) {
     return handleWriteError(error, "No se pudo actualizar la autorización.");
   }
@@ -34,7 +36,9 @@ export async function DELETE(request: Request, context: RouteContext) {
 
   try {
     const { id, authorizationId } = await context.params;
+    const before = await readAuditSnapshot("autorizacion", authorizationId);
     await deleteAuthorizationFromDb(id, authorizationId);
+    await auditWrite(auditContextFor(access.session.user, request), "autorizacion", "baja", authorizationId, before);
     return NextResponse.json({ data: { id: authorizationId } });
   } catch (error) {
     return handleWriteError(error, "No se pudo eliminar la autorización.");

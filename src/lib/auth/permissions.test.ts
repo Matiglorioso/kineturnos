@@ -33,6 +33,8 @@ const EXPECTED: Record<Permission, Record<RolUsuario, boolean>> = {
   "insurances:read": { superadmin: true, admin: true, profesional: true },
   "insurances:write": { superadmin: true, admin: true, profesional: false },
   "users:manage": { superadmin: true, admin: true, profesional: false },
+  // Por ahora, solo el equipo de desarrollo.
+  "audit:read": { superadmin: true, admin: false, profesional: false },
 };
 
 describe("permisos: matriz rol × permiso", () => {
@@ -106,6 +108,12 @@ describe("permisos: acceso a páginas", () => {
     assert.equal(canAccessPage("admin", "/usuarios"), true);
     assert.equal(canAccessPage("superadmin", "/usuarios"), true);
     assert.equal(canAccessPage("profesional", "/usuarios"), false);
+  });
+
+  it("la auditoría es solo del Superadmin", () => {
+    assert.equal(canAccessPage("superadmin", "/auditoria"), true);
+    assert.equal(canAccessPage("admin", "/auditoria"), false);
+    assert.equal(canAccessPage("profesional", "/auditoria"), false);
   });
 
   it("permite subrutas de un prefijo habilitado", () => {

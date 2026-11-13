@@ -37,6 +37,26 @@ async function login(page: Page, baseUrl: string, email: string, password: strin
   await page.waitForURL(`${baseUrl}/`);
 }
 
+/** Cambios reales por la API (con la sesión de Administración) para que la auditoría tenga movimientos. */
+async function recordDemoChanges(page: Page, baseUrl: string, patientId: string) {
+  const api = page.request;
+  const appointments = (await (await api.get(`${baseUrl}/api/appointments`)).json()).data as {
+    id: string;
+    status: string;
+    date: string;
+  }[];
+  const today = format(new Date(), "dd-MM-yyyy");
+  const pending = appointments.filter((item) => item.status === "pendiente" && item.date !== today).slice(0, 2);
+  for (const item of pending) {
+    await api.patch(`${baseUrl}/api/appointments/${item.id}`, { data: { status: "confirmado" } });
+  }
+
+  const patient = (await (await api.get(`${baseUrl}/api/patients/${patientId}`)).json()).data;
+  await api.patch(`${baseUrl}/api/patients/${patientId}`, {
+    data: { ...patient, phone: "+54 351 555-0199", notes: "Prefiere turnos por la mañana." },
+  });
+}
+
 async function capture(page: Page, baseUrl: string, shot: Shot) {
   await page.goto(`${baseUrl}${shot.path}`);
   await shot.prepare(page);
@@ -182,6 +202,19 @@ async function main() {
     });
     await login(mobilePage, base, demo.adminEmail, password);
     for (const shot of mobile) await capture(mobilePage, base, { ...shot, fullPage: false });
+
+    // Auditoría (solo Superadmin): primero Administración hace algunos cambios para que haya movimientos.
+    await recordDemoChanges(desktopPage, base, demo.featuredPatientId);
+    const auditPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await login(auditPage, base, demo.superadminEmail, password);
+    await capture(auditPage, base, {
+      file: "auditoria-desktop.png",
+      path: "/auditoria",
+      prepare: async (p) => {
+        await p.getByRole("button", { name: /Modificación/ }).first().click();
+        await p.getByText("Antes", { exact: true }).waitFor();
+      },
+    });
 
     await browser.close();
   } finally {

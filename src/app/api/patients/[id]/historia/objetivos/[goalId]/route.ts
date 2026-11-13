@@ -6,6 +6,7 @@ import {
   hasClinicalAccess,
   updateTreatmentGoalInDb,
 } from "@/lib/db/clinical-history";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -39,9 +40,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    return NextResponse.json({
-      data: await updateTreatmentGoalInDb(id, goalId, body.achieved, user),
-    });
+    const before = await readAuditSnapshot("objetivo", goalId);
+    const goal = await updateTreatmentGoalInDb(id, goalId, body.achieved, user);
+    await auditWrite(auditContextFor(user, request), "objetivo", "modificacion", goalId, before);
+    return NextResponse.json({ data: goal });
   } catch (error) {
     return handleWriteError(error, "No se pudo actualizar el objetivo.");
   }
@@ -53,7 +55,9 @@ export async function DELETE(request: Request, context: RouteContext) {
     const { response, user } = await authorize(request, id);
     if (response) return response;
 
+    const before = await readAuditSnapshot("objetivo", goalId);
     await deleteTreatmentGoalInDb(id, goalId, user);
+    await auditWrite(auditContextFor(user, request), "objetivo", "baja", goalId, before);
     return NextResponse.json({ data: { id: goalId } });
   } catch (error) {
     return handleWriteError(error, "No se pudo quitar el objetivo.");

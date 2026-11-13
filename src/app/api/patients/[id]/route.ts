@@ -12,6 +12,7 @@ import {
   patientBelongsToProfessionalInDb,
   updatePatientInDb,
 } from "@/lib/db/patients";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -79,11 +80,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    const before = await readAuditSnapshot("paciente", id);
     const patient = await updatePatientInDb(id, {
       ...parsed.input,
       lastAppointment: parsed.input.lastAppointment ?? existing.lastAppointment,
       createdAt: parsed.input.createdAt ?? existing.createdAt,
     });
+    await auditWrite(auditContextFor(access.session.user, request), "paciente", "modificacion", id, before);
 
     return NextResponse.json({ data: patient });
   } catch (error) {
@@ -107,7 +110,9 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     const deletedAppointments = await countPatientAppointmentsInDb(id);
+    const before = await readAuditSnapshot("paciente", id);
     await deletePatientFromDb(id);
+    await auditWrite(auditContextFor(access.session.user, request), "paciente", "baja", id, before);
 
     return NextResponse.json({
       data: {

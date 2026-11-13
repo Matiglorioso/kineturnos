@@ -313,3 +313,44 @@ model Autorizacion {
   @@index([obraSocialId])
   @@map("autorizaciones")
 }
+
+enum AccionAuditoria {
+  alta
+  modificacion
+  baja
+  cambio_estado
+  ingreso
+  ingreso_fallido
+  cambio_password
+  restablecimiento_password
+
+  @@map("accion_auditoria")
+}
+
+/// Auditoría (seguridad y auditoría): quién cambió qué, cuándo y desde dónde,
+/// con el valor anterior y el nuevo de cada campo (`cambios`). También los
+/// ingresos al sistema, exitosos y fallidos. Sin claves foráneas: el registro
+/// se conserva aunque se borre lo auditado. Inmutable: un trigger rechaza
+/// UPDATE, DELETE y TRUNCATE. Ver src/lib/audit.ts y src/lib/db/audit.ts.
+model Auditoria {
+  id            String          @id
+  fecha         DateTime        @default(now()) @db.Timestamptz(6)
+  /// Null si no es un usuario del sistema (paciente desde el correo, ingreso fallido).
+  usuarioId     String?         @map("usuario_id")
+  usuarioNombre String          @map("usuario_nombre")
+  /// superadmin, admin, profesional, paciente o desconocido.
+  usuarioRol    String          @map("usuario_rol")
+  accion        AccionAuditoria
+  entidad       String
+  entidadId     String?         @map("entidad_id")
+  /// Descripción legible del registro afectado al momento del cambio.
+  registro      String
+  cambios       Json?
+  ip            String?
+  navegador     String?
+
+  @@index([fecha])
+  @@index([entidad, entidadId])
+  @@index([usuarioId])
+  @@map("auditoria")
+}

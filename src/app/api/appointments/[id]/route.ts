@@ -16,6 +16,7 @@ import {
   updateAppointmentInDb,
   updateAppointmentStatusInDb,
 } from "@/lib/db/appointments";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (owned) return owned;
 
     const body = await request.json();
+    const audit = auditContextFor(user, request);
+    const before = await readAuditSnapshot("turno", id);
 
     if (
       body &&
@@ -97,6 +100,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
 
       const appointment = await updateAppointmentStatusInDb(id, parsedStatus.status);
+      await auditWrite(audit, "turno", "modificacion", id, before);
       return NextResponse.json({ data: appointment });
     }
 
@@ -132,6 +136,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       ...parsed.input,
       notes: parsed.input.notes ?? existing.notes,
     });
+    await auditWrite(audit, "turno", "modificacion", id, before);
 
     return NextResponse.json({ data: appointment });
   } catch (error) {
@@ -157,7 +162,9 @@ export async function DELETE(request: Request, context: RouteContext) {
     );
     if (owned) return owned;
 
+    const before = await readAuditSnapshot("turno", id);
     const deleted = await deleteAppointmentFromDb(id);
+    await auditWrite(auditContextFor(access.session.user, request), "turno", "baja", id, before);
     return NextResponse.json({ data: { id: deleted.id } });
   } catch (error) {
     return handleWriteError(error, "No se pudo eliminar el turno.");
