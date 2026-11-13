@@ -66,7 +66,7 @@ Commits en formato rojo → verde. PR: #5 unitarios (paso 1), #6 regresión (pas
 | **M5** `purge-demo` pisa `ultimo_turno` | `scripts.int.test.ts` | `3cdc622` → `ddad2ad` | #7 | ✅ |
 | **M6** "Último turno" mal calculado | `patient-appointments.test.ts`, `appointments.int.test.ts` | `b6fb182` → `620b04e` | #6 | ✅ |
 | **M7** Validación incompleta en la API | `parse-*-body.test.ts` | `6c5f5a4` → `0485c9a` | #6 | ✅ 400 con `field` |
-| **M8** Turnos a profesionales/pacientes inactivos | — | — | — | ⏳ Pendiente |
+| **M8** Turnos a profesionales/pacientes inactivos | `appointment-validation.test.ts`, `appointments.int.test.ts` | Resuelto después del plan | — | ✅ No se agendan ni reprograman turnos activos; cancelar o editar sin mover sigue permitido |
 | **M9** Sin gestión de usuarios | `users.int.test.ts`, `e2e/usuarios.spec.ts` | — | #23 | ✅ Resuelto después del plan (ver §9) |
 | **B1** Orden de turnos por string | `appointment-sort.test.ts` | `4895be7` → `56c29ee` | #6 | ✅ |
 | **B2** Actividad con la hora de creación | `dashboard.test.ts` (`it.todo`) | — | — | ⏳ Documentado, pendiente |
@@ -124,7 +124,7 @@ Integración y E2E crean y borran datos: nunca contra la base de producción (ve
 ## 8. Limitaciones y trabajo futuro
 
 - **Cobertura del servidor por líneas:** integración y E2E no suman a la métrica de líneas. Se podría instrumentar `next dev` con `NODE_V8_COVERAGE` para medirla.
-- **Hallazgos pendientes:** M8, B2–B8 y las decisiones de producto de M4 (borrado solo para admin) y A3 (duración de la sesión).
+- **Hallazgos pendientes:** B2–B8 y las decisiones de producto de M4 (borrado solo para admin) y A3 (duración de la sesión).
 - **Concurrencia de M2:** los locks cubren las escrituras de la app; no hay una restricción de base equivalente al índice único del profesional para el paciente.
 
 ## 9. Estado de la suite al cierre (26-10-2026)

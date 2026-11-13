@@ -19,6 +19,7 @@ import { isFinalAppointmentStatus } from "@/lib/appointment-status";
 import {
   APPOINTMENT_OVERLAP_ERROR,
   validateAppointmentForm,
+  validateAppointmentParticipants,
   validateAppointmentStatusChange,
 } from "@/lib/appointment-validation";
 import { scheduleNotificationDispatch } from "@/lib/notifications/schedule";
@@ -176,6 +177,27 @@ export async function assertAppointmentInputValid(
   );
 
   throwFirstValidationError(errors);
+
+  // M8: pacientes y profesionales desactivados.
+  const [patient, professional] = await Promise.all([
+    db.paciente.findUnique({ where: { id: input.patientId }, select: { estado: true } }),
+    db.profesional.findUnique({ where: { id: input.professionalId }, select: { activo: true } }),
+  ]);
+  throwFirstValidationError(
+    validateAppointmentParticipants(
+      toAppointmentFormInput(input),
+      // Si no existe, el error correspondiente lo da la resolución de nombres.
+      { patientActive: patient?.estado !== "inactivo", professionalActive: professional?.activo !== false },
+      existing
+        ? {
+            patientId: existing.patientId,
+            professionalId: existing.professionalId,
+            date: existing.date,
+            time: existing.time,
+          }
+        : undefined
+    )
+  );
 }
 
 export async function createAppointmentInDb(

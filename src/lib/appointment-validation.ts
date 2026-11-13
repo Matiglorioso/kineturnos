@@ -15,6 +15,7 @@ import {
 import {
   canTransitionAppointmentStatus,
   getAppointmentStatusLabel,
+  isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
 import { validateProfessionalAppointmentSlot } from "@/lib/professional-schedule";
@@ -120,6 +121,38 @@ export function getAppointmentRescheduleError(status: AppointmentStatus): string
 
 export const APPOINTMENT_PAST_TIME_ERROR =
   "Ese horario ya pasó. Elegí un horario posterior a la hora actual.";
+
+export const APPOINTMENT_INACTIVE_PATIENT_ERROR =
+  "El paciente está desactivado. Activalo desde Pacientes para agendarle turnos.";
+
+export const APPOINTMENT_INACTIVE_PROFESSIONAL_ERROR =
+  "El profesional está desactivado. Activalo desde Profesionales para agendarle turnos.";
+
+/**
+ * M8: no se agendan ni se reprograman turnos activos de un paciente o de un
+ * profesional desactivado. Un turno que no se mueve (editar observaciones,
+ * confirmar, cancelar) o que queda en un estado final sí se puede tocar.
+ */
+export function validateAppointmentParticipants(
+  values: Pick<AppointmentFormInput, "patientId" | "professionalId" | "date" | "time" | "status">,
+  participants: { patientActive: boolean; professionalActive: boolean },
+  previous?: { patientId: string; professionalId: string; date: string; time: string }
+): AppointmentFormErrors {
+  if (!isActiveAppointmentStatus(values.status as AppointmentStatus)) return {};
+
+  const moved =
+    !previous ||
+    previous.patientId !== values.patientId ||
+    previous.professionalId !== values.professionalId ||
+    !areSameAppDay(previous.date, values.date) ||
+    normalizeTime(previous.time) !== normalizeTime(values.time);
+  if (!moved) return {};
+
+  const errors: AppointmentFormErrors = {};
+  if (!participants.patientActive) errors.patientId = APPOINTMENT_INACTIVE_PATIENT_ERROR;
+  if (!participants.professionalActive) errors.professionalId = APPOINTMENT_INACTIVE_PROFESSIONAL_ERROR;
+  return errors;
+}
 
 export type AppointmentFormInput = {
   patientId: string;

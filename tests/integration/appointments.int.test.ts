@@ -325,3 +325,42 @@ describe("máquina de estados en la API", () => {
     assert.equal(res.field, "date");
   });
 });
+
+describe("M8: turnos de pacientes o profesionales desactivados", () => {
+  it("rechaza agendar a un paciente desactivado (400, campo patientId)", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    await prisma.paciente.update({ where: { id: patient.id }, data: { estado: "inactivo" } });
+
+    const res = await api("/api/appointments", {
+      method: "POST",
+      body: appointmentBody({ patientId: patient.id, professionalId: professional.id, date: futureWorkday(14), time: "10:00" }),
+    });
+    assert.equal(res.status, 400, res.error);
+    assert.equal(res.field, "patientId");
+  });
+
+  it("rechaza agendar con un profesional desactivado (400, campo professionalId)", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    await prisma.profesional.update({ where: { id: professional.id }, data: { activo: false } });
+
+    const res = await api("/api/appointments", {
+      method: "POST",
+      body: appointmentBody({ patientId: patient.id, professionalId: professional.id, date: futureWorkday(14), time: "11:00" }),
+    });
+    assert.equal(res.status, 400, res.error);
+    assert.equal(res.field, "professionalId");
+  });
+
+  it("permite cancelar el turno activo de un paciente que se desactivó", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    const turno = await createAppointmentInDb({ patient, professional, date: futureWorkday(14), time: "12:00" });
+    await prisma.paciente.update({ where: { id: patient.id }, data: { estado: "inactivo" } });
+
+    const res = await api(`/api/appointments/${turno.id}`, { method: "PATCH", body: { status: "cancelado" } });
+    assert.equal(res.status, 200, res.error);
+  });
+});
+
