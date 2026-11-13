@@ -14,6 +14,7 @@ import {
   logClinicalAccess,
 } from "@/lib/db/clinical-history";
 import { prisma } from "@/lib/prisma";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const entry = await createClinicalEntryInDb(id, parsed.input, user);
+    await auditWrite(auditContextFor(user, request), "historia_clinica", "alta", entry.id, null);
     return NextResponse.json({ data: entry }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo guardar el registro de la historia clínica.");

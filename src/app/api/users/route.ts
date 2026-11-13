@@ -2,6 +2,7 @@ import { handleWriteError } from "@/lib/api/handle-write-error";
 import { parseUserWriteInput } from "@/lib/api/parse-user-body";
 import { requireApiPermission } from "@/lib/auth/require-session";
 import { createUserInDb, getUsersFromDb } from "@/lib/db/users";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     }
 
     const result = await createUserInDb(access.session.user, parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "usuario", "alta", result.user.id, null);
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo crear el usuario.");

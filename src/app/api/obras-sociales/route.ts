@@ -2,6 +2,7 @@ import { handleWriteError } from "@/lib/api/handle-write-error";
 import { requireApiPermission } from "@/lib/auth/require-session";
 import { createInsuranceInDb, getInsurancesFromDb } from "@/lib/db/insurances";
 import { parseInsuranceInput } from "@/lib/insurance";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,9 @@ export async function POST(request: Request) {
     if (!parsed.input) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
-    return NextResponse.json({ data: await createInsuranceInDb(parsed.input) }, { status: 201 });
+    const insurance = await createInsuranceInDb(parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "obra_social", "alta", insurance.id, null);
+    return NextResponse.json({ data: insurance }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo guardar la obra social.");
   }

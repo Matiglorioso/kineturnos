@@ -5,6 +5,7 @@ import {
   parseTreatmentGoalInput,
 } from "@/lib/clinical-history";
 import { createTreatmentGoalInDb, hasClinicalAccess } from "@/lib/db/clinical-history";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const goal = await createTreatmentGoalInDb(id, parsed.input.description, user);
+    await auditWrite(auditContextFor(user, request), "objetivo", "alta", goal.id, null);
     return NextResponse.json({ data: goal }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo agregar el objetivo.");

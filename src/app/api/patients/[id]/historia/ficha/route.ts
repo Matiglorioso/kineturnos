@@ -5,6 +5,7 @@ import {
   parseClinicalProfileInput,
 } from "@/lib/clinical-history";
 import { hasClinicalAccess, saveClinicalProfileInDb } from "@/lib/db/clinical-history";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,10 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
 
-    return NextResponse.json({ data: await saveClinicalProfileInDb(id, parsed.input, user) });
+    const before = await readAuditSnapshot("ficha_clinica", id);
+    const profile = await saveClinicalProfileInDb(id, parsed.input, user);
+    await auditWrite(auditContextFor(user, request), "ficha_clinica", before ? "modificacion" : "alta", id, before);
+    return NextResponse.json({ data: profile });
   } catch (error) {
     return handleWriteError(error, "No se pudieron guardar las alertas y antecedentes.");
   }
