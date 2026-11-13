@@ -1,6 +1,6 @@
 "use client";
 
-import { AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, type AuditAction } from "@/lib/audit";
+import { AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, describeUserAgent, type AuditAction } from "@/lib/audit";
 import { getRoleLabel } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import type { AuditLogItem } from "@/types";
@@ -90,6 +90,11 @@ function AuditRow({ item }: { item: AuditLogItem }) {
         <div className="mt-3 space-y-3 rounded-xl bg-slate-50 p-3 text-sm">
           {item.changes.length > 0 && (
             <dl className="space-y-2">
+              <div className="hidden text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid sm:grid-cols-[10rem_1fr_1fr] sm:gap-3">
+                <span>Campo</span>
+                <span>Antes</span>
+                <span>Después</span>
+              </div>
               {item.changes.map((change) => (
                 <div key={change.field} className="grid gap-1 sm:grid-cols-[10rem_1fr_1fr] sm:gap-3">
                   <dt className="font-medium text-slate-700">{change.label}</dt>
@@ -105,9 +110,9 @@ function AuditRow({ item }: { item: AuditLogItem }) {
               ))}
             </dl>
           )}
-          <p className="break-words text-xs text-muted-foreground">
+          <p className="break-words text-xs text-muted-foreground" title={item.userAgent ?? undefined}>
             IP {item.ip ?? "desconocida"}
-            {item.userAgent && <> · {item.userAgent}</>}
+            {describeUserAgent(item.userAgent) && <> · {describeUserAgent(item.userAgent)}</>}
           </p>
         </div>
       )}

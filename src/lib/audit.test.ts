@@ -119,3 +119,24 @@ describe("auditoría: período y filtros", () => {
     assert.deepEqual(ids(filterAuditEntries(entries, { userKey: "todos", entity: "paciente" })), ["3"]);
   });
 });
+
+describe("auditoría: navegador", () => {
+  it("resume el user agent", async () => {
+    const { describeUserAgent } = await import("./audit");
+    assert.equal(
+      describeUserAgent(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0 Safari/537.36"
+      ),
+      "Chrome en Windows"
+    );
+    assert.equal(
+      describeUserAgent(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+      ),
+      "Safari en iPhone"
+    );
+    assert.equal(describeUserAgent("Mozilla/5.0 (Windows NT 10.0) Chrome/120 Safari/537.36 Edg/120"), "Edge en Windows");
+    assert.equal(describeUserAgent("curl/8.0"), null);
+    assert.equal(describeUserAgent(null), null);
+  });
+});

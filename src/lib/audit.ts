@@ -253,3 +253,34 @@ export function filterAuditEntries<T extends { userId: string | null; userName: 
       (filters.entity === "todas" || entry.entity === filters.entity)
   );
 }
+
+/** "Chrome en Windows", "Safari en iPhone"… a partir del user agent; null si no se reconoce. */
+export function describeUserAgent(userAgent: string | null): string | null {
+  if (!userAgent) return null;
+  const browser = /Edg\//.test(userAgent)
+    ? "Edge"
+    : /OPR\//.test(userAgent)
+      ? "Opera"
+      : /Firefox\//.test(userAgent)
+        ? "Firefox"
+        : /Chrome\//.test(userAgent)
+          ? "Chrome"
+          : /Safari\//.test(userAgent)
+            ? "Safari"
+            : null;
+  const system = /iPhone/.test(userAgent)
+    ? "iPhone"
+    : /iPad/.test(userAgent)
+      ? "iPad"
+      : /Android/.test(userAgent)
+        ? "Android"
+        : /Windows/.test(userAgent)
+          ? "Windows"
+          : /Mac OS X/.test(userAgent)
+            ? "Mac"
+            : /Linux/.test(userAgent)
+              ? "Linux"
+              : null;
+  if (browser && system) return `${browser} en ${system}`;
+  return browser ?? system;
+}
