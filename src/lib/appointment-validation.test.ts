@@ -3,12 +3,15 @@ import { describe, it } from "node:test";
 import { nextDay, subDays } from "date-fns";
 import {
   APPOINTMENT_FUTURE_STATUS_ERROR,
+  APPOINTMENT_INACTIVE_PATIENT_ERROR,
+  APPOINTMENT_INACTIVE_PROFESSIONAL_ERROR,
   APPOINTMENT_OVERLAP_ERROR,
   APPOINTMENT_PAST_TIME_ERROR,
   APPOINTMENT_PATIENT_OVERLAP_ERROR,
   getAppointmentTransitionError,
   hasProfessionalOverlap,
   validateAppointmentForm,
+  validateAppointmentParticipants,
   validateAppointmentStatusChange,
   type AppointmentFormInput,
 } from "@/lib/appointment-validation";
@@ -562,5 +565,43 @@ describe("edición de turnos en estado final (diagrama de estados)", () => {
       }
     );
     assert.equal(errors.status, getAppointmentTransitionError("confirmado", "pendiente"));
+  });
+});
+
+describe("M8: pacientes y profesionales desactivados", () => {
+  const values = {
+    patientId: "pac-1",
+    professionalId: "pro-1",
+    date: "16-11-2026",
+    time: "10:00",
+    status: "pendiente",
+  };
+  const active = { patientActive: true, professionalActive: true };
+
+  it("no agenda turnos para un paciente o un profesional desactivado", () => {
+    assert.deepEqual(validateAppointmentParticipants(values, active), {});
+    assert.equal(
+      validateAppointmentParticipants(values, { ...active, patientActive: false }).patientId,
+      APPOINTMENT_INACTIVE_PATIENT_ERROR
+    );
+    assert.equal(
+      validateAppointmentParticipants(values, { ...active, professionalActive: false }).professionalId,
+      APPOINTMENT_INACTIVE_PROFESSIONAL_ERROR
+    );
+  });
+
+  it("no reprograma un turno activo de alguien desactivado", () => {
+    const previous = { patientId: "pac-1", professionalId: "pro-1", date: "16-11-2026", time: "10:00" };
+    const moved = { ...values, time: "11:00" };
+    assert.ok(validateAppointmentParticipants(moved, { ...active, patientActive: false }, previous).patientId);
+  });
+
+  it("permite tocar un turno que no se mueve o que ya terminó", () => {
+    const previous = { patientId: "pac-1", professionalId: "pro-1", date: "16-11-2026", time: "10:00" };
+    const inactive = { patientActive: false, professionalActive: false };
+    // Editar observaciones o confirmar, sin moverlo.
+    assert.deepEqual(validateAppointmentParticipants({ ...values, status: "confirmado" }, inactive, previous), {});
+    // Un turno final (p. ej. cargar una sesión ya atendida o cancelarlo).
+    assert.deepEqual(validateAppointmentParticipants({ ...values, status: "cancelado" }, inactive), {});
   });
 });
