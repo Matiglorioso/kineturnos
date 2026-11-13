@@ -144,6 +144,14 @@ export function NewAppointmentDialog({
 
     return active;
   }, [professionals, editingAppointment]);
+  // M8: los pacientes desactivados no se ofrecen; al editar se conserva el del turno.
+  const selectablePatients = useMemo(() => {
+    const active = patients.filter((patient) => patient.status !== "inactivo");
+    const current = editingAppointment
+      ? patients.find((patient) => patient.id === editingAppointment.patientId)
+      : undefined;
+    return current && !active.some((item) => item.id === current.id) ? [current, ...active] : active;
+  }, [patients, editingAppointment]);
   const [form, setForm] = useState<NewAppointmentFormValues>(() =>
     buildInitialForm(defaultDate)
   );
@@ -364,7 +372,7 @@ export function NewAppointmentDialog({
             >
               <PatientCombobox
                 id="patientId"
-                patients={patients}
+                patients={selectablePatients}
                 value={form.patientId}
                 onChange={(value) => updateField("patientId", value)}
                 disabled={isFinalEditing}
