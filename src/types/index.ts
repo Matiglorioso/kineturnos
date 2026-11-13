@@ -195,6 +195,23 @@ export interface ClinicalAccessLogItem {
   at: string;
 }
 
+/** Evento del registro de auditoría (solo Superadmin). */
+export interface AuditLogItem {
+  id: string;
+  /** ISO 8601 */
+  at: string;
+  userId: string | null;
+  userName: string;
+  userRole: string;
+  action: import("@/lib/audit").AuditAction;
+  entity: import("@/lib/audit").AuditEntity;
+  entityId: string | null;
+  label: string;
+  changes: import("@/lib/audit").AuditChange[];
+  ip: string | null;
+  userAgent: string | null;
+}
+
 /** Obra social del catálogo. */
 export interface Insurance {
   id: string;

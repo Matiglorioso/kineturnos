@@ -52,6 +52,10 @@ export const pageMetadata = {
     title: "Usuarios",
     description: "Accesos al sistema: perfiles, profesional vinculado y contraseñas.",
   },
+  auditoria: {
+    title: "Auditoría",
+    description: "Registro de cambios e ingresos al sistema: quién, qué, cuándo y desde dónde.",
+  },
   cambiarContrasena: {
     title: "Cambiar contraseña",
     description: "Elegí una contraseña propia para ingresar a KineTurnos.",

@@ -8,12 +8,14 @@ import {
   type PatientLinkOutcome,
 } from "@/lib/appointment-links";
 import { getAppointmentByIdFromDb, updateAppointmentStatusInDb } from "@/lib/db/appointments";
+import { auditWrite, patientAuditContext, readAuditSnapshot } from "@/lib/db/audit";
 import { formatAppDate } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
 import { normalizeTime } from "@/lib/time-utils";
 import type { Appointment } from "@/types";
 import { CalendarCheck, CalendarX, CircleAlert } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 // Página pública (sin sesión) a la que llevan los botones del correo: el enlace firmado es la autorización.
@@ -36,6 +38,14 @@ async function resolveLink(token: string, action: PatientLinkAction) {
   return { appointment, outcome: evaluatePatientLink(appointment, slot, action, new Date()) };
 }
 
+/** Cambio de estado hecho por el paciente desde el correo, con auditoría. */
+async function setStatusFromLink(appointment: Appointment, status: "confirmado" | "cancelado") {
+  const before = await readAuditSnapshot("turno", appointment.id);
+  const updated = await updateAppointmentStatusInDb(appointment.id, status, { notifyPatient: false });
+  await auditWrite(patientAuditContext(appointment.patientName, await headers()), "turno", "modificacion", appointment.id, before);
+  return updated;
+}
+
 function describe(appointment: Appointment): string {
   const day = formatAppDate(appointment.date, "EEEE d 'de' MMMM");
   return `del ${day} a las ${normalizeTime(appointment.time)} h con ${appointment.professionalName}`;
@@ -45,7 +55,7 @@ async function cancelAppointment(token: string) {
   "use server";
   const resolved = await resolveLink(token, "cancelar");
   if (resolved?.outcome === "disponible") {
-    await updateAppointmentStatusInDb(resolved.appointment.id, "cancelado", { notifyPatient: false });
+    await setStatusFromLink(resolved.appointment, "cancelado");
   }
   // La misma página muestra el resultado (cancelado, o por qué no se pudo).
   redirect(`/turno/${token}/cancelar`);
@@ -104,7 +114,7 @@ export default async function PatientAppointmentLinkPage({ params }: { params: P
 
   // Confirmar es de un toque: se aplica al abrir el enlace.
   if (accion === "confirmar" && outcome === "disponible") {
-    appointment = await updateAppointmentStatusInDb(appointment.id, "confirmado", { notifyPatient: false });
+    appointment = await setStatusFromLink(appointment, "confirmado");
     outcome = "ya-confirmado";
   }
 

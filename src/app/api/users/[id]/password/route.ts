@@ -1,6 +1,7 @@
 import { handleWriteError } from "@/lib/api/handle-write-error";
 import { requireApiPermission } from "@/lib/auth/require-session";
 import { resetUserPasswordInDb } from "@/lib/db/users";
+import { auditContextFor, recordAuditEvent } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const result = await resetUserPasswordInDb(access.session.user, id);
+    await recordAuditEvent(auditContextFor(access.session.user, request), {
+      entity: "usuario",
+      entityId: id,
+      action: "restablecimiento_password",
+      label: `${result.user.name} (${result.user.email})`,
+    });
     return NextResponse.json({ data: result });
   } catch (error) {
     return handleWriteError(error, "No se pudo restablecer la contraseña.");

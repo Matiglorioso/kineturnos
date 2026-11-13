@@ -2,6 +2,7 @@ import { handleWriteError } from "@/lib/api/handle-write-error";
 import { requireApiPermission } from "@/lib/auth/require-session";
 import { deleteInsuranceFromDb, updateInsuranceInDb } from "@/lib/db/insurances";
 import { parseInsuranceInput } from "@/lib/insurance";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!parsed.input) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
-    return NextResponse.json({ data: await updateInsuranceInDb(id, parsed.input) });
+    const before = await readAuditSnapshot("obra_social", id);
+    const insurance = await updateInsuranceInDb(id, parsed.input);
+    await auditWrite(auditContextFor(access.session.user, request), "obra_social", "modificacion", id, before);
+    return NextResponse.json({ data: insurance });
   } catch (error) {
     return handleWriteError(error, "No se pudo actualizar la obra social.");
   }
@@ -33,7 +37,9 @@ export async function DELETE(request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
+    const before = await readAuditSnapshot("obra_social", id);
     await deleteInsuranceFromDb(id);
+    await auditWrite(auditContextFor(access.session.user, request), "obra_social", "baja", id, before);
     return NextResponse.json({ data: { id } });
   } catch (error) {
     return handleWriteError(error, "No se pudo eliminar la obra social.");

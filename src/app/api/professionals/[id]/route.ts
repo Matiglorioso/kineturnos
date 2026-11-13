@@ -10,6 +10,7 @@ import {
   getProfessionalByIdFromDb,
   updateProfessionalInDb,
 } from "@/lib/db/professionals";
+import { auditContextFor, auditWrite, readAuditSnapshot } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -73,10 +74,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    const before = await readAuditSnapshot("profesional", id);
     const professional = await updateProfessionalInDb(id, {
       ...parsed.input,
       avatarColor: parsed.input.avatarColor || existing.avatarColor,
     });
+    await auditWrite(auditContextFor(access.session.user, request), "profesional", "modificacion", id, before);
 
     return NextResponse.json({ data: professional });
   } catch (error) {
@@ -99,7 +102,9 @@ export async function DELETE(request: Request, context: RouteContext) {
       );
     }
 
+    const before = await readAuditSnapshot("profesional", id);
     const deletedAppointments = await deleteProfessionalFromDb(id);
+    await auditWrite(auditContextFor(access.session.user, request), "profesional", "baja", id, before);
 
     return NextResponse.json({
       data: {

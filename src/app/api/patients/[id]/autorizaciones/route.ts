@@ -10,6 +10,7 @@ import {
 } from "@/lib/db/insurances";
 import { patientBelongsToProfessionalInDb } from "@/lib/db/patients";
 import { parseAuthorizationInput } from "@/lib/insurance";
+import { auditContextFor, auditWrite } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
     }
     const authorization = await createAuthorizationInDb(id, parsed.input, access.session.user);
+    await auditWrite(auditContextFor(access.session.user, request), "autorizacion", "alta", authorization.id, null);
     return NextResponse.json({ data: authorization }, { status: 201 });
   } catch (error) {
     return handleWriteError(error, "No se pudo guardar la autorización.");
