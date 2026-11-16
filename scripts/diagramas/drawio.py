@@ -7,7 +7,10 @@ cursiva, multiplicidades en cada extremo.
 
 Después se exportan a PNG con draw.io Desktop (ver docs/diagramas/README.md).
 """
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from xml.sax.saxutils import escape
 
 OUT = Path(__file__).resolve().parents[2] / "docs" / "diagramas"
@@ -516,6 +519,149 @@ def paquetes():
     d.write()
 
 
+# ---------------------------------------------------------------- Documentación de cada paquete
+from paquetes_uml import PAQUETES  # noqa: E402  (datos de cada paquete)
+
+
+def paquete_casos(key):
+    """Casos de uso del paquete en una columna, con los actores a la izquierda.
+
+    Así ninguna línea atraviesa un caso de uso: cada actor llega al borde izquierdo de
+    sus casos; las relaciones «include» / «extend» entre casos del paquete van por
+    carriles a la derecha de la columna, y los casos de otros paquetes, afuera del
+    límite del paquete (punteados).
+    """
+    pk = PAQUETES[key]
+    orden = pk.get("orden", [c[0] for c in pk["casos"]])
+    casos = sorted(pk["casos"], key=lambda c: orden.index(c[0]))
+    externos = {n: (nom, paq) for n, nom, paq in pk.get("externos", [])}
+    internas = [r for r in pk["relaciones"] if r[1] not in externos]
+    hacia_afuera = [r for r in pk["relaciones"] if r[1] in externos]
+
+    paso, y0, col_x, col_w, cu_h = 92, 150, 300, 240, 56
+    carril0, carril_paso = col_x + col_w + 40, 70
+    caja_der = max(carril0 + len(internas) * carril_paso + 10, col_x + col_w + 60)
+    alto = max(len(casos) * paso + 70, 150 * len(pk["actores"]) + 40)
+    ext_x = caja_der + 90
+    ancho = ext_x + (280 if externos else 0) + 40
+    d = Diagram(f"paquete-{key}-casos", ancho, y0 + alto + 20 + (cu_h + 40) * max(len(externos) - 1, 0))
+    d.title(f"Diagrama de Casos de Uso — Paquete {pk['nombre']}", "Actores, casos de uso y relaciones")
+    d.box(250, 100, caja_der - 250, alto, "", "verticalAlign=top;")
+    d.text(262, 106, caja_der - 270, 20, f"<b>{pk['numero']}. {pk['nombre']}</b>", "fontSize=12;")
+
+    ids, centro_y = {}, {}
+    for i, (num, nombre, _) in enumerate(casos):
+        y = y0 + i * paso
+        ids[num] = d.ellipse(col_x, y, col_w, cu_h, f"{num} {nombre}")
+        centro_y[num] = y + cu_h / 2
+
+    # Casos de otros paquetes: a la altura promedio de los casos que los usan.
+    posiciones = []
+    for num in externos:
+        fuentes = [centro_y[src] for src, dst, _ in hacia_afuera if dst == num]
+        posiciones.append([sum(fuentes) / len(fuentes) - cu_h / 2, num])
+    posiciones.sort()
+    for i in range(1, len(posiciones)):  # sin superponerse
+        posiciones[i][0] = max(posiciones[i][0], posiciones[i - 1][0] + cu_h + 40)
+    for y, num in posiciones:
+        nombre, paquete = externos[num]
+        ids[num] = d.ellipse(ext_x, y, 260, cu_h + 6, f"{num} {nombre}<br><i>(paquete {paquete})</i>", "dashed=1;")
+
+    # Actores a la izquierda, repartidos a lo alto de la columna.
+    actores = {}
+    n = len(pk["actores"])
+    separacion = max(alto / (n + 1), 150)
+    for j, actor in enumerate(pk["actores"]):
+        y = 100 + alto / 2 + (j - (n - 1) / 2) * separacion - 30
+        actores[actor] = d.actor(110, y, actor)
+    for num, _, quienes in casos:
+        for actor in quienes:
+            d.line(actores[actor], ids[num], style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;")
+
+    # Relaciones dentro del paquete: por carriles a la derecha de la columna.
+    for k, (src, dst, kind) in enumerate(internas):
+        x = carril0 + k * carril_paso
+        d.edge(ids[src], ids[dst], label=f"«{kind}»", dashed=True, arrow="open", exit_=(1, 0.5), entry=(1, 0.5),
+               points=[(x, centro_y[src]), (x, centro_y[dst])], font=11,
+               label_style="fontStyle=2;labelBackgroundColor=#FFFFFF;")
+    # Relaciones con casos de otros paquetes: rectas, hacia afuera del paquete.
+    for src, dst, kind in hacia_afuera:
+        d.line(ids[src], ids[dst], f"«{kind}»", dashed=True, arrow="open",
+               style="fontStyle=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;")
+    d.write()
+
+def paquete_clases(key):
+    """Vista estática del paquete: el control y las entidades que usa, con sus multiplicidades."""
+    pk = PAQUETES[key]
+    if not pk.get("clases"):
+        return
+    d = Diagram(f"paquete-{key}-clases", 1300, 900)
+    d.title(f"Diagrama de Clases — Paquete {pk['nombre']}", "Vista estática")
+    ids = {}
+    control, *entidades = pk["clases"]
+    ids[control[1]], _ = d.uml_class(30, 110, 330, f"{control[0]}<br><b>{control[1]}</b>",
+                                     control[2] or ["(sin atributos persistentes)"], control[3])
+    principal, *otras = entidades
+    ids[principal[1]], _ = d.uml_class(440, 110, 320, f"{principal[0]}<br><b>{principal[1]}</b>",
+                                       principal[2], principal[3])
+    y = 110
+    for estereotipo, nombre, attrs, metodos in otras:
+        ids[nombre], hh = d.uml_class(900, y, 320, f"{estereotipo}<br><b>{nombre}</b>",
+                                      attrs or ["(sin atributos persistentes)"], metodos)
+        y += hh + 40
+    d.edge(ids[control[1]], ids[principal[1]], label="«usa»", dashed=True, arrow="open", label_style="fontStyle=2;")
+    asociaciones = pk.get("asociaciones", [])
+    n = len(asociaciones)
+    for i, (a, b, ma, mb) in enumerate(asociaciones):
+        if a == principal[1]:
+            d.edge(ids[a], ids[b], src_mult=ma, tgt_mult=mb, exit_=(1, round((i + 1) / (n + 1), 2)), entry=(0, 0.5))
+        else:
+            d.edge(ids[b], ids[a], src_mult=mb, tgt_mult=ma, exit_=(0, 0.5), entry=(1, round((i + 1) / (n + 1), 2)))
+    d.write()
+
+
+def _estereotipo(nombre):
+    if nombre == "Auditoria":
+        return "GestorAuditoria", "«Control»"
+    if nombre.startswith("Gestor"):
+        return nombre, "«Control»"
+    if nombre.startswith("Servicio"):
+        return nombre, "«Sistema»"
+    return nombre, "«Entidad»"
+
+
+def colaboracion(key, numero):
+    """Diagrama de colaboración del caso de uso: interfaz, control y entidades, con los mensajes numerados."""
+    pk = PAQUETES[key]
+    spec = pk["colaboraciones"][numero]
+    nombre = next(n for num, n, _ in pk["casos"] if num == numero)
+    actor_nombre = next(q for num, _, q in pk["casos"] if num == numero)[0]
+    entidades = spec["entidades"]
+    alto = max(len(entidades) * 100, 240) + 130
+    d = Diagram(f"colaboracion-{numero.replace('.', '-')}", 1230, alto)
+    d.title("Diagrama de Colaboración", f"Caso de uso {numero} “{nombre}”")
+    centro = 110 + (alto - 130) / 2
+    actor = d.actor(30, centro - 30, actor_nombre)
+    obj = "rounded=1;arcSize=10;"
+    ui = d.box(140, centro - 25, 200, 50, f"<u>:{spec['interfaz']}</u><br>«Interfaz»", obj)
+    ctrl = d.box(650, centro - 25, 220, 50, f"<u>:{spec['control']}</u><br>«Control»", obj)
+    ids = {"interfaz": ui, "control": ctrl}
+    paso = (alto - 130) / max(len(entidades), 1)
+    for i, ent in enumerate(entidades):
+        nombre_obj, estereo = _estereotipo(ent)
+        ids[ent] = d.box(1000, 110 + i * paso + paso / 2 - 25, 210, 50, f"<u>:{nombre_obj}</u><br>{estereo}", obj)
+    d.line(actor, ui)
+    etiquetas = {}
+    for origen, destino, texto in spec["mensajes"]:
+        par = tuple(sorted((origen, destino)))
+        # La flecha apunta hacia el destino según la posición: interfaz, control y entidades, de izquierda a derecha.
+        rango = {"interfaz": 1, "control": 2}
+        flecha = " →" if rango.get(destino, 3) > rango.get(origen, 3) else " ←"
+        etiquetas.setdefault(par, []).append(texto + flecha)
+    for (a_, b_), textos in etiquetas.items():
+        d.line(ids[a_], ids[b_], "<br>".join(textos), style="fontSize=10;")
+    d.write()
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     clases()
@@ -524,3 +670,8 @@ if __name__ == "__main__":
     ambiental()
     paquetes()
     arbol()
+    for key, pk in PAQUETES.items():
+        paquete_casos(key)
+        paquete_clases(key)
+        for numero in pk["colaboraciones"]:
+            colaboracion(key, numero)
