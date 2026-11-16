@@ -121,6 +121,53 @@ class Diagram:
             )
         return eid
 
+    def actor(self, x, y, label, w=30, h=60):
+        cid = self._id()
+        self.add(
+            f'<mxCell id="{cid}" value="{escape(label)}" style="shape=umlActor;verticalLabelPosition=bottom;'
+            f'verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;{FONT}fontSize=12;'
+            f'fontStyle=1;" vertex="1" parent="1"><mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>'
+        )
+        return cid
+
+    def ellipse(self, x, y, w, h, html, style=""):
+        cid = self._id()
+        self.add(
+            f'<mxCell id="{cid}" value="{escape(html)}" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;'
+            f'strokeColor=#000000;{FONT}fontSize=11;{style}" vertex="1" parent="1">'
+            f'<mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>'
+        )
+        return cid
+
+    def package(self, x, y, w, h, html, style=""):
+        cid = self._id()
+        self.add(
+            f'<mxCell id="{cid}" value="{escape(html)}" style="shape=folder;tabWidth=40;tabHeight=14;tabPosition=left;'
+            f'html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#000000;{FONT}fontSize=12;fontStyle=1;spacingTop=12;'
+            f'{style}" vertex="1" parent="1"><mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>'
+        )
+        return cid
+
+    def note(self, x, y, w, h, html):
+        cid = self._id()
+        self.add(
+            f'<mxCell id="{cid}" value="{escape(html)}" style="shape=note;size=12;whiteSpace=wrap;html=1;align=left;'
+            f'verticalAlign=top;spacingLeft=6;spacingTop=2;fillColor=#FFFFFF;strokeColor=#000000;{FONT}fontSize=11;" '
+            f'vertex="1" parent="1"><mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>'
+        )
+        return cid
+
+    def line(self, source, target, label="", dashed=False, arrow="none", style=""):
+        """Línea recta (sin ortogonal) con etiqueta en el medio."""
+        eid = self._id()
+        st = (f"edgeStyle=none;html=1;endArrow={arrow};endFill=0;strokeColor=#000000;{FONT}fontSize=11;"
+              f"labelBackgroundColor=#FFFFFF;{'dashed=1;' if dashed else ''}{style}")
+        self.add(
+            f'<mxCell id="{eid}" value="{escape(label)}" style="{st}" edge="1" parent="1" source="{source}" target="{target}">'
+            f'<mxGeometry relative="1" as="geometry"/></mxCell>'
+        )
+        return eid
+
     def write(self):
         body = "".join(self.cells)
         xml = (
@@ -337,8 +384,143 @@ def der():
     d.write()
 
 
+# ---------------------------------------------------------------- Casos de uso
+# Catálogo de casos de uso por paquete, con numeración jerárquica (árbol y matriz de trazabilidad de la tesis).
+CATALOGO = [
+    ("Gestión de Turnos y Agenda", ["Crear Turno", "Reprogramar Turno", "Confirmar Turno", "Cancelar Turno",
+                                    "Registrar Asistencia", "Eliminar Turno", "Consultar Agenda"]),
+    ("Gestión de Pacientes", ["Registrar Paciente", "Actualizar Paciente", "Desactivar Paciente", "Eliminar Paciente",
+                              "Buscar Paciente"]),
+    ("Gestión de Profesionales", ["Registrar Profesional", "Actualizar Profesional", "Desactivar Profesional",
+                                  "Eliminar Profesional"]),
+    ("Gestión Clínica", ["Registrar Evolución", "Corregir Evolución", "Consultar Historia Clínica",
+                         "Registrar Alertas y Antecedentes", "Gestionar Objetivos de Tratamiento",
+                         "Consultar Registro de Accesos"]),
+    ("Gestión de Obras Sociales", ["Gestionar Catálogo de Obras Sociales", "Registrar Autorización",
+                                   "Consultar Autorizaciones", "Generar Planilla Mensual"]),
+    ("Dashboard", ["Visualizar Indicadores", "Resolver Tareas del Día"]),
+    ("«Servicio»<br>Seguridad y Accesos", ["Iniciar Sesión", "Cerrar Sesión", "Cambiar Contraseña", "Gestionar Usuarios",
+                                           "Consultar Auditoría"]),
+    ("«Servicio»<br>Notificaciones", ["Enviar Notificación de Turno", "Enviar Recordatorio de Turno",
+                                      "Confirmar o Cancelar desde el Correo"]),
+]
+
+
+def arbol():
+    """Dos franjas de cuatro paquetes, para que el árbol entre legible en una hoja vertical."""
+    col_w, gap, mid_gap, x0 = 180, 18, 60, 30
+    per_band = 4
+    width = x0 * 2 + per_band * col_w + (per_band - 2) * gap + mid_gap
+    bands = [CATALOGO[:per_band], CATALOGO[per_band:]]
+    band_h = [70 + max(len(cus) for _, cus in band) * 58 for band in bands]
+    top = 170
+    height = top + sum(band_h) + 60 + 40
+    d = Diagram("arbol-casos-de-uso", width, height)
+    d.title("Árbol de Casos de Uso — Sistema SANMAR SALUD",
+            "Casos de uso agrupados por paquete, con numeración jerárquica")
+    root = d.box(width / 2 - 130, 90, 260, 40, "<b>Sistema SANMAR SALUD</b>")
+    trunk_x = x0 + 2 * col_w + gap + mid_gap / 2
+
+    def col_x(k):
+        x = x0 + k * col_w + k * gap
+        return x + (mid_gap - gap if k >= 2 else 0)
+
+    y = top
+    numero = 0
+    for band_index, band in enumerate(bands):
+        for k, (paquete, cus) in enumerate(band):
+            numero += 1
+            x = col_x(k)
+            pkg = d.package(x, y, col_w, 52, f"{numero}. {paquete}", "fontSize=11;")
+            if band_index == 0:
+                d.edge(root, pkg, exit_=(0.5, 1), entry=(0.5, 0))
+            else:
+                d.edge(root, pkg, exit_=(0.5, 1), entry=(0.5, 0),
+                       points=[(trunk_x, 150), (trunk_x, y - 20), (x + col_w / 2, y - 20)])
+            prev = pkg
+            for j, nombre in enumerate(cus, start=1):
+                cu = d.ellipse(x + 4, y + 70 + (j - 1) * 58, col_w - 8, 46, f"{numero}.{j} {nombre}", "fontSize=11;")
+                d.line(prev, cu)
+                prev = cu
+        y += band_h[band_index] + 60
+    d.write()
+
+
+def ambiental():
+    d = Diagram("caso-de-uso-ambiental", 1300, 820)
+    d.title("Diagrama de Caso de Uso Ambiental — Sistema SANMAR SALUD",
+            "Actores directos e indirectos, internos y externos, y otros sistemas")
+    sistema = d.ellipse(520, 300, 260, 110, "<b>Sistema de Gestión<br>SANMAR SALUD</b><br>(KineTurnos)", "fontSize=12;")
+
+    admin = d.actor(150, 120, "Administrador")
+    d.note(60, 205, 270, 82, "<b>Interno, directo.</b> Gestiona turnos, pacientes, profesionales, obras sociales, "
+           "autorizaciones y usuarios; consulta indicadores y la planilla mensual.")
+    obras = d.actor(150, 470, "Obras Sociales")
+    d.note(60, 555, 270, 68, "<b>Externo, indirecto.</b> Autoriza sesiones y recibe la planilla mensual a través de "
+           "la Administración.")
+    prof = d.actor(635, 560, "Profesional")
+    d.note(515, 645, 270, 68, "<b>Interno, directo.</b> Consulta su agenda, registra la asistencia y la historia "
+           "clínica de sus pacientes.")
+    paciente = d.actor(1100, 150, "Paciente")
+    d.note(990, 330, 270, 82, "<b>Externo.</b> Indirecto: pide turnos al consultorio. Directo: confirma o cancela su "
+           "turno desde el enlace del correo, sin usuario ni contraseña.")
+    correo = d.box(1040, 500, 170, 50, "«sistema»<br><b>Servicio de Correo</b>")
+    d.note(990, 575, 270, 54, "<b>Sistema externo.</b> Entrega los avisos y recordatorios que genera el sistema.")
+
+    d.line(admin, sistema, "gestiona")
+    d.line(prof, sistema, "consulta y registra")
+    d.line(sistema, correo, "solicita el envío", arrow="open")
+    d.edge(correo, paciente, label="entrega avisos<br>y recordatorios", arrow="open", exit_=(1, 0.5), entry=(1, 0.5),
+           points=[(1280, 525), (1280, 180)], label_style="labelBackgroundColor=#FFFFFF;")
+    d.line(paciente, sistema, "confirma o cancela desde el correo", arrow="open")
+    d.line(paciente, admin, "pide turnos", dashed=True)
+    d.edge(obras, admin, label="autorizaciones<br>y planilla", dashed=True, exit_=(0, 0.5), entry=(0, 0.5),
+           points=[(40, 500), (40, 150)], label_style="labelBackgroundColor=#FFFFFF;")
+    d.text(30, 780, 1240, 20, "<i>Línea llena: relación directa con el sistema. Línea punteada: relación indirecta, a "
+           "través de otro actor. El nivel técnico Superadmin no se modela como actor.</i>",
+           "fontSize=11;fontColor=#555555;")
+    d.write()
+
+
+def paquetes():
+    d = Diagram("paquetes", 1300, 840)
+    d.title("Modelo de Paquetes — Sistema SANMAR SALUD", "Paquetes de negocio, paquetes de servicio y sus dependencias")
+    w, h = 220, 70
+    negocio = d.box(40, 100, 1220, 510, "", "dashed=1;strokeColor=#888888;")
+    d.text(55, 106, 300, 20, "<b>Paquetes de negocio</b>", "fontSize=12;fontColor=#555555;")
+    dashboard = d.package(540, 130, w, h, "Dashboard")
+    clinica = d.package(90, 300, w, h, "Gestión Clínica")
+    turnos = d.package(540, 300, w, h, "Gestión de Turnos y Agenda")
+    obras = d.package(990, 300, w, h, "Gestión de Obras Sociales")
+    pacientes = d.package(300, 480, w, h, "Gestión de Pacientes")
+    profesionales = d.package(780, 480, w, h, "Gestión de Profesionales")
+    notif = d.package(540, 690, w, h, "«Servicio»<br>Notificaciones")
+    seguridad = d.package(990, 690, w, h, "«Servicio»<br>Seguridad y Accesos")
+
+    usa = dict(dashed=True, arrow="open", label="«usa»")
+    d.line(dashboard, turnos, **usa)
+    d.line(dashboard, obras, **usa)
+    d.line(clinica, turnos, **usa)
+    d.line(clinica, pacientes, **usa)
+    d.line(turnos, pacientes, **usa, style="exitX=0.2;exitY=1;")
+    d.line(turnos, profesionales, **usa, style="exitX=0.8;exitY=1;")
+    d.line(turnos, obras, **usa)
+    d.line(turnos, notif, **usa, style="exitX=0.5;exitY=1;entryX=0.5;entryY=0;")
+    d.edge(obras, pacientes, label="«usa»", dashed=True, arrow="open", exit_=(0.5, 1), entry=(0.5, 1),
+           points=[(1100, 585), (410, 585)], label_style="labelBackgroundColor=#FFFFFF;")
+    d.edge(negocio, seguridad, label="«usa»", dashed=True, arrow="open", exit_=(0.87, 1), entry=(0.5, 0),
+           label_style="labelBackgroundColor=#FFFFFF;")
+    d.text(40, 785, 1220, 40, "<i>Todos los paquetes de negocio usan Seguridad y Accesos (sesión, permisos por perfil "
+           "y auditoría). Gestión de Turnos usa Notificaciones para avisar al paciente y Obras Sociales para descontar "
+           "la sesión de la autorización.</i>", "fontSize=11;fontColor=#555555;")
+    d.write()
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     clases()
     arquitectura()
     der()
+    ambiental()
+    paquetes()
+    arbol()
