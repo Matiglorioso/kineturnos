@@ -317,46 +317,59 @@ def arquitectura():
 
 # ---------------------------------------------------------------- Modelo entidad-relación
 def der():
-    d = Diagram("der", 1420, 1000)
+    d = Diagram("der", 1420, 1130)
     d.title("Modelo Entidad-Relación (DER)", "Sistema Web Integral de Gestión — SANMAR SALUD", x=20, y=20)
     f = dict(line_h=14, font=11)
 
     obra, _ = d.uml_class(20, 110, 240, "<b>ObraSocial</b>", [
-        "-id : String (PK)", "-nombre : String (único)", "-activo : Boolean", "-observaciones : String"], **f)
+        "<b>-id : String (PK)</b>", "-nombre : String (único)", "-activo : Boolean", "-observaciones : String"], **f)
     autor, _ = d.uml_class(20, 330, 240, "<b>Autorizacion</b>", [
-        "-id : String (PK)", "-pacienteId : String (FK)", "-obraSocialId : String (FK)", "-numero : String",
-        "-estado : String", "-sesiones : Integer", "-fechaDesde : Date", "-vencimiento : Date"], **f)
+        "<b>-id : String (PK)</b>", "<b>-pacienteId : String (FK)</b>", "<b>-obraSocialId : String (FK)</b>", "-numero : String",
+        "-estado : EstadoAutorizacion", "-sesiones : Integer", "-fechaDesde : Date", "-vencimiento : Date"], **f)
     paciente, _ = d.uml_class(330, 110, 280, "<b>Paciente</b>", [
-        "-id : String (PK)", "-nombre : String", "-apellido : String", "-dni : String (único)", "-cuil : String",
+        "<b>-id : String (PK)</b>", "-nombre : String", "-apellido : String", "-dni : String (único)", "-cuil : String",
         "-fechaNacimiento : Date", "-telefono : String", "-email : String",
-        "-obraSocialId : String (FK, opcional)", "-nroAfiliado : String", "-planObraSocial : String",
-        "-estado : String", "-ultimoTurno : Date", "-fechaAlta : Date"], attr_min=240, **f)
+        "<b>-obraSocialId : String (FK, opcional)</b>", "-nroAfiliado : String", "-planObraSocial : String",
+        "-estado : EstadoPaciente", "-ultimoTurno : Date", "-fechaAlta : Date"], attr_min=240, **f)
     turno, _ = d.uml_class(720, 110, 280, "<b>Turno</b>", [
-        "-id : String (PK)", "-pacienteId : String (FK)", "-profesionalId : String (FK)",
-        "-autorizacionId : String (FK, opcional)", "-fecha : Date", "-hora : Time", "-estado : String",
+        "<b>-id : String (PK)</b>", "<b>-pacienteId : String (FK)</b>", "<b>-profesionalId : String (FK)</b>",
+        "<b>-autorizacionId : String (FK, opcional)</b>", "-fecha : Date", "-hora : Time", "-estado : EstadoTurno",
         "-tipoSesion : String", "-observaciones : String"], **f)
     usuario, _ = d.uml_class(1110, 110, 290, "<b>Usuario</b>", [
-        "-id : String (PK)", "-email : String (único)", "-nombre : String", "-contrasenaHash : String",
-        "-rol : String", "-activo : Boolean", "-profesionalId : String (FK, único, opcional)",
+        "<b>-id : String (PK)</b>", "-email : String (único)", "-nombre : String", "-contrasenaHash : String",
+        "-rol : RolUsuario", "-activo : Boolean", "<b>-profesionalId : String (FK, único, opcional)</b>",
         "-debeCambiarPassword : Boolean", "-ultimoIngreso : DateTime"], **f)
     profesional, _ = d.uml_class(1110, 400, 290, "<b>Profesional</b>", [
-        "-id : String (PK)", "-nombre : String", "-apellido : String", "-matricula : String (única)",
+        "<b>-id : String (PK)</b>", "-nombre : String", "-apellido : String", "-matricula : String (única)",
         "-especialidad : String", "-diasAtencion : String[]", "-activo : Boolean"], **f)
     notif, _ = d.uml_class(720, 400, 280, "<b>Notificacion</b>", [
-        "-id : String (PK)", "-turnoId : String (FK)", "-tipo : String", "-estado : String",
+        "<b>-id : String (PK)</b>", "<b>-turnoId : String (FK)</b>", "-tipo : TipoNotificacion", "-estado : EstadoNotificacion",
         "-destinatario : String", "-clave : String (única)", "-intentos : Integer", "-enviadaEn : DateTime"], **f)
     hc, _ = d.uml_class(1110, 640, 290, "<b>HistoriaClinica</b>", [
-        "-id : String (PK)", "-pacienteId : String (FK)", "-profesionalId : String (FK)",
-        "-turnoId : String (FK, único, opcional)", "-autorNombre : String", "-fecha : Date",
+        "<b>-id : String (PK)</b>", "<b>-pacienteId : String (FK)</b>", "<b>-profesionalId : String (FK)</b>",
+        "<b>-turnoId : String (FK, único, opcional)</b>", "-autorNombre : String", "-fecha : Date",
         "-diagnostico : String", "-tratamiento : String", "-evolucion : String"], **f)
     acceso, _ = d.uml_class(20, 640, 240, "<b>AccesoHistoriaClinica</b>", [
-        "-id : String (PK)", "-pacienteId : String (FK)", "-usuarioId : String", "-usuarioRol : String",
-        "-accion : String", "-fecha : DateTime"], **f)
+        "<b>-id : String (PK)</b>", "<b>-pacienteId : String (FK)</b>", "-usuarioId : String", "-usuarioRol : String",
+        "-accion : AccionHistoriaClinica", "-fecha : DateTime"], **f)
     ficha, _ = d.uml_class(300, 640, 200, "<b>FichaClinica</b>", [
-        "-pacienteId : String (PK, FK)", "-alertas : String", "-antecedentes : String",
+        "<b>-pacienteId : String (PK, FK)</b>", "-alertas : String", "-antecedentes : String",
         "-actualizadoEn : DateTime"], **f)
     objetivo, _ = d.uml_class(520, 640, 230, "<b>ObjetivoTratamiento</b>", [
-        "-id : String (PK)", "-pacienteId : String (FK)", "-descripcion : String", "-cumplido : Boolean"], **f)
+        "<b>-id : String (PK)</b>", "<b>-pacienteId : String (FK)</b>", "-descripcion : String", "-cumplido : Boolean"], **f)
+
+    audit, _ = d.uml_class(20, 860, 420, "<b>Auditoria</b>", [
+        "<b>-id : String (PK)</b>", "-fecha : DateTime", "-usuarioId : String", "-usuarioNombre : String",
+        "-usuarioRol : String", "-accion : AccionAuditoria", "-entidad : String", "-entidadId : String",
+        "-registro : String", "-cambios : Json", "-ip : String", "-navegador : String"], **f)
+    login, _ = d.uml_class(480, 860, 270, "<b>LoginIntento</b>", [
+        "<b>-clave : String (PK)</b>", "-fallos : Integer", "-ventanaInicio : DateTime",
+        "-bloqueadoHasta : DateTime"], **f)
+    d.text(780, 960, 600, 80,
+           "<i>Auditoria y LoginIntento no tienen claves foráneas: la auditoría se conserva aunque se borre "
+           "el registro auditado (y la base rechaza modificarla o borrarla), y los intentos de ingreso se "
+           "registran por correo o dirección IP, aunque el usuario no exista.</i>",
+           "fontSize=11;fontColor=#555555;")
 
     m = dict(font=11)
     d.edge(obra, paciente, src_mult="0..1", tgt_mult="0..*", exit_=(1, 0.5), entry=(0, 0.2), **m)
@@ -380,7 +393,7 @@ def der():
            points=[(442, 610), (400, 610)], **m)
     d.edge(paciente, objetivo, src_mult="1", tgt_mult="0..*", exit_=(0.75, 1), entry=(0.3, 0),
            points=[(540, 620), (589, 620)], **m)
-    d.text(20, 965, 1380, 20,
+    d.text(20, 1095, 1380, 20,
            "<i>Nota: la multiplicidad se indica en formato UML, en pares, junto a cada extremo de la línea "
            "(convención utilizada en la Figura 3-2-1 del material de estudio).</i>",
            "fontSize=10;fontColor=#555555;align=center;")
