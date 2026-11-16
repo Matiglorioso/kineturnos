@@ -524,45 +524,71 @@ from paquetes_uml import PAQUETES  # noqa: E402  (datos de cada paquete)
 
 
 def paquete_casos(key):
-    """Casos de uso del paquete: actores, casos y relaciones «include» / «extend» (también con casos de otros paquetes)."""
-    pk = PAQUETES[key]
-    externos = pk.get("externos", [])
-    # Los casos destino de un «include» o un «extend» van a la columna derecha, para que las relaciones no crucen otros casos.
-    # Se puede fijar a mano qué casos van a la derecha ("derecha") y el orden de la izquierda ("orden").
-    incluidos = set(pk.get("derecha", {dst for _, dst, _kind in pk["relaciones"]}))
-    orden = pk.get("orden", [c[0] for c in pk["casos"]])
-    izquierda = sorted((c for c in pk["casos"] if c[0] not in incluidos), key=lambda c: orden.index(c[0]))
-    derecha = [c for c in pk["casos"] if c[0] in incluidos] + [(n, f"{nom}<br><i>(paquete {paq})</i>", None)
-                                                              for n, nom, paq in externos]
-    filas = max(len(izquierda), len(derecha), 1)
-    alto = filas * 95 + 60
-    d = Diagram(f"paquete-{key}-casos", 1100, alto + 140)
-    d.title(f"Diagrama de Casos de Uso — Paquete {pk['nombre']}", "Actores, casos de uso y relaciones")
-    d.box(250, 100, 600, alto, "", "verticalAlign=top;")
-    d.text(262, 106, 580, 20, f"<b>{pk['numero']}. {pk['nombre']}</b>", "fontSize=12;")
-    ids = {}
-    for i, (num, nombre, _) in enumerate(izquierda):
-        ids[num] = d.ellipse(290, 150 + i * 95, 230, 58, f"{num} {nombre}")
-    for i, (num, nombre, quienes) in enumerate(derecha):
-        y = 150 + (filas - len(derecha)) * 95 / 2 + i * 95
-        externo = quienes is None
-        ids[num] = d.ellipse(590, y, 230, 58, f"{num} {nombre}", "dashed=1;" if externo else "")
-    actores = {}
-    centro = 100 + alto / 2 - 40
-    todos_izq = pk.get("actores_izquierda", False) or len(pk["actores"]) == 1
-    lado_izq = pk["actores"] if todos_izq else pk["actores"][:-1]
-    lado_der = [] if todos_izq else pk["actores"][-1:]
-    for j, actor in enumerate(lado_izq):
-        actores[actor] = d.actor(110, centro + (j - (len(lado_izq) - 1) / 2) * 170, actor)
-    for actor in lado_der:
-        actores[actor] = d.actor(950, centro, actor)
-    for num, _, quienes in pk["casos"]:
-        for actor in quienes:
-            d.line(actores[actor], ids[num])
-    for src, dst, kind in pk["relaciones"]:
-        d.line(ids[src], ids[dst], f"«{kind}»", dashed=True, arrow="open", style="fontStyle=2;")
-    d.write()
+    """Casos de uso del paquete en una columna, con los actores a la izquierda.
 
+    Así ninguna línea atraviesa un caso de uso: cada actor llega al borde izquierdo de
+    sus casos; las relaciones «include» / «extend» entre casos del paquete van por
+    carriles a la derecha de la columna, y los casos de otros paquetes, afuera del
+    límite del paquete (punteados).
+    """
+    pk = PAQUETES[key]
+    orden = pk.get("orden", [c[0] for c in pk["casos"]])
+    casos = sorted(pk["casos"], key=lambda c: orden.index(c[0]))
+    externos = {n: (nom, paq) for n, nom, paq in pk.get("externos", [])}
+    internas = [r for r in pk["relaciones"] if r[1] not in externos]
+    hacia_afuera = [r for r in pk["relaciones"] if r[1] in externos]
+
+    paso, y0, col_x, col_w, cu_h = 92, 150, 300, 240, 56
+    carril0, carril_paso = col_x + col_w + 40, 70
+    caja_der = max(carril0 + len(internas) * carril_paso + 10, col_x + col_w + 60)
+    alto = max(len(casos) * paso + 70, 150 * len(pk["actores"]) + 40)
+    ext_x = caja_der + 90
+    ancho = ext_x + (280 if externos else 0) + 40
+    d = Diagram(f"paquete-{key}-casos", ancho, y0 + alto + 20 + (cu_h + 40) * max(len(externos) - 1, 0))
+    d.title(f"Diagrama de Casos de Uso — Paquete {pk['nombre']}", "Actores, casos de uso y relaciones")
+    d.box(250, 100, caja_der - 250, alto, "", "verticalAlign=top;")
+    d.text(262, 106, caja_der - 270, 20, f"<b>{pk['numero']}. {pk['nombre']}</b>", "fontSize=12;")
+
+    ids, centro_y = {}, {}
+    for i, (num, nombre, _) in enumerate(casos):
+        y = y0 + i * paso
+        ids[num] = d.ellipse(col_x, y, col_w, cu_h, f"{num} {nombre}")
+        centro_y[num] = y + cu_h / 2
+
+    # Casos de otros paquetes: a la altura promedio de los casos que los usan.
+    posiciones = []
+    for num in externos:
+        fuentes = [centro_y[src] for src, dst, _ in hacia_afuera if dst == num]
+        posiciones.append([sum(fuentes) / len(fuentes) - cu_h / 2, num])
+    posiciones.sort()
+    for i in range(1, len(posiciones)):  # sin superponerse
+        posiciones[i][0] = max(posiciones[i][0], posiciones[i - 1][0] + cu_h + 40)
+    for y, num in posiciones:
+        nombre, paquete = externos[num]
+        ids[num] = d.ellipse(ext_x, y, 260, cu_h + 6, f"{num} {nombre}<br><i>(paquete {paquete})</i>", "dashed=1;")
+
+    # Actores a la izquierda, repartidos a lo alto de la columna.
+    actores = {}
+    n = len(pk["actores"])
+    separacion = max(alto / (n + 1), 150)
+    for j, actor in enumerate(pk["actores"]):
+        y = 100 + alto / 2 + (j - (n - 1) / 2) * separacion - 30
+        actores[actor] = d.actor(110, y, actor)
+    for num, _, quienes in casos:
+        for actor in quienes:
+            d.line(actores[actor], ids[num], style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;")
+
+    # Relaciones dentro del paquete: por carriles a la derecha de la columna.
+    for k, (src, dst, kind) in enumerate(internas):
+        x = carril0 + k * carril_paso
+        d.edge(ids[src], ids[dst], label=f"«{kind}»", dashed=True, arrow="open", exit_=(1, 0.5), entry=(1, 0.5),
+               points=[(x, centro_y[src]), (x, centro_y[dst])], font=11,
+               label_style="fontStyle=2;labelBackgroundColor=#FFFFFF;")
+    # Relaciones con casos de otros paquetes: rectas, hacia afuera del paquete.
+    for src, dst, kind in hacia_afuera:
+        d.line(ids[src], ids[dst], f"«{kind}»", dashed=True, arrow="open",
+               style="fontStyle=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;")
+    d.write()
 
 def paquete_clases(key):
     """Vista estática del paquete: el control y las entidades que usa, con sus multiplicidades."""
