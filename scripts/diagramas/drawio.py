@@ -662,6 +662,39 @@ def colaboracion(key, numero):
         d.line(ids[a_], ids[b_], "<br>".join(textos), style="fontSize=10;")
     d.write()
 
+def asociaciones(key, numero):
+    """Diagrama de asociaciones de un caso de uso: los casos que extiende (arriba) y los que incluye (abajo)."""
+    pk = PAQUETES[key]
+    nombres = {num: nom for num, nom, _ in pk["casos"]}
+    paquete_de = {num: paq for num, _, paq in pk.get("externos", [])}
+    nombres.update({num: nom for num, nom, _ in pk.get("externos", [])})
+    arriba = [(dst if src == numero else src, kind) for src, dst, kind in pk["relaciones"]
+              if kind == "extend" and numero in (src, dst)]
+    abajo = [(dst, kind) for src, dst, kind in pk["relaciones"] if kind == "include" and src == numero]
+    d = Diagram(f"asociaciones-{numero.replace('.', '-')}", 760, 560 if abajo else 360)
+    d.title("Diagrama de Asociaciones", f"Caso de uso {numero} “{nombres[numero]}”")
+    centro = d.ellipse(260, 250, 240, 70, f"<b>{numero} {nombres[numero]}</b>", "strokeWidth=2;")
+
+    def rotulo(num):
+        extra = f"<br><i>(paquete {paquete_de[num]})</i>" if num in paquete_de else ""
+        return f"{num} {nombres[num]}{extra}"
+
+    def fila(items, y):
+        ancho = 230
+        total = len(items) * ancho + (len(items) - 1) * 40
+        x0 = 380 - total / 2
+        return [(x0 + i * (ancho + 40), y, num, kind) for i, (num, kind) in enumerate(items)]
+
+    for x, y, num, kind in fila(arriba, 110):
+        otro = d.ellipse(x, y, 230, 62, rotulo(num), "dashed=1;" if num in paquete_de else "")
+        # «extend»: la flecha sale del caso que extiende hacia el caso extendido.
+        origen, destino = (centro, otro) if any(s_ == numero and t == num for s_, t, k in pk["relaciones"] if k == "extend") else (otro, centro)
+        d.line(origen, destino, "«extend»", dashed=True, arrow="open", style="fontStyle=2;")
+    for x, y, num, kind in fila(abajo, 410):
+        otro = d.ellipse(x, y, 230, 62, rotulo(num), "dashed=1;" if num in paquete_de else "")
+        d.line(centro, otro, "«include»", dashed=True, arrow="open", style="fontStyle=2;")
+    d.write()
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     clases()
@@ -675,3 +708,5 @@ if __name__ == "__main__":
         paquete_clases(key)
         for numero in pk["colaboraciones"]:
             colaboracion(key, numero)
+        for numero in pk.get("asociaciones_cu", []):
+            asociaciones(key, numero)

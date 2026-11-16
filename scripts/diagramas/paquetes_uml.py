@@ -41,9 +41,61 @@ PAQUETES = {
             ("1.4", "8.1", "include"),
             ("1.1", "1.7", "extend"),
         ],
-        # El paquete Turnos ya tiene su diagrama de clases y sus colaboraciones (clases-turnos y los de la tesis).
+        # El paquete Turnos ya tiene su diagrama de clases (clases-turnos).
         "clases": None,
-        "colaboraciones": {},
+        "asociaciones_cu": ["1.1", "1.2", "1.4", "1.7"],
+        "colaboraciones": {
+            "1.1": {
+                "interfaz": "UI Turno", "control": "GestorTurnos",
+                "entidades": ["Paciente", "Profesional", "Turno", "GestorNotificaciones", "Auditoria"],
+                "mensajes": [
+                    ("interfaz", "control", "1: solicitarCrearTurno(datos)"),
+                    ("control", "Paciente", "2: obtenerDatos()"),
+                    ("control", "Profesional", "3: atiendeEl(fecha)"),
+                    ("control", "Turno", "4: obtenerTurnosActivos(profesional, paciente, fecha)"),
+                    ("control", "Turno", "5: crear(datos)"),
+                    ("control", "GestorNotificaciones", "6: encolar(turno, creacion)"),
+                    ("control", "Auditoria", "7: registrarAlta(turno)"),
+                    ("control", "interfaz", "8: mostrarTurnoCreado()"),
+                ],
+            },
+            "1.2": {
+                "interfaz": "UI Turno", "control": "GestorTurnos",
+                "entidades": ["Turno", "Profesional", "GestorNotificaciones", "Auditoria"],
+                "mensajes": [
+                    ("interfaz", "control", "1: solicitarReprogramar(turno, fecha, hora)"),
+                    ("control", "Turno", "2: obtenerDatos(id)"),
+                    ("control", "Profesional", "3: atiendeEl(fecha)"),
+                    ("control", "Turno", "4: obtenerTurnosActivos(profesional, paciente, fecha)"),
+                    ("control", "Turno", "5: reprogramar(fecha, hora)"),
+                    ("control", "GestorNotificaciones", "6: encolar(turno, reprogramacion)"),
+                    ("control", "Auditoria", "7: registrarModificacion(antes, despues)"),
+                    ("control", "interfaz", "8: mostrarTurnoActualizado()"),
+                ],
+            },
+            "1.4": {
+                "interfaz": "UI Agenda", "control": "GestorTurnos",
+                "entidades": ["Turno", "GestorNotificaciones", "Auditoria"],
+                "mensajes": [
+                    ("interfaz", "control", "1: solicitarCancelar(turno)"),
+                    ("control", "Turno", "2: obtenerDatos(id)"),
+                    ("control", "Turno", "3: cancelar()"),
+                    ("control", "GestorNotificaciones", "4: encolar(turno, cancelacion)"),
+                    ("control", "Auditoria", "5: registrarCambioEstado(antes, despues)"),
+                    ("control", "interfaz", "6: mostrarTurnoCancelado()"),
+                ],
+            },
+            "1.7": {
+                "interfaz": "UI Agenda", "control": "GestorTurnos",
+                "entidades": ["Turno", "Profesional"],
+                "mensajes": [
+                    ("interfaz", "control", "1: consultarAgenda(fecha, filtros)"),
+                    ("control", "Turno", "2: obtenerTurnos(fecha, filtros)"),
+                    ("control", "Profesional", "3: obtenerDatos()"),
+                    ("control", "interfaz", "4: mostrarAgenda()"),
+                ],
+            },
+        },
     },
     "pacientes": {
         "numero": 2,
