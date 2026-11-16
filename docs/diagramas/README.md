@@ -8,6 +8,7 @@
 | Caso de uso ambiental | `caso-de-uso-ambiental.drawio` | `caso-de-uso-ambiental.png` |
 | Modelo de paquetes, con dependencias | `paquetes.drawio` | `paquetes.png` |
 | Árbol de casos de uso (numeración jerárquica, mismo catálogo que la matriz de trazabilidad) | `arbol-casos-de-uso.drawio` | `arbol-casos-de-uso.png` |
+| Documentación de cada paquete: casos de uso (`paquete-<paquete>-casos`), clases (`paquete-<paquete>-clases`) y colaboración de los casos principales (`colaboracion-<n>-<m>`). Datos en `scripts/diagramas/paquetes_uml.py` | `*.drawio` | `*.png` |
 
 Los `.drawio` se abren y editan con draw.io (escritorio o app.diagrams.net). Los PNG también llevan el diagrama incrustado: se pueden abrir directamente en draw.io para editarlos.
 
@@ -22,8 +23,8 @@ npm run diagramas
 Para exportarlos a PNG con draw.io Desktop, con escala 2 y el diagrama incrustado:
 
 ```bash
-for n in clases-turnos arquitectura der caso-de-uso-ambiental paquetes arbol-casos-de-uso; do
-  "/c/Program Files/draw.io/draw.io.exe" -x -f png -s 2 -b 20 --embed-diagram -o "docs/diagramas/$n.png" "docs/diagramas/$n.drawio"
+for f in docs/diagramas/*.drawio; do
+  "/c/Program Files/draw.io/draw.io.exe" -x -f png -s 2 -b 20 --embed-diagram -o "${f%.drawio}.png" "$f"
 done
 ```
 
