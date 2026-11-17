@@ -96,7 +96,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 
 Datos de demostración, con nombres ficticios.
 
-### Desktop (1440px)
+### Escritorio (1920 × 1080)
 
 | Panel | Agenda del día |
 |:---:|:---:|
