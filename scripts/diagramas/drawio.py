@@ -633,58 +633,95 @@ def paquete_clases(key):
     d.write()
 
 
-def _estereotipo(nombre):
-    if nombre == "Auditoria":
-        return "GestorAuditoria", "«Control»"
+# Nombre legible y tipo de objeto (ícono del apunte) de cada participante de una colaboración.
+NOMBRES_OBJETO = {
+    "Auditoria": ("Gestor de Auditoría", "control"),
+    "GestorNotificaciones": ("Gestor de Notificaciones", "control"),
+    "GestorTurnos": ("Gestor de Turnos", "control"),
+    "GestorPanel": ("Gestor del Panel", "control"),
+    "ServicioDeCorreo": ("Servicio de Correo", "interfaz"),
+    "HistoriaClinica": ("Historia Clínica", "entidad"),
+    "AccesoHistoriaClinica": ("Acceso a Historia Clínica", "entidad"),
+    "ObraSocial": ("Obra Social", "entidad"),
+    "LoginIntento": ("Intento de Ingreso", "entidad"),
+    "Autorizacion": ("Autorización", "entidad"),
+    "Notificacion": ("Notificación", "entidad"),
+}
+
+
+def _objeto(nombre):
+    if nombre in NOMBRES_OBJETO:
+        return NOMBRES_OBJETO[nombre]
     if nombre.startswith("Gestor"):
-        return nombre, "«Control»"
-    if nombre.startswith("Servicio"):
-        return nombre, "«Sistema»"
-    return nombre, "«Entidad»"
+        return "Gestor de " + nombre[len("Gestor"):].replace("Clinica", " Clínica").replace("Sociales", " Sociales").replace("ObrasSociales", "Obras Sociales").strip(), "control"
+    return nombre, "entidad"
+
+
+ICONO = {
+    "interfaz": "shape=umlBoundary;",
+    "control": "shape=umlControl;",
+    "entidad": "shape=umlEntity;",
+}
 
 
 def colaboracion(key, numero):
-    """Diagrama de colaboración del caso de uso: interfaz, control y entidades, con los mensajes numerados."""
+    """Diagrama de colaboración con la notación del apunte (PP3, SP1/H2): íconos de interfaz,
+    control y entidad, nombres sin ":", mensajes numerados "1- Texto" sobre las líneas."""
     pk = PAQUETES[key]
     spec = pk["colaboraciones"][numero]
     nombre = next(n for num, n, _ in pk["casos"] if num == numero)
     actor_nombre = next(q for num, _, q in pk["casos"] if num == numero)[0]
     entidades = spec["entidades"]
-    alto = max(len(entidades) * 100, 240) + 130
-    rango = {"interfaz": 1, "control": 2}
     etiquetas = {}
     for origen, destino, texto in spec["mensajes"]:
-        par = tuple(sorted((origen, destino)))
-        # La flecha apunta hacia el destino según la posición: interfaz, control y entidades, de izquierda a derecha.
-        flecha = " →" if rango.get(destino, 3) > rango.get(origen, 3) else " ←"
-        etiquetas.setdefault(par, []).append(texto + flecha)
+        etiquetas.setdefault(tuple(sorted((origen, destino))), []).append(texto)
 
-    # Separación horizontal según el texto más largo de cada tramo, para que ningún mensaje
-    # toque las cajas: el texto va centrado en la línea, con margen a cada lado.
+    # Separación horizontal según el mensaje más largo de cada tramo, con margen a cada lado,
+    # para que ningún texto toque los íconos ni sus nombres.
     def ancho(textos):
-        return max(len(t) for t in textos) * 6.2 + 60
+        return max(len(t) for t in textos) * 6.4 + 90
 
-    tramo_ui = max([ancho(t) for p, t in etiquetas.items() if "interfaz" in p] + [200])
-    tramo_ent = max([ancho(t) for p, t in etiquetas.items() if "interfaz" not in p] + [200])
-    # Las líneas hacia las entidades son oblicuas: el texto se apoya cerca del centro, que queda más lejos de las cajas.
-    x_ui, w_ui, w_ctrl, w_ent = 140, 200, 230, 210
-    x_ctrl = x_ui + w_ui + tramo_ui
-    x_ent = x_ctrl + w_ctrl + tramo_ent
-    d = Diagram(f"colaboracion-{numero.replace('.', '-')}", x_ent + w_ent + 30, alto)
+    tramo_ui = max([ancho(t) for p, t in etiquetas.items() if "interfaz" in p] + [220])
+    tramo_ent = max([ancho(t) for p, t in etiquetas.items() if "interfaz" not in p] + [240])
+    ICON, ROT = 50, 130  # tamaño del ícono y ancho del nombre debajo (en dos renglones si hace falta)
+    x_ui = 230
+    x_ctrl = x_ui + ICON + tramo_ui
+    x_ent = x_ctrl + ICON + tramo_ent
+    paso = 170
+    alto = max(len(entidades) * paso, 260) + 150
+    d = Diagram(f"colaboracion-{numero.replace('.', '-')}", x_ent + ICON + ROT / 2 + 40, alto)
     d.title("Diagrama de Colaboración", f"Caso de uso {numero} “{nombre}”")
-    centro = 110 + (alto - 130) / 2
-    actor = d.actor(30, centro - 30, actor_nombre)
-    obj = "rounded=1;arcSize=10;"
-    ui = d.box(x_ui, centro - 25, w_ui, 50, f"<u>:{spec['interfaz']}</u><br>«Interfaz»", obj)
-    ctrl = d.box(x_ctrl, centro - 25, w_ctrl, 50, f"<u>:{spec['control']}</u><br>«Control»", obj)
+    centro = 120 + (alto - 150) / 2
+
+    def icono(x, y, tipo, rotulo):
+        cid = d._id()
+        d.add(
+            f'<mxCell id="{cid}" value="" style="{ICONO[tipo]}html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;" '
+            f'vertex="1" parent="1"><mxGeometry x="{x}" y="{y}" width="{ICON}" height="{ICON}" as="geometry"/></mxCell>'
+        )
+        d.text(x + ICON / 2 - ROT / 2, y + ICON + 4, ROT, 40, f"<b>{rotulo}</b>", "align=center;fontSize=12;")
+        return cid
+
+    actor = d.actor(70, centro - 30, actor_nombre)
+    ui = icono(x_ui, centro - ICON / 2, "interfaz", spec["interfaz"])
+    ctrl_nombre, _ = _objeto(spec["control"])
+    ctrl = icono(x_ctrl, centro - ICON / 2, "control", ctrl_nombre)
     ids = {"interfaz": ui, "control": ctrl}
-    paso = (alto - 130) / max(len(entidades), 1)
+    paso_real = (alto - 150) / max(len(entidades), 1)
     for i, ent in enumerate(entidades):
-        nombre_obj, estereo = _estereotipo(ent)
-        ids[ent] = d.box(x_ent, 110 + i * paso + paso / 2 - 25, w_ent, 50, f"<u>:{nombre_obj}</u><br>{estereo}", obj)
+        rotulo, tipo = _objeto(ent)
+        ids[ent] = icono(x_ent, 120 + i * paso_real + paso_real / 2 - ICON / 2, tipo, rotulo)
     d.line(actor, ui)
-    for (a_, b_), textos in etiquetas.items():
-        d.line(ids[a_], ids[b_], "<br>".join(textos), style="fontSize=10;")
+    # Todas las líneas salen del costado derecho del objeto de la izquierda y llegan al costado izquierdo
+    # del de la derecha: así no cruzan los nombres que van debajo de los íconos.
+    anclas = "exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+    for par, textos in etiquetas.items():
+        izq = "interfaz" if "interfaz" in par else "control"
+        der = next(x for x in par if x != izq)
+        eid = d.line(ids[izq], ids[der], "<br>".join(textos), style="fontSize=11;" + anclas)
+        if izq == "control" and len(entidades) > 1:
+            # Hacia las entidades, el texto va más cerca del destino, donde las líneas ya se separaron.
+            d.cells[-1] = d.cells[-1].replace('<mxGeometry relative="1"', '<mxGeometry x="0.35" relative="1"')
     d.write()
 
 def asociaciones(key, numero):
