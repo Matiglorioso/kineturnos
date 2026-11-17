@@ -651,26 +651,38 @@ def colaboracion(key, numero):
     actor_nombre = next(q for num, _, q in pk["casos"] if num == numero)[0]
     entidades = spec["entidades"]
     alto = max(len(entidades) * 100, 240) + 130
-    d = Diagram(f"colaboracion-{numero.replace('.', '-')}", 1230, alto)
-    d.title("Diagrama de Colaboración", f"Caso de uso {numero} “{nombre}”")
-    centro = 110 + (alto - 130) / 2
-    actor = d.actor(30, centro - 30, actor_nombre)
-    obj = "rounded=1;arcSize=10;"
-    ui = d.box(140, centro - 25, 200, 50, f"<u>:{spec['interfaz']}</u><br>«Interfaz»", obj)
-    ctrl = d.box(650, centro - 25, 220, 50, f"<u>:{spec['control']}</u><br>«Control»", obj)
-    ids = {"interfaz": ui, "control": ctrl}
-    paso = (alto - 130) / max(len(entidades), 1)
-    for i, ent in enumerate(entidades):
-        nombre_obj, estereo = _estereotipo(ent)
-        ids[ent] = d.box(1000, 110 + i * paso + paso / 2 - 25, 210, 50, f"<u>:{nombre_obj}</u><br>{estereo}", obj)
-    d.line(actor, ui)
+    rango = {"interfaz": 1, "control": 2}
     etiquetas = {}
     for origen, destino, texto in spec["mensajes"]:
         par = tuple(sorted((origen, destino)))
         # La flecha apunta hacia el destino según la posición: interfaz, control y entidades, de izquierda a derecha.
-        rango = {"interfaz": 1, "control": 2}
         flecha = " →" if rango.get(destino, 3) > rango.get(origen, 3) else " ←"
         etiquetas.setdefault(par, []).append(texto + flecha)
+
+    # Separación horizontal según el texto más largo de cada tramo, para que ningún mensaje
+    # toque las cajas: el texto va centrado en la línea, con margen a cada lado.
+    def ancho(textos):
+        return max(len(t) for t in textos) * 6.2 + 60
+
+    tramo_ui = max([ancho(t) for p, t in etiquetas.items() if "interfaz" in p] + [200])
+    tramo_ent = max([ancho(t) for p, t in etiquetas.items() if "interfaz" not in p] + [200])
+    # Las líneas hacia las entidades son oblicuas: el texto se apoya cerca del centro, que queda más lejos de las cajas.
+    x_ui, w_ui, w_ctrl, w_ent = 140, 200, 230, 210
+    x_ctrl = x_ui + w_ui + tramo_ui
+    x_ent = x_ctrl + w_ctrl + tramo_ent
+    d = Diagram(f"colaboracion-{numero.replace('.', '-')}", x_ent + w_ent + 30, alto)
+    d.title("Diagrama de Colaboración", f"Caso de uso {numero} “{nombre}”")
+    centro = 110 + (alto - 130) / 2
+    actor = d.actor(30, centro - 30, actor_nombre)
+    obj = "rounded=1;arcSize=10;"
+    ui = d.box(x_ui, centro - 25, w_ui, 50, f"<u>:{spec['interfaz']}</u><br>«Interfaz»", obj)
+    ctrl = d.box(x_ctrl, centro - 25, w_ctrl, 50, f"<u>:{spec['control']}</u><br>«Control»", obj)
+    ids = {"interfaz": ui, "control": ctrl}
+    paso = (alto - 130) / max(len(entidades), 1)
+    for i, ent in enumerate(entidades):
+        nombre_obj, estereo = _estereotipo(ent)
+        ids[ent] = d.box(x_ent, 110 + i * paso + paso / 2 - 25, w_ent, 50, f"<u>:{nombre_obj}</u><br>{estereo}", obj)
+    d.line(actor, ui)
     for (a_, b_), textos in etiquetas.items():
         d.line(ids[a_], ids[b_], "<br>".join(textos), style="fontSize=10;")
     d.write()

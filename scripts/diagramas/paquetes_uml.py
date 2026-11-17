@@ -509,7 +509,7 @@ PAQUETES = {
         "asociaciones": [("Notificacion", "Turno", "0..*", "1")],
         "colaboraciones": {
             "8.2": {
-                "interfaz": "API de recordatorios", "control": "GestorNotificaciones",
+                "interfaz": "API Recordatorios", "control": "GestorNotificaciones",
                 "entidades": ["Turno", "Notificacion", "ServicioDeCorreo"],
                 "mensajes": [
                     ("interfaz", "control", "1: encolarRecordatorios(ahora)"),
@@ -520,7 +520,7 @@ PAQUETES = {
                 ],
             },
             "8.3": {
-                "interfaz": "Página del turno", "control": "GestorNotificaciones",
+                "interfaz": "UI Página del Turno", "control": "GestorNotificaciones",
                 "entidades": ["Turno", "Auditoria"],
                 "mensajes": [
                     ("interfaz", "control", "1: verificarEnlace(token)"),
