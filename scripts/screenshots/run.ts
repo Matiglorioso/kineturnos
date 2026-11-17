@@ -1,5 +1,5 @@
 /**
- * Capturas de pantalla para el README y la tesis (escritorio 1440 px y celular 390 px).
+ * Capturas de pantalla para el README y la tesis (escritorio 1920 × 1080 y celular 390 px).
  *
  *   npm run screenshots                  # base descartable con datos de demostración, build y capturas
  *   npm run screenshots -- --sin-build   # reutiliza la compilación anterior (.next-perf)
@@ -17,6 +17,8 @@ import { join } from "node:path";
 
 const PORT = 3200;
 const OUTPUT_DIR = join(process.cwd(), "docs", "screenshots");
+/** Monitor de escritorio (1920 × 1080), con el doble de densidad para que se lean nítidas impresas. */
+const DESKTOP = { viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 };
 
 interface Shot {
   file: string;
@@ -183,14 +185,14 @@ async function main() {
 
     const browser = await chromium.launch();
 
-    const loginPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const loginPage = await browser.newPage(DESKTOP);
     await loginPage.goto(`${base}/login`);
     await loginPage.getByLabel("Email").waitFor();
     await loginPage.screenshot({ path: join(OUTPUT_DIR, "login-desktop.png") });
     console.log("OK login-desktop.png");
     await loginPage.close();
 
-    const desktopPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const desktopPage = await browser.newPage(DESKTOP);
     await login(desktopPage, base, demo.adminEmail, password);
     for (const shot of desktop) await capture(desktopPage, base, shot);
 
@@ -205,7 +207,7 @@ async function main() {
 
     // Auditoría (solo Superadmin): primero Administración hace algunos cambios para que haya movimientos.
     await recordDemoChanges(desktopPage, base, demo.featuredPatientId);
-    const auditPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const auditPage = await browser.newPage(DESKTOP);
     await login(auditPage, base, demo.superadminEmail, password);
     await capture(auditPage, base, {
       file: "auditoria-desktop.png",
