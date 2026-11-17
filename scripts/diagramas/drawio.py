@@ -708,6 +708,87 @@ def asociaciones(key, numero):
         d.line(centro, otro, "«include»", dashed=True, arrow="open", style="fontStyle=2;")
     d.write()
 
+# ---------------------------------------------------------------- Diagramas de estados
+
+ESTADO = "rounded=1;arcSize=30;fontStyle=1;"
+
+
+def _inicial(d, x, y, size=30):
+    return d.ellipse(x, y, size, size, "", "fillColor=#000000;")
+
+
+def _final(d, x, y):
+    return d.ellipse(x, y, 32, 32, "", "shape=endState;fillColor=#000000;")
+
+
+def _compuesto(d, x, y, w, h, nombre):
+    return d.box(x, y, w, h, f"<b>{nombre}</b>",
+                 "rounded=1;arcSize=24;absoluteArcSize=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;")
+
+
+def estados_autorizacion():
+    """Autorización de obra social: estado registrado (en trámite, aprobada, rechazada) y,
+    mientras está aprobada, la situación que calcula el sistema (src/lib/insurance.ts)."""
+    d = Diagram("estados-autorizacion", 1420, 720)
+    d.title("Diagrama de Estados — Clase Autorización", "Ciclo de vida de una autorización de obra social")
+    t = "fontSize=11;labelBackgroundColor=#FFFFFF;"
+    inicio = _inicial(d, 40, 315)
+    tramite = d.box(250, 300, 160, 60, "En trámite", ESTADO)
+    rechazada = d.box(250, 625, 160, 60, "Rechazada", ESTADO)
+    aprobada = _compuesto(d, 580, 150, 800, 380, "Aprobada")
+    sub_inicio = _inicial(d, 615, 263, 24)
+    vigente = d.box(690, 245, 160, 60, "Vigente", ESTADO)
+    renovar = d.box(1060, 245, 160, 60, "Por renovar", ESTADO)
+    agotada = d.box(890, 430, 160, 60, "Agotada", ESTADO)
+    vencida = d.box(1180, 430, 160, 60, "Vencida", ESTADO)
+    fin = _final(d, 964, 639)
+
+    d.edge(inicio, tramite, label="registrar autorización<br>[en trámite]", arrow="block", label_style=t)
+    d.edge(inicio, aprobada, label="registrar autorización [ya aprobada]", arrow="block", exit_=(0.5, 0),
+           entry=(0.2, 0), points=((55, 110), (740, 110)), label_style=t)
+    d.edge(tramite, aprobada, label="aprobación de la<br>obra social", arrow="block", entry=(0, 0.47), label_style=t)
+    d.edge(tramite, rechazada, label="rechazo de la obra social", arrow="block", label_style=t)
+    d.edge(sub_inicio, vigente, arrow="block")
+    d.edge(vigente, vigente, label="registrar asistencia / descuenta una sesión", arrow="block",
+           exit_=(0.25, 0), entry=(0.75, 0), points=((730, 205), (810, 205)), label_style=t)
+    d.edge(vigente, renovar, label="[quedan 2 sesiones o menos<br>o vence en 7 días o menos]", arrow="block", label_style=t)
+    d.line(renovar, agotada, "registrar asistencia<br>[se usó la última sesión]", arrow="block")
+    d.line(renovar, vencida, "[pasó la fecha<br>de vencimiento]", arrow="block")
+    d.edge(aprobada, fin, label="eliminar autorización", arrow="block", exit_=(0.48, 1), entry=(0.5, 0), label_style=t)
+    d.edge(rechazada, fin, label="eliminar autorización", arrow="block", entry=(0, 0.5), label_style=t)
+    d.write()
+
+
+def estados_notificacion():
+    """Notificación (correo al paciente): ver src/lib/db/notifications.ts."""
+    d = Diagram("estados-notificacion", 1320, 640)
+    d.title("Diagrama de Estados — Clase Notificación", "Ciclo de vida de un correo al paciente")
+    t = "fontSize=11;labelBackgroundColor=#FFFFFF;"
+    inicio = _inicial(d, 40, 300)
+    pendiente = d.box(250, 285, 150, 60, "Pendiente", ESTADO)
+    enviando = d.box(580, 285, 150, 60, "Enviando", ESTADO)
+    enviada = d.box(930, 130, 150, 60, "Enviada", ESTADO)
+    fallida = d.box(930, 285, 150, 60, "Fallida", ESTADO)
+    omitida = d.box(930, 450, 150, 60, "Omitida", ESTADO)
+    fin = _final(d, 1240, 299)
+
+    d.edge(inicio, pendiente, label="encolar correo<br>[paciente con correo]", arrow="block", label_style=t)
+    d.edge(inicio, omitida, label="encolar correo [paciente sin correo]", arrow="block", exit_=(0.5, 1),
+           entry=(0.5, 1), points=((55, 570), (1005, 570)), label_style=t)
+    d.edge(pendiente, enviando, label="tomar para enviar /<br>suma un intento", arrow="block", label_style=t)
+    d.edge(enviando, enviando, label="reintentar [sin respuesta en 10 minutos<br>y menos de 3 intentos]", arrow="block",
+           exit_=(0.25, 0), entry=(0.75, 0), points=((617, 235), (692, 235)), label_style=t)
+    d.line(enviando, enviada, "correo aceptado", arrow="block")
+    d.edge(enviando, fallida, label="error de envío", arrow="block", exit_=(1, 0.3), entry=(0, 0.3), label_style=t)
+    d.edge(fallida, enviando, label="reintentar<br>[menos de 3 intentos]", arrow="block", exit_=(0, 0.75),
+           entry=(1, 0.75), label_style=t)
+    d.line(enviando, omitida, "envío de correos<br>desactivado", arrow="block")
+    d.line(enviada, fin, "", arrow="block")
+    d.edge(fallida, fin, label="[3 intentos]", arrow="block", label_style=t)
+    d.line(omitida, fin, "", arrow="block")
+    d.write()
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     clases()
@@ -716,6 +797,8 @@ if __name__ == "__main__":
     ambiental()
     paquetes()
     arbol()
+    estados_autorizacion()
+    estados_notificacion()
     for key, pk in PAQUETES.items():
         paquete_casos(key)
         paquete_clases(key)
