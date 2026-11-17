@@ -9,6 +9,7 @@
 | Modelo de paquetes, con dependencias | `paquetes.drawio` | `paquetes.png` |
 | Árbol de casos de uso (numeración jerárquica, mismo catálogo que la matriz de trazabilidad) | `arbol-casos-de-uso.drawio` | `arbol-casos-de-uso.png` |
 | Documentación de cada paquete: casos de uso (`paquete-<paquete>-casos`), clases (`paquete-<paquete>-clases`) y colaboración de los casos principales (`colaboracion-<n>-<m>`). Datos en `scripts/diagramas/paquetes_uml.py` | `*.drawio` | `*.png` |
+| Diagramas de estados de la Autorización (`estados-autorizacion`) y de la Notificación (`estados-notificacion`), según `src/lib/insurance.ts` y `src/lib/db/notifications.ts` | `*.drawio` | `*.png` |
 
 Los `.drawio` se abren y editan con draw.io (escritorio o app.diagrams.net). Los PNG también llevan el diagrama incrustado: se pueden abrir directamente en draw.io para editarlos.
 
