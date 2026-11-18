@@ -44,6 +44,8 @@ interface LogoProps {
   showText?: boolean;
   href?: string;
   className?: string;
+  /** "dark": sobre el menú verde (texto claro). */
+  tone?: "light" | "dark";
 }
 
 export function Logo({
@@ -52,14 +54,17 @@ export function Logo({
   showText = true,
   href,
   className,
+  tone = "light",
 }: LogoProps) {
   const styles = sizeStyles[size];
+  const dark = tone === "dark";
 
   const content = (
     <>
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center gradient-brand shadow-sm ring-1 ring-brand-600/10",
+          "flex shrink-0 items-center justify-center",
+          dark ? "bg-white/12 ring-1 ring-white/20" : "gradient-brand shadow-sm ring-1 ring-brand-600/10",
           styles.box
         )}
         aria-hidden
@@ -68,14 +73,15 @@ export function Logo({
       </div>
       {showText && (
         <div className="min-w-0">
-          <p className={cn("tracking-tight text-slate-900", styles.title)}>
+          <p className={cn("tracking-tight", dark ? "text-white" : "text-slate-900", styles.title)}>
             <span>Kine</span>
-            <span className="text-brand-700">Turnos</span>
+            <span className={dark ? "text-brand-200" : "text-brand-700"}>Turnos</span>
           </p>
           {showTagline && (
             <p
               className={cn(
-                "font-medium uppercase tracking-widest text-brand-700/90",
+                "font-medium uppercase tracking-widest",
+                dark ? "text-brand-200/80" : "text-brand-700/90",
                 styles.tagline
               )}
             >

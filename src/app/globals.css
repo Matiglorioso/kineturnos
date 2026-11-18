@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 175 77% 26%;
+    --background: 48 22% 95%;
+    --foreground: 45 7% 11%;
+    --card: 45 60% 99%;
+    --card-foreground: 45 7% 11%;
+    --popover: 45 60% 99%;
+    --popover-foreground: 45 7% 11%;
+    --primary: 114 41% 31%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 42%;
-    --accent: 174 72% 95%;
-    --accent-foreground: 174 72% 25%;
+    --secondary: 45 18% 93%;
+    --secondary-foreground: 45 7% 11%;
+    --muted: 45 18% 93%;
+    --muted-foreground: 42 6% 40%;
+    --accent: 100 30% 93%;
+    --accent-foreground: 112 40% 25%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 175 77% 26%;
+    --border: 44 15% 87%;
+    --input: 44 15% 85%;
+    --ring: 114 41% 31%;
     --radius: 0.875rem;
   }
 
@@ -45,16 +45,15 @@
   }
 
   .gradient-brand {
-    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #2dd4bf 100%);
+    background: #356f2f;
   }
 
   .gradient-subtle {
-    background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 100%);
+    background: #f6f5f0;
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #0f766e, #14b8a6);
+    @apply text-brand-700;
   }
 
   .surface-card {
