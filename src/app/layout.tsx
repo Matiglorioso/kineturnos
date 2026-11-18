@@ -1,11 +1,12 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { rootMetadata } from "@/lib/site-config";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Figtree, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Figtree: sans humanista, cálida y muy legible en tamaños chicos (listas y tablas).
+const fontSans = Figtree({
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
@@ -24,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${fontSans.variable} ${geistMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>
