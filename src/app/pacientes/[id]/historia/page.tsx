@@ -275,7 +275,7 @@ function HistoriaClinicaContent() {
 
       <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm print:shadow-none sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-lg font-bold text-white print:hidden">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white print:hidden">
             {getInitials(patient.name)}
           </div>
           <div className="min-w-0 flex-1">

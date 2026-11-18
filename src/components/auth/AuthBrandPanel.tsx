@@ -31,22 +31,10 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
   return (
     <aside
       className={cn(
-        "@container relative hidden h-[100dvh] min-w-0 overflow-hidden border-r border-brand-100/80 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 text-white lg:flex",
+        "@container relative hidden h-[100dvh] min-w-0 overflow-hidden border-r border-brand-100/80 bg-brand-800 text-white lg:flex",
         className
       )}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-20 top-1/4 h-72 w-72 rounded-full bg-white/10 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-20 left-0 h-72 w-72 rounded-full bg-brand-300/15 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.12),transparent_55%)]"
-      />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0"
