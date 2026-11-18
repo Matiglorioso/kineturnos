@@ -20,8 +20,8 @@ const OPTIONS: Record<
   Exclude<AppointmentStatus, "pendiente">,
   { label: string; icon: typeof Check; className: string }
 > = {
-  confirmado: { label: "Confirmado", icon: Check, className: "text-brand-700" },
-  atendido: { label: "Atendido", icon: CheckCircle2, className: "text-emerald-600" },
+  confirmado: { label: "Confirmado", icon: Check, className: "text-sky-700" },
+  atendido: { label: "Atendido", icon: CheckCircle2, className: "text-brand-700" },
   ausente: { label: "Ausente", icon: UserX, className: "text-slate-500" },
   cancelado: { label: "Cancelado", icon: Ban, className: "text-red-600" },
 };

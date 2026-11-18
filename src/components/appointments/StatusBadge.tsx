@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
-import { Ban, CheckCircle2, Clock, UserX } from "lucide-react";
+import { Ban, Check, CheckCircle2, Clock, UserX } from "lucide-react";
 
 const statusConfig: Record<
   AppointmentStatus,
@@ -12,8 +12,8 @@ const statusConfig: Record<
   }
 > = {
   pendiente: { label: "Pendiente", variant: "warning", icon: Clock },
-  confirmado: { label: "Confirmado", variant: "success", icon: CheckCircle2 },
-  atendido: { label: "Atendido", variant: "info", icon: CheckCircle2 },
+  confirmado: { label: "Confirmado", variant: "info", icon: Check },
+  atendido: { label: "Atendido", variant: "success", icon: CheckCircle2 },
   cancelado: { label: "Cancelado", variant: "danger", icon: Ban },
   ausente: { label: "Ausente", variant: "neutral", icon: UserX },
 };
@@ -59,7 +59,7 @@ export function PatientStatusBadge({
       <span
         className={cn(
           "h-1.5 w-1.5 rounded-full",
-          active ? "bg-emerald-500" : "bg-slate-400"
+          active ? "bg-brand-500" : "bg-slate-400"
         )}
       />
       {active ? "Activo" : "Inactivo"}
