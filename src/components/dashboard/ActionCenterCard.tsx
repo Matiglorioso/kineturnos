@@ -113,7 +113,7 @@ export function ActionCenterCard({
                       onClick={() => void run(appointment, "atendido")}
                       aria-label={`Marcar atendido: ${appointment.patientName}`}
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600" />
                       Atendido
                     </Button>
                     <Button
@@ -172,7 +172,7 @@ export function ActionCenterCard({
                         onClick={() => void run(appointment, "confirmado")}
                         aria-label={`Confirmar turno: ${appointment.patientName}`}
                       >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <CheckCircle2 className="h-4 w-4 text-brand-600" />
                         Confirmar
                       </Button>
                     </span>

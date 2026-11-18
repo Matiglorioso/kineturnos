@@ -12,8 +12,8 @@ import { readableAvatarColor } from "@/lib/professional-utils";
 
 const STATUS_STYLES: Record<AppointmentStatus, { card: string; dot: string }> = {
   pendiente: { card: "border-amber-200 bg-amber-50/90 hover:bg-amber-50", dot: "bg-amber-500" },
-  confirmado: { card: "border-emerald-200 bg-emerald-50/90 hover:bg-emerald-50", dot: "bg-emerald-500" },
-  atendido: { card: "border-sky-200 bg-sky-50/90 hover:bg-sky-50", dot: "bg-sky-500" },
+  confirmado: { card: "border-sky-200 bg-sky-50/90 hover:bg-sky-50", dot: "bg-sky-500" },
+  atendido: { card: "border-brand-200 bg-brand-50/90 hover:bg-brand-50", dot: "bg-brand-500" },
   cancelado: { card: "border-red-200 bg-red-50/80 opacity-80 hover:bg-red-50", dot: "bg-red-500" },
   ausente: { card: "border-slate-300 bg-slate-100/90 opacity-80 hover:bg-slate-100", dot: "bg-slate-400" },
 };

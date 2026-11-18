@@ -90,7 +90,7 @@ export default function DashboardPage() {
       icon: CalendarDays,
       title: isScopedProfessional ? "Mis turnos de hoy" : "Agenda de hoy",
       value: pluralize(daySummary.total, "turno"),
-      detail: daySummary.total ? `${daySummary.attended} atendidos · ${daySummary.upcoming} por venir` : "Sin turnos",
+      detail: daySummary.total ? `${pluralize(daySummary.attended, "atendido")} · ${daySummary.upcoming} por venir` : "Sin turnos",
     },
     ...(showCoverage
       ? [

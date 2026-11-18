@@ -41,7 +41,7 @@ export function MetricTile({ label, value, icon: Icon, tone = "brand", hint, cha
               change.good === null
                 ? "bg-slate-100 text-slate-600"
                 : change.good
-                  ? "bg-emerald-50 text-emerald-700"
+                  ? "bg-brand-50 text-brand-800"
                   : "bg-red-50 text-red-700"
             )}
           >
@@ -50,7 +50,7 @@ export function MetricTile({ label, value, icon: Icon, tone = "brand", hint, cha
         )}
       </div>
       <div className="mt-3 min-w-0">
-        <p className="text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+        <p className="text-2xl font-bold tracking-tight tabular-nums text-slate-900">{value}</p>
         <p className="mt-0.5 truncate text-sm font-medium text-slate-700">{label}</p>
         <p className="mt-0.5 h-4 truncate text-xs text-muted-foreground">{hint ?? ""}</p>
       </div>

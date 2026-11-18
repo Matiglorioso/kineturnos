@@ -39,12 +39,22 @@ export function AgendaDayStrip({ value, today, counts, onChange }: AgendaDayStri
   // Mantiene el día elegido a la vista (centrado) al cambiar de día o de mes.
   useEffect(() => {
     const strip = stripRef.current;
-    const selected = strip?.querySelector<HTMLElement>("[aria-pressed='true']");
-    if (!strip || !selected) return;
-    strip.scrollTo({
-      left: selected.offsetLeft - strip.clientWidth / 2 + selected.clientWidth / 2,
-    });
-  }, [value]);
+    if (!strip) return;
+    const center = () => {
+      const selected = strip.querySelector<HTMLElement>("[aria-pressed='true']");
+      if (!selected) return;
+      strip.scrollTo({
+        left: selected.offsetLeft - strip.clientWidth / 2 + selected.clientWidth / 2,
+        // "instant": la tira tiene scroll suave por CSS, y una animación cortada la dejaba a mitad de camino.
+        behavior: "instant",
+      });
+    };
+    center();
+    // El ancho final llega después del primer render (fuentes, menú lateral): recentra cuando cambia.
+    const observer = new ResizeObserver(center);
+    observer.observe(strip);
+    return () => observer.disconnect();
+  }, [value, selectedMonth, days.length]);
 
   const scrollStrip = (direction: -1 | 1) => {
     const strip = stripRef.current;
