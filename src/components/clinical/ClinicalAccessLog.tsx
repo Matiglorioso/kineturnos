@@ -21,7 +21,10 @@ function formatTimestamp(iso: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(iso));
+    hourCycle: "h23",
+  })
+    .format(new Date(iso))
+    .replace(/\//g, "-");
 }
 
 /** Trazabilidad (RNF07): quién y cuándo consultó o modificó la historia clínica. */

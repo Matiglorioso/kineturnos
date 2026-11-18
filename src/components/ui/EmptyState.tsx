@@ -81,7 +81,7 @@ export function EmptyState({
       role="status"
       className={cn(
         "relative overflow-hidden rounded-2xl border border-dashed border-brand-200/50",
-        "bg-gradient-to-b from-brand-50/30 via-muted/25 to-muted/40 text-center",
+        "bg-muted/40 text-center",
         isInline ? "sm:text-left" : "",
         styles.wrapper,
         className
@@ -104,7 +104,7 @@ export function EmptyState({
       >
         <div
           className={cn(
-            "flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100/90 text-brand-700 shadow-sm ring-4 ring-brand-50/80",
+            "flex items-center justify-center bg-brand-50 text-brand-700 shadow-sm ring-4 ring-brand-50/80",
             styles.iconBox
           )}
         >
