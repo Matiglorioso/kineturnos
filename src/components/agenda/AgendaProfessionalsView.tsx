@@ -11,11 +11,11 @@ import { useEffect, useState } from "react";
 import { readableAvatarColor } from "@/lib/professional-utils";
 
 const STATUS_STYLES: Record<AppointmentStatus, { card: string; dot: string }> = {
-  pendiente: { card: "border-l-amber-400 bg-amber-50/90 hover:bg-amber-50", dot: "bg-amber-500" },
-  confirmado: { card: "border-l-emerald-400 bg-emerald-50/90 hover:bg-emerald-50", dot: "bg-emerald-500" },
-  atendido: { card: "border-l-sky-400 bg-sky-50/90 hover:bg-sky-50", dot: "bg-sky-500" },
-  cancelado: { card: "border-l-red-400 bg-red-50/80 opacity-80 hover:bg-red-50", dot: "bg-red-500" },
-  ausente: { card: "border-l-slate-400 bg-slate-100/90 opacity-80 hover:bg-slate-100", dot: "bg-slate-400" },
+  pendiente: { card: "border-amber-200 bg-amber-50/90 hover:bg-amber-50", dot: "bg-amber-500" },
+  confirmado: { card: "border-emerald-200 bg-emerald-50/90 hover:bg-emerald-50", dot: "bg-emerald-500" },
+  atendido: { card: "border-sky-200 bg-sky-50/90 hover:bg-sky-50", dot: "bg-sky-500" },
+  cancelado: { card: "border-red-200 bg-red-50/80 opacity-80 hover:bg-red-50", dot: "bg-red-500" },
+  ausente: { card: "border-slate-300 bg-slate-100/90 opacity-80 hover:bg-slate-100", dot: "bg-slate-400" },
 };
 
 interface AgendaProfessionalsViewProps {
@@ -42,7 +42,7 @@ function AppointmentChip({
       onClick={() => onClick(appointment)}
       aria-label={`${appointment.time} · ${appointment.patientName} · ${APPOINTMENT_STATUS_LABELS[appointment.status]}`}
       className={cn(
-        "flex w-full min-w-0 flex-col justify-center rounded-lg border border-l-4 border-slate-200/80 px-2.5 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+        "flex w-full min-w-0 flex-col justify-center rounded-lg border px-2.5 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
         styles.card,
         compact ? "py-1" : "h-full py-1.5"
       )}
