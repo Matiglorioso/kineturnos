@@ -64,5 +64,5 @@ export function formatLastLogin(iso: string | null, now: Date = new Date()): str
 
   if (day === getTodayAppDate(now)) return `Hoy ${time}`;
   if (day === getTodayAppDate(new Date(now.getTime() - 24 * 60 * 60 * 1000))) return `Ayer ${time}`;
-  return dayFormatter.format(date);
+  return dayFormatter.format(date).replace(/\//g, "-");
 }

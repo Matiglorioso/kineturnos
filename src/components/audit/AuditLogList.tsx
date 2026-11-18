@@ -35,7 +35,10 @@ function formatTimestamp(iso: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(iso));
+    hourCycle: "h23",
+  })
+    .format(new Date(iso))
+    .replace(/\//g, "-");
 }
 
 function Value({ value }: { value: string | null }) {
