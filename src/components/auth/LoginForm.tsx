@@ -1,11 +1,11 @@
 "use client";
 
 import { Logo } from "@/components/brand/Logo";
+import { KineMark } from "@/components/brand/KineMark";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
-import { getSupportMailto } from "@/data/public-help";
 import { safeCallbackUrl } from "@/lib/auth/safe-callback-url";
 import { getLoginErrorMessage } from "@/lib/login-errors";
 import { siteConfig } from "@/lib/site-config";
@@ -42,7 +42,6 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const supportMailto = getSupportMailto();
   const [formError, setFormError] = useState<string | null>(null);
 
   const authNotice = useMemo(
@@ -95,19 +94,21 @@ export function LoginForm() {
         <div className="mb-3 flex justify-center lg:hidden">
           <Logo size="lg" showText={false} />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700 max-lg:hidden">
-          {siteConfig.clinicName}
-        </p>
-        <h1 className="text-[22px] font-bold text-slate-900 lg:mt-1.5 lg:text-[1.65rem] lg:font-semibold">
-          <span className="lg:hidden">{siteConfig.name}</span>
-          <span className="max-lg:hidden">Ingresá a {siteConfig.name}</span>
-        </h1>
+        {/* Celular: nombre y consultorio. */}
+        <h1 className="text-[22px] font-bold text-slate-900 lg:hidden">{siteConfig.name}</h1>
         <p className="mt-1 text-[13px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
           {siteConfig.clinicName}
         </p>
-        <p className="mt-1.5 text-sm text-muted-foreground max-lg:hidden">
-          Acceso para administración y profesionales.
-        </p>
+        {/* Computadora: el isotipo y el título (el consultorio ya está en el panel izquierdo). */}
+        <div className="flex items-center gap-3 max-lg:hidden">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-brand-800 text-white">
+            <KineMark className="h-6 w-6" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Ingresá a {siteConfig.name}</h1>
+            <p className="text-sm text-muted-foreground">Administración y profesionales del consultorio.</p>
+          </div>
+        </div>
       </div>
 
       {authNotice && (
@@ -122,7 +123,7 @@ export function LoginForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-3.5 max-lg:pt-3 lg:space-y-4 lg:rounded-2xl lg:border lg:border-slate-200/80 lg:bg-white lg:p-5 lg:shadow-sm"
+        className="space-y-3.5 max-lg:pt-3 lg:space-y-4 lg:rounded-lg lg:border lg:border-slate-200 lg:bg-white lg:p-5"
         noValidate
       >
         <FormField id="email" label="Email">
@@ -137,10 +138,10 @@ export function LoginForm() {
               setEmail(event.target.value);
               if (formError) setFormError(null);
             }}
-            placeholder="nombre@consultorio.com"
+            placeholder="usuario@sanmarsalud.com"
             required
             aria-invalid={Boolean(formError)}
-            className="h-12 max-lg:bg-white sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10 lg:border-[#D1D5DB] lg:bg-white lg:shadow-none lg:focus-visible:border-brand-800 lg:focus-visible:ring-0 lg:focus-visible:shadow-[0_0_0_3px_rgba(36,74,34,0.15)]"
           />
         </FormField>
 
@@ -155,7 +156,7 @@ export function LoginForm() {
             }}
             required
             aria-invalid={Boolean(formError)}
-            className="h-12 max-lg:bg-white sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10 lg:border-[#D1D5DB] lg:bg-white lg:shadow-none lg:focus-visible:border-brand-800 lg:focus-visible:ring-0 lg:focus-visible:shadow-[0_0_0_3px_rgba(36,74,34,0.15)]"
           />
         </FormField>
 
@@ -179,38 +180,13 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="text-center text-xs text-muted-foreground lg:hidden">
-        ¿Olvidaste la contraseña? Pedila a Administración.
+      {/* La ayuda tiene el contacto de soporte. */}
+      <p className="text-center text-xs text-muted-foreground lg:text-left lg:text-sm">
+        ¿Olvidaste tu contraseña? Pedila a Administración ·{" "}
+        <Link href="/ayuda" className="font-semibold text-brand-700 hover:underline">
+          Ayuda
+        </Link>
       </p>
-      <div className="space-y-2 text-center text-sm text-muted-foreground max-lg:hidden lg:text-left">
-        <p className="leading-relaxed">
-          ¿Olvidaste tu contraseña? Pedile a Administración que te la restablezca
-          {supportMailto ? (
-            <>
-              {" "}o{" "}
-              <a href={supportMailto} className="font-medium text-brand-700 hover:underline">
-                contactá soporte
-              </a>
-            </>
-          ) : (
-            "."
-          )}
-          <span className="hidden lg:inline"> · </span>
-          <Link href="/ayuda" className="font-medium text-brand-700 hover:underline lg:inline">
-            Ayuda
-          </Link>
-        </p>
-        {supportMailto && (
-          <p className="text-xs leading-relaxed">
-            <a
-              href={supportMailto}
-              className="break-all font-medium text-brand-700 hover:underline lg:break-normal"
-            >
-              {siteConfig.supportEmail}
-            </a>
-          </p>
-        )}
-      </div>
     </div>
   );
 }
