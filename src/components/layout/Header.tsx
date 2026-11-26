@@ -12,32 +12,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { usePermissions } from "@/hooks/use-permissions";
 import { getRoleLabel } from "@/lib/auth/roles";
-import { formatTodayLongLabel } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ChevronDown, KeyRound, LogOut, Plus, Search } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 
 interface HeaderProps {
   title?: string;
   subtitle?: string;
-}
-
-function TodayLabel() {
-  const [today, setToday] = useState("");
-
-  useEffect(() => {
-    setToday(formatTodayLongLabel());
-  }, []);
-
-  return (
-    <p className="text-sm font-semibold capitalize text-slate-900">
-      {today || "\u00A0"}
-    </p>
-  );
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
@@ -76,7 +61,6 @@ export function Header({ title, subtitle }: HeaderProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-brand-700">
                 {siteConfig.clinicName}
               </p>
-              <TodayLabel />
             </div>
           )}
         </div>

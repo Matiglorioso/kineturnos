@@ -139,7 +139,6 @@ export default function UsuariosPage() {
       <PageHeader
         className="max-lg:hidden"
         title="Usuarios"
-        description="Accesos del personal del consultorio."
         actionLabel="Nuevo usuario"
         actionIcon={UserPlus}
         onAction={openCreate}

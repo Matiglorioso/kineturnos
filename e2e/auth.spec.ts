@@ -20,7 +20,7 @@ test.describe("login", () => {
 
       await expect(page).toHaveURL("/");
       await expect(
-        page.getByRole("heading", { level: 1, name: /^(Buen día|Buenas tardes|Buenas noches)/ })
+        page.getByRole("heading", { level: 1, name: /^Hoy/ }).filter({ visible: true })
       ).toBeVisible();
       await expect(page.getByText(USERS[role].roleLabel, { exact: true })).toBeVisible();
     });

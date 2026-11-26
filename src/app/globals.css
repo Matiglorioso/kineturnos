@@ -15,13 +15,13 @@
     --secondary: 45 18% 93%;
     --secondary-foreground: 45 7% 11%;
     --muted: 45 18% 93%;
-    --muted-foreground: 42 6% 40%;
+    --muted-foreground: 42 7% 32%;
     --accent: 100 30% 93%;
     --accent-foreground: 112 40% 25%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 44 15% 87%;
-    --input: 44 15% 85%;
+    --border: 44 14% 79%;
+    --input: 44 14% 76%;
     --ring: 114 41% 31%;
     --radius: 0.875rem;
     --radius-xl: 0.875rem;

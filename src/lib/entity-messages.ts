@@ -4,8 +4,8 @@ export function buildPermanentDeleteDescription(
 ): string {
   if (appointmentCount > 0) {
     const turnoLabel = appointmentCount === 1 ? "turno" : "turnos";
-    return `Se eliminara permanentemente a ${entityName} y sus ${appointmentCount} ${turnoLabel}. Esta accion no se puede deshacer.`;
+    return `Se elimina a ${entityName} y sus ${appointmentCount} ${turnoLabel}.`;
   }
 
-  return `Se eliminara permanentemente a ${entityName}. No tiene turnos registrados. Esta accion no se puede deshacer.`;
+  return `Se elimina a ${entityName}. No tiene turnos registrados.`;
 }

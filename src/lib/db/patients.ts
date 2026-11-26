@@ -203,10 +203,21 @@ export async function deletePatientFromDb(id: string): Promise<void> {
     );
   }
 
-  const clinicalCount = await prisma.historiaClinica.count({ where: { pacienteId: id } });
+  // Integridad de los datos clínicos: un paciente con registros no se borra, se da de baja
+  // (queda inactivo y conserva todo). Solo se puede borrar un alta sin ningún registro.
+  const [appointmentCount, clinicalCount, authorizationCount] = await Promise.all([
+    prisma.turno.count({ where: { pacienteId: id } }),
+    prisma.historiaClinica.count({ where: { pacienteId: id } }),
+    prisma.autorizacion.count({ where: { pacienteId: id } }),
+  ]);
   if (clinicalCount > 0) {
     throw new DeleteBlockedError(
-      "No se puede eliminar el paciente porque tiene historia clínica registrada. Marcalo como inactivo para conservar su historia."
+      "No se puede eliminar el paciente porque tiene historia clínica registrada. Dalo de baja para conservar su historia."
+    );
+  }
+  if (appointmentCount > 0 || authorizationCount > 0) {
+    throw new DeleteBlockedError(
+      "No se puede eliminar el paciente porque tiene turnos o autorizaciones registrados. Dalo de baja para conservarlos."
     );
   }
 

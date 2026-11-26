@@ -24,6 +24,9 @@ export const appToasts = {
         "Paciente registrado",
         `${name} ya forma parte del consultorio.`
       ),
+    discharged: (name: string) =>
+      showSuccessToast("Paciente dado de baja", `${name} quedó dado de baja. Sus registros se conservan.`),
+    reactivated: (name: string) => showSuccessToast("Paciente reactivado", `${name} volvió a estar activo.`),
     updated: (name: string) =>
       showSuccessToast(
         "Datos actualizados",
@@ -70,7 +73,7 @@ export const appToasts = {
     deleted: (patientName: string) =>
       showSuccessToast(
         "Turno eliminado",
-        `El registro de ${patientName} se eliminó de forma permanente.`
+        `Se eliminó el turno de ${patientName}.`
       ),
     validationError: () =>
       showErrorToast(

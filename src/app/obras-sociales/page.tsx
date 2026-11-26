@@ -8,7 +8,7 @@ import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useInsurances } from "@/hooks/use-insurances";
 import { MobilePageTitle, MobileSegmented } from "@/components/mobile/MobileUi";
-import { pageMetadata, siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ClipboardList, FileCheck2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -62,7 +62,7 @@ export default function ObrasSocialesPage() {
       />
 
       <div className="max-lg:hidden print:hidden">
-        <PageHeader title="Obras sociales" description={pageMetadata.obrasSociales.description} />
+        <PageHeader title="Obras sociales" />
       </div>
 
       <div

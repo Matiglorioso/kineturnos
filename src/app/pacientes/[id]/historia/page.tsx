@@ -190,16 +190,6 @@ function HistoriaClinicaContent() {
   return (
     <div className="space-y-5 max-lg:pb-20 lg:space-y-4">
       <div className="flex items-center justify-between gap-2 lg:hidden print:hidden">{backLink}</div>
-      {/* Computadora: dónde estás, sin botón de volver. */}
-      <nav aria-label="Ruta" className="hidden text-sm text-muted-foreground lg:block print:hidden">
-        <Link href="/pacientes" className="hover:text-slate-900 hover:underline">
-          Pacientes
-        </Link>
-        <span className="mx-1.5 text-slate-400">/</span>
-        <span className="text-slate-700">{patient.name}</span>
-        <span className="mx-1.5 text-slate-400">/</span>
-        <span>Historia clínica</span>
-      </nav>
 
       <p className="hidden text-xs text-slate-500 print:block">
         {siteConfig.clinicName} · Historia clínica · impresa el{" "}

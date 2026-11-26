@@ -153,10 +153,8 @@ export function NewProfessionalDialog({
             </span>
             {isEditing ? "Editar profesional" : "Nuevo profesional"}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Actualizá los datos y la disponibilidad del kinesiólogo."
-              : "Completá la ficha con especialidad y días de atención."}
+          <DialogDescription className="sr-only">
+            {isEditing ? "Datos del profesional" : "Alta de profesional"}
           </DialogDescription>
         </DialogHeader>
 

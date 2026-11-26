@@ -23,7 +23,9 @@ export function activeAppointmentsBlockMessage(
       ? "1 turno activo (pendiente o confirmado)"
       : `${activeCount} turnos activos (pendientes o confirmados)`;
   const action = activeCount === 1 ? "Cancelalo" : "Cancelalos";
-  return `No se puede desactivar al ${subject} porque tiene ${turnos}. ${action} o registrá su asistencia antes de desactivarlo.`;
+  // Al paciente se lo da de baja; al profesional se lo desactiva.
+  const [verb, verbAfter] = subject === "paciente" ? ["dar de baja", "darlo de baja"] : ["desactivar", "desactivarlo"];
+  return `No se puede ${verb} al ${subject} porque tiene ${turnos}. ${action} o registrá su asistencia antes de ${verbAfter}.`;
 }
 
 /** Días que estaban en la agenda del profesional y ya no (conserva cómo estaban escritos antes). */

@@ -37,7 +37,6 @@ interface PatientDetailDialogProps {
   appointments: Appointment[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDeleteRequest?: (patient: Patient) => void;
   onToggleStatus?: (patient: Patient) => void;
   onEdit?: (patient: Patient) => void;
   /** Cambió una autorización: refrescar la cobertura en la lista. */
@@ -49,7 +48,6 @@ export function PatientDetailDialog({
   appointments,
   open,
   onOpenChange,
-  onDeleteRequest,
   onToggleStatus,
   onEdit,
   onCoverageChange,
@@ -92,7 +90,6 @@ export function PatientDetailDialog({
             past={past}
             onEdit={onEdit}
             onToggleStatus={onToggleStatus}
-            onDeleteRequest={onDeleteRequest}
             onCoverageChange={onCoverageChange}
           />
         ) : (
@@ -185,20 +182,8 @@ export function PatientDetailDialog({
           </div>
         </div>
 
-        {(onEdit || onToggleStatus || onDeleteRequest) && (
+        {(onEdit || onToggleStatus) && (
           <DialogFooter className="flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Eliminar queda a la izquierda, separado de las acciones de todos los días. */}
-            {onDeleteRequest && (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-8 w-full border-red-200 px-3 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
-                onClick={() => onDeleteRequest(activePatient)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Eliminar paciente
-              </Button>
-            )}
             <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
               {onEdit && (
                 <Button
@@ -220,8 +205,8 @@ export function PatientDetailDialog({
                 >
                   <UserX className="h-3.5 w-3.5" />
                   {activePatient.status === "activo"
-                    ? "Desactivar paciente"
-                    : "Activar paciente"}
+                    ? "Dar de baja"
+                    : "Reactivar"}
                 </Button>
               )}
             </div>
