@@ -408,6 +408,7 @@ export default function AgendaPage() {
           renderActions={renderActions}
           renderStatus={renderStatus}
           onSelectAppointment={setSheetAppointment}
+          showProfessional={!isScopedProfessional}
           onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
           showClearFilters={hasActiveFilters && appointments.length > 0}

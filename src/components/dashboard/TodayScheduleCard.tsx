@@ -51,7 +51,7 @@ export function TodayScheduleCard({ schedule, nowMinutes, showProfessional }: To
                     {now ? " · en curso" : ""}
                   </span>
                 </span>
-                <StatusBadge status={appointment.status} />
+                <StatusBadge status={appointment.status} showIcon={false} />
               </li>
             );
           })}

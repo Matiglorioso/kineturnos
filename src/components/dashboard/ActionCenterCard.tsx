@@ -30,6 +30,8 @@ interface ActionCenterCardProps {
   patientsById: Map<string, Patient>;
   canConfirm: boolean;
   showCoverage: boolean;
+  /** El profesional en cada fila (el rol Profesional solo ve los suyos). */
+  showProfessional?: boolean;
   onStatusChange: (appointment: Appointment, status: AppointmentStatus) => Promise<void>;
 }
 
@@ -75,6 +77,7 @@ export function ActionCenterCard({
   canConfirm,
   showCoverage,
   onStatusChange,
+  showProfessional = true,
 }: ActionCenterCardProps) {
   const [busyId, setBusyId] = useState<string | null>(null);
   // Atendido y ausente son finales: se confirman antes de aplicarlos, como en la Agenda.
@@ -118,7 +121,8 @@ export function ActionCenterCard({
                       {appointment.patientName}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {formatAppDate(appointment.date, "EEE dd-MM")} · {appointment.professionalName}
+                      {formatAppDate(appointment.date, "EEE dd-MM")} ·{" "}
+                      {showProfessional ? appointment.professionalName : appointment.sessionType}
                     </span>
                   </span>
                   <span className="flex shrink-0 gap-1.5">
@@ -177,7 +181,7 @@ export function ActionCenterCard({
                         {appointment.patientName}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {appointment.professionalName}
+                        {showProfessional ? appointment.professionalName : appointment.sessionType}
                         {phone ? <span className="hidden sm:inline"> · {phone}</span> : null}
                       </span>
                     </span>
