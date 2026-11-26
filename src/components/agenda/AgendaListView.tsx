@@ -29,6 +29,8 @@ interface AgendaListViewProps {
   onClearFilters?: () => void;
   /** Celular: tocar un turno abre sus acciones (panel desde abajo). */
   onSelectAppointment?: (appointment: Appointment) => void;
+  /** Celular: el profesional en cada fila (no hace falta si son todos del usuario). */
+  showProfessional?: boolean;
 }
 
 export function AgendaListView({
@@ -42,6 +44,7 @@ export function AgendaListView({
   showClearFilters,
   onClearFilters,
   onSelectAppointment,
+  showProfessional = true,
 }: AgendaListViewProps) {
   // Al cambiar de día vuelve a la primera página (los filtros ya cambian la lista).
   const pagination = usePagination(appointments, { storageKey: "agenda-dia", resetKey: dateLabel });
@@ -133,10 +136,11 @@ export function AgendaListView({
                   {appointment.patientName}
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  {appointment.professionalName} · {appointment.sessionType}
+                  {showProfessional ? `${appointment.professionalName} · ` : ""}
+                  {appointment.sessionType}
                 </span>
               </span>
-              <StatusBadge status={appointment.status} className="shrink-0" />
+              <StatusBadge status={appointment.status} showIcon={false} className="shrink-0" />
             </button>
           </li>
         ))}

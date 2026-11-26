@@ -185,6 +185,7 @@ export default function DashboardPage() {
             patientsById={patientsById}
             canConfirm={can("appointments:status")}
             showCoverage={showCoverage}
+            showProfessional={!isScopedProfessional}
             onStatusChange={handleStatusChange}
           />
           <TodayScheduleCard
