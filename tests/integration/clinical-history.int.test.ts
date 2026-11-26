@@ -263,13 +263,18 @@ describe("corrección de registros: solo el autor, dentro de las 24 h", () => {
   });
 });
 
+/** Una API que se sacó: 404, o 405 si la ruta coincide con la de un registro ([entryId]). */
+function assertGone(status: number) {
+  assert.ok(status === 404 || status === 405, `esperaba 404 o 405 y fue ${status}`);
+}
+
 describe("trazabilidad (RNF07) y conservación", () => {
   it("las consultas a la historia quedan en la auditoría del Superadmin; ya no hay «Ver accesos»", async () => {
     const patient = await createPatient();
     await api(historia(patient.id), { auth: admin });
 
     // El registro por paciente se sacó de la pantalla y de la API.
-    assert.equal((await api(`${historia(patient.id)}/accesos`, { auth: admin })).status, 404);
+    assertGone((await api(`${historia(patient.id)}/accesos`, { auth: admin })).status);
 
     const superadmin = await login("superadmin@kineturnos.local");
     const log = await api<{ items: { action: string; entity: string; entityId: string | null }[] }>(
@@ -305,13 +310,11 @@ describe("la historia es solo la evolución", () => {
     for (const key of ["profile", "goals", "nextAppointment", "summary"]) {
       assert.ok(!(key in (history.data ?? {})), key);
     }
-    assert.equal(
-      (await api(`${historia(patient.id)}/ficha`, { method: "PUT", auth: admin, body: { alerts: "x" } })).status,
-      404
+    assertGone(
+      (await api(`${historia(patient.id)}/ficha`, { method: "PUT", auth: admin, body: { alerts: "x" } })).status
     );
-    assert.equal(
-      (await api(`${historia(patient.id)}/objetivos`, { method: "POST", auth: admin, body: { description: "x" } })).status,
-      404
+    assertGone(
+      (await api(`${historia(patient.id)}/objetivos`, { method: "POST", auth: admin, body: { description: "x" } })).status
     );
   });
 });

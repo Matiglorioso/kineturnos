@@ -155,10 +155,8 @@ describe("API de profesionales", () => {
       date: futureWorkday(11),
       time: "11:00",
     });
-    assert.equal(
-      (await api("/api/appointments", { method: "POST", body: appointment })).status,
-      201
-    );
+    const created = await api<{ id: string }>("/api/appointments", { method: "POST", body: appointment });
+    assert.equal(created.status, 201, created.error);
 
     const renamed = await api(`/api/professionals/${professional.id}`, {
       method: "PATCH",
@@ -171,8 +169,9 @@ describe("API de profesionales", () => {
     });
     assert.equal(renamed.status, 200, renamed.error);
 
+    // El id lo genera el servidor.
     const turno = await prisma.turno.findUniqueOrThrow({
-      where: { id: appointment.id },
+      where: { id: created.data!.id },
     });
     assert.equal(turno.profesionalNombre, "Nombre Nuevo");
   });

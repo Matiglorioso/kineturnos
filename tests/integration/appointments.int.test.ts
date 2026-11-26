@@ -108,11 +108,14 @@ describe("API de turnos", () => {
     const slot = { professionalId: professional.id, date: futureWorkday(14), time: "11:00" };
     const first = appointmentBody({ ...slot, patientId: patient.id });
 
-    assert.equal((await api("/api/appointments", { method: "POST", body: first })).status, 201);
-    await api(`/api/appointments/${first.id}`, {
+    const created = await api<{ id: string }>("/api/appointments", { method: "POST", body: first });
+    assert.equal(created.status, 201, created.error);
+    // El id lo genera el servidor.
+    const cancelled = await api(`/api/appointments/${created.data!.id}`, {
       method: "PATCH",
       body: { status: "cancelado" },
     });
+    assert.equal(cancelled.status, 200, cancelled.error);
 
     const again = await api("/api/appointments", {
       method: "POST",
