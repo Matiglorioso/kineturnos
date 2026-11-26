@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePermissions } from "@/hooks/use-permissions";
-import { canAccessPage } from "@/lib/auth/permissions";
+import { visibleNavItems } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 import {
   CalendarDays,
@@ -153,12 +153,8 @@ export function Sidebar({
   const pathname = usePathname();
   const { role } = usePermissions();
 
-  const visibleNavigation = role
-    ? navigation.filter((item) => canAccessPage(role, item.href))
-    : navigation;
-  const visibleSecondary = role
-    ? secondaryNavigation.filter((item) => canAccessPage(role, item.href))
-    : secondaryNavigation;
+  const visibleNavigation = visibleNavItems(role, navigation);
+  const visibleSecondary = visibleNavItems(role, secondaryNavigation);
 
   const renderNav = (options: {
     compact: boolean;

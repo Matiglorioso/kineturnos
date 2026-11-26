@@ -95,13 +95,14 @@ export function hasPermission(
 
 /**
  * Secciones del menú que puede ver el perfil. Mientras la sesión carga (sin perfil),
- * todavía no se sabe qué puede ver.
+ * solo las que ven todos los perfiles: así nunca aparece un instante algo que no le toca.
  */
 export function visibleNavItems<T extends { href: string }>(
   role: RolUsuario | null | undefined,
   items: readonly T[]
 ): T[] {
-  return role ? items.filter((item) => canAccessPage(role, item.href)) : [...items];
+  const roles = role ? [role] : (Object.keys(ROLE_PAGE_PREFIXES) as RolUsuario[]);
+  return items.filter((item) => roles.every((each) => canAccessPage(each, item.href)));
 }
 
 export function canAccessPage(role: RolUsuario, pathname: string): boolean {
