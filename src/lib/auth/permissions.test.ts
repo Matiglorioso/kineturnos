@@ -9,6 +9,7 @@ import {
   canScheduleAppointments,
   hasPermission,
   isScopedToOwnProfessional,
+  visibleNavItems,
   type Permission,
 } from "./permissions";
 import { canAccessAppPath, hasVerifyBypass, isPublicPath } from "./route-access";
@@ -81,6 +82,24 @@ describe("permisos: helpers por capacidad", () => {
     assert.equal(isScopedToOwnProfessional("profesional"), true);
     assert.equal(isScopedToOwnProfessional("admin"), false);
     assert.equal(isScopedToOwnProfessional("superadmin"), false);
+  });
+});
+
+describe("menú mientras carga la sesión", () => {
+  const items = ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/usuarios", "/auditoria", "/proyecto"].map(
+    (href) => ({ href })
+  );
+
+  it("sin perfil todavía, solo muestra lo que ven todos los perfiles (nunca Auditoría ni Usuarios)", () => {
+    assert.deepEqual(
+      visibleNavItems(undefined, items).map((item) => item.href),
+      ["/", "/agenda", "/pacientes", "/proyecto"]
+    );
+  });
+
+  it("con perfil, muestra lo que ese perfil puede ver", () => {
+    assert.ok(visibleNavItems("superadmin", items).some((item) => item.href === "/auditoria"));
+    assert.ok(!visibleNavItems("admin", items).some((item) => item.href === "/auditoria"));
   });
 });
 

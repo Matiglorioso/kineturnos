@@ -93,6 +93,17 @@ export function hasPermission(
   return ROLE_PERMISSIONS[role].includes(permission);
 }
 
+/**
+ * Secciones del menú que puede ver el perfil. Mientras la sesión carga (sin perfil),
+ * todavía no se sabe qué puede ver.
+ */
+export function visibleNavItems<T extends { href: string }>(
+  role: RolUsuario | null | undefined,
+  items: readonly T[]
+): T[] {
+  return role ? items.filter((item) => canAccessPage(role, item.href)) : [...items];
+}
+
 export function canAccessPage(role: RolUsuario, pathname: string): boolean {
   const allowed = ROLE_PAGE_PREFIXES[role];
 
