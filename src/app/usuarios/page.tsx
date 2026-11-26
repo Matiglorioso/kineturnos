@@ -6,6 +6,7 @@ import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { MobilePageTitle } from "@/components/mobile/MobileUi";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TemporaryPasswordDialog } from "@/components/users/TemporaryPasswordDialog";
 import { UserDialog } from "@/components/users/UserDialog";
@@ -128,8 +129,15 @@ export default function UsuariosPage() {
     );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Celular (boceto 11): cantidad, título y "+"; la lista arranca arriba, sin filtros. */}
+      <MobilePageTitle
+        eyebrow={`${users.length} ${users.length === 1 ? "usuario" : "usuarios"}`}
+        title="Usuarios"
+        action={{ label: "Nuevo usuario", onClick: openCreate }}
+      />
       <PageHeader
+        className="max-lg:hidden"
         title="Usuarios"
         description="Accesos del personal del consultorio."
         actionLabel="Nuevo usuario"
@@ -137,7 +145,7 @@ export default function UsuariosPage() {
         onAction={openCreate}
       />
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 max-lg:hidden lg:flex-row lg:items-center lg:justify-between">
         <div className="relative w-full lg:max-w-md">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

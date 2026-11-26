@@ -14,19 +14,17 @@ import {
   CalendarDays,
   CircleHelp,
   LayoutDashboard,
-  Menu,
   PanelLeftClose,
   PanelLeftOpen,
   Stethoscope,
   UserCog,
   Users,
-  X,
   ShieldCheck,
   History,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ComponentType } from "react";
+import { type ComponentType } from "react";
 
 /**
  * Patrón de portales SaaS (Linear / Notion / dashboards):
@@ -37,7 +35,7 @@ import { useState, type ComponentType } from "react";
 const SIDEBAR_TRANSITION =
   "duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
 
-const navigation = [
+export const navigation = [
   {
     name: "Panel",
     href: "/",
@@ -75,7 +73,7 @@ const navigation = [
   },
 ];
 
-const secondaryNavigation = [
+export const secondaryNavigation = [
   {
     name: "Ayuda",
     href: "/proyecto",
@@ -86,6 +84,7 @@ const secondaryNavigation = [
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /** Menú del celular: lo abre "Más" de la barra de abajo. */
 }
 
 function NavLink({
@@ -114,25 +113,20 @@ function NavLink({
         "flex items-center rounded-xl text-sm font-medium transition-colors duration-200",
         compact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
         isActive
-          ? "bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          ? "bg-white/[0.12] font-semibold text-white shadow-[inset_3px_0_0_theme(colors.brand.200)]"
+          : "text-brand-50/85 hover:bg-white/10 hover:text-white"
       )}
     >
       <Icon
         className={cn(
           "h-5 w-5 shrink-0",
-          isActive
-            ? "text-brand-700"
-            : "text-slate-500 group-hover:text-slate-600"
+          isActive ? "text-white" : "text-brand-200"
         )}
       />
       {/* No animar labels ocultos: evita spans opacity-0 que interceptan clicks */}
       {!compact && (
         <>
           <span className="truncate">{name}</span>
-          {isActive && (
-            <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
-          )}
         </>
       )}
     </Link>
@@ -157,7 +151,6 @@ export function Sidebar({
   onToggleCollapsed,
 }: SidebarProps) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { role } = usePermissions();
 
   const visibleNavigation = role
@@ -176,11 +169,6 @@ export function Sidebar({
     return (
       <>
         <nav className={cn("flex-1 space-y-1 p-3", compact ? "overflow-visible" : "overflow-y-auto")}>
-          {!compact && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-              Menú principal
-            </p>
-          )}
           {visibleNavigation.map((item) => {
             const isActive =
               item.href === "/"
@@ -201,12 +189,7 @@ export function Sidebar({
           })}
         </nav>
 
-        <nav className="space-y-1 px-3 pb-3">
-          {!compact && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-              Soporte
-            </p>
-          )}
+        <nav aria-label="Soporte" className="mx-3 space-y-1 border-t border-white/10 pb-3 pt-3">
           {visibleSecondary.map((item) => {
             const isActive = pathname.startsWith(item.href);
 
@@ -229,65 +212,24 @@ export function Sidebar({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm lg:hidden"
-        aria-label="Abrir menú"
-      >
-        <Menu className="h-5 w-5 text-slate-600" />
-      </button>
-
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden
-        />
-      )}
-
-      {/* Drawer móvil */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-md transition-transform duration-300 lg:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
-        )}
-        aria-hidden={!mobileOpen}
-      >
-        <button
-          type="button"
-          onClick={() => setMobileOpen(false)}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100"
-          aria-label="Cerrar menú"
-        >
-          <X className="h-4 w-4 text-slate-500" />
-        </button>
-        <div className="flex h-16 shrink-0 items-center border-b border-slate-200/60 px-5">
-          <Logo href="/" size="md" />
-        </div>
-        {renderNav({
-          compact: false,
-          onNavigate: () => setMobileOpen(false),
-        })}
-      </aside>
 
       {/* Rail fijo desktop / notebook */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-md transition-[width] lg:flex",
+          "fixed inset-y-0 left-0 z-40 hidden flex-col bg-brand-800 transition-[width] lg:flex",
           SIDEBAR_TRANSITION,
           collapsed ? "w-[4.5rem] overflow-visible" : "w-72 overflow-hidden"
         )}
       >
         <div
           className={cn(
-            "flex h-16 shrink-0 items-center border-b border-slate-200/60",
+            "flex h-16 shrink-0 items-center border-b border-white/10",
             collapsed ? "justify-center px-2" : "gap-1 px-3 pr-2"
           )}
         >
           {!collapsed && (
             <div className="min-w-0 flex-1 overflow-hidden px-1">
-              <Logo href="/" size="md" showText showTagline />
+              <Logo href="/" size="md" showText showTagline tone="dark" />
             </div>
           )}
 
@@ -299,7 +241,7 @@ export function Sidebar({
                   onClick={onToggleCollapsed}
                   aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
                   aria-expanded={!collapsed}
-                  className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:inline-flex"
+                  className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-brand-200 transition-colors hover:bg-white/10 hover:text-white lg:inline-flex"
                 >
                   {collapsed ? (
                     <PanelLeftOpen className="h-4 w-4" />

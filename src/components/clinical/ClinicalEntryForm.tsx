@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,77 +13,103 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { ClinicalEntryRequest } from "@/lib/api/clinical-history-client";
 import { ApiError } from "@/lib/api/fetch-json";
-import { getAppointmentStatusLabel } from "@/lib/appointment-status";
 import { CLINICAL_TEXT_MAX_LENGTH } from "@/lib/clinical-history";
-import { formatAppDate } from "@/lib/date-utils";
-import type { ClinicalSessionOption } from "@/types";
+import { compareAppDates, formatAppDate, isValidAppDate, normalizeAppDate } from "@/lib/date-utils";
 import { Save } from "lucide-react";
 import { useState } from "react";
 
-const NO_SESSION = "sin-turno";
+type Field = "date" | "professionalId" | "evolution" | "form";
 
-type Values = { appointmentId: string; diagnosis: string; treatment: string; evolution: string };
+/**
+ * Guía de la evolución, en el orden habitual de una nota de sesión de kinesiología
+ * (subjetivo, intervención, respuesta y plan). Es solo ayuda: el campo sigue siendo libre.
+ */
+const EVOLUTION_GUIDE = [
+  "Cómo llegó: dolor (EVA 0–10), molestias desde la última sesión",
+  "Qué se hizo: técnicas y ejercicios (series × repeticiones, carga)",
+  "Cómo respondió: tolerancia, cambios en movilidad o fuerza",
+  "Indicaciones: ejercicios para casa, próximos pasos",
+].join("\n");
+
+/**
+ * Datos del alta: la fecha arranca en hoy y el profesional lo elige Administración; el
+ * Profesional registra a su nombre. Si se abre desde un turno de la agenda, fecha y
+ * profesional salen del turno.
+ */
+export interface NewClinicalEntryContext {
+  today: string;
+  professionalOptions?: { id: string; name: string }[];
+  ownProfessionalName?: string | null;
+  appointment?: { id: string; date: string; professionalName: string } | null;
+}
 
 interface ClinicalEntryFormProps {
   idPrefix: string;
-  /** Solo en el alta: turnos que se pueden asociar al registro. */
-  sessionOptions?: ClinicalSessionOption[];
-  defaultAppointmentId?: string | null;
-  initial?: Partial<Values>;
+  /** Alta: fecha, profesional y evolución. Sin esto, es una corrección: solo la evolución. */
+  newEntry?: NewClinicalEntryContext;
+  initialEvolution?: string;
   submitLabel: string;
   onSubmit: (body: ClinicalEntryRequest) => Promise<void>;
   onCancel?: () => void;
-  /** Diagnóstico y plan vigentes, como referencia en el alta. */
-  current?: { diagnosis: string | null; treatment: string | null };
 }
 
 export function ClinicalEntryForm({
   idPrefix,
-  sessionOptions,
-  defaultAppointmentId,
-  initial,
+  newEntry,
+  initialEvolution,
   submitLabel,
   onSubmit,
   onCancel,
-  current,
 }: ClinicalEntryFormProps) {
-  const initialSession =
-    defaultAppointmentId && sessionOptions?.some((option) => option.id === defaultAppointmentId)
-      ? defaultAppointmentId
-      : NO_SESSION;
-  const [values, setValues] = useState<Values>({
-    appointmentId: initialSession,
-    diagnosis: initial?.diagnosis ?? "",
-    treatment: initial?.treatment ?? "",
-    evolution: initial?.evolution ?? "",
-  });
-  const [errors, setErrors] = useState<Partial<Record<keyof Values | "form", string>>>({});
+  const appointment = newEntry?.appointment ?? null;
+  const [date, setDate] = useState(appointment?.date ?? newEntry?.today ?? "");
+  const [professionalId, setProfessionalId] = useState("");
+  const [evolution, setEvolution] = useState(initialEvolution ?? "");
+  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [saving, setSaving] = useState(false);
 
-  const update = (field: keyof Values, value: string) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
+  const fixedProfessional = appointment?.professionalName ?? newEntry?.ownProfessionalName ?? null;
+  const asksProfessional = Boolean(newEntry && !fixedProfessional);
+
+  const clear = (field: Field) => setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
+
+  const validate = (): Partial<Record<Field, string>> => {
+    const found: Partial<Record<Field, string>> = {};
+    if (newEntry && !appointment) {
+      if (!isValidAppDate(date)) found.date = "Ingresá la fecha con el formato dd-mm-aaaa.";
+      else if (compareAppDates(date, newEntry.today) > 0) found.date = "La fecha no puede ser futura.";
+    }
+    if (asksProfessional && !professionalId) found.professionalId = "Elegí qué profesional atendió la sesión.";
+    if (!evolution.trim()) found.evolution = "Escribí la evolución de la sesión.";
+    return found;
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!values.evolution.trim()) {
-      setErrors({ evolution: "Escribí la evolución de la sesión." });
+    const found = validate();
+    if (Object.keys(found).length > 0) {
+      setErrors(found);
       return;
     }
 
     setSaving(true);
     try {
-      await onSubmit({
-        appointmentId: values.appointmentId === NO_SESSION ? null : values.appointmentId,
-        diagnosis: values.diagnosis,
-        treatment: values.treatment,
-        evolution: values.evolution,
-      });
+      await onSubmit(
+        newEntry
+          ? {
+              appointmentId: appointment?.id ?? null,
+              date: appointment ? null : normalizeAppDate(date),
+              professionalId: asksProfessional ? professionalId : null,
+              evolution,
+            }
+          : { evolution }
+      );
     } catch (error) {
-      setErrors({
-        form: error instanceof ApiError ? error.message : "No se pudo guardar el registro.",
-      });
+      if (error instanceof ApiError && error.field && ["date", "professionalId", "evolution"].includes(error.field)) {
+        setErrors({ [error.field as Field]: error.message });
+      } else {
+        setErrors({ form: error instanceof ApiError ? error.message : "No se pudo guardar el registro." });
+      }
     } finally {
       setSaving(false);
     }
@@ -92,57 +119,69 @@ export function ClinicalEntryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      {sessionOptions && (
-        <FormField id={id("session")} label="Sesión">
-          <Select value={values.appointmentId} onValueChange={(value) => update("appointmentId", value)}>
-            <SelectTrigger id={id("session")}>
-              <SelectValue placeholder="Elegí el turno" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_SESSION}>Sin turno asociado (fecha de hoy)</SelectItem>
-              {sessionOptions.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {formatAppDate(option.date)} {option.time} · {option.professionalName} ·{" "}
-                  {getAppointmentStatusLabel(option.status)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
+      {newEntry && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField id={id("date")} label="Fecha" required error={errors.date}>
+            <Input
+              id={id("date")}
+              value={appointment ? formatAppDate(appointment.date) : date}
+              onChange={(event) => {
+                setDate(event.target.value);
+                clear("date");
+              }}
+              placeholder="dd-mm-aaaa"
+              inputMode="numeric"
+              disabled={Boolean(appointment)}
+            />
+          </FormField>
+
+          <FormField id={id("professional")} label="Profesional" required error={errors.professionalId}>
+            {fixedProfessional ? (
+              <Input id={id("professional")} value={fixedProfessional} disabled />
+            ) : (
+              <Select
+                value={professionalId}
+                onValueChange={(value) => {
+                  setProfessionalId(value);
+                  clear("professionalId");
+                }}
+              >
+                <SelectTrigger id={id("professional")}>
+                  <SelectValue placeholder="Elegí el profesional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(newEntry.professionalOptions ?? []).map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+        </div>
       )}
 
-      <FormField id={id("evolution")} label="Evolución de la sesión" required error={errors.evolution}>
+      {appointment && (
+        <p className="-mt-2 text-xs text-muted-foreground">Fecha y profesional del turno de la agenda.</p>
+      )}
+
+      <FormField id={id("evolution")} label="Evolución" required error={errors.evolution}>
         <Textarea
           id={id("evolution")}
-          value={values.evolution}
-          onChange={(event) => update("evolution", event.target.value)}
-          placeholder="Qué se trabajó, cómo respondió el paciente, indicaciones..."
+          value={evolution}
+          onChange={(event) => {
+            setEvolution(event.target.value);
+            clear("evolution");
+          }}
+          placeholder={EVOLUTION_GUIDE}
           maxLength={CLINICAL_TEXT_MAX_LENGTH}
-          rows={4}
+          rows={8}
+          aria-describedby={id("evolution-hint")}
         />
-      </FormField>
-
-      <FormField id={id("diagnosis")} label="Diagnóstico">
-        <Textarea
-          id={id("diagnosis")}
-          value={values.diagnosis}
-          onChange={(event) => update("diagnosis", event.target.value)}
-          placeholder={current?.diagnosis ? `Vigente: ${current.diagnosis}` : "Diagnóstico kinésico"}
-          maxLength={CLINICAL_TEXT_MAX_LENGTH}
-          rows={2}
-        />
-        <p className="text-xs text-muted-foreground">Completalo solo si es el primero o si cambia.</p>
-      </FormField>
-      <FormField id={id("treatment")} label="Plan de tratamiento">
-        <Textarea
-          id={id("treatment")}
-          value={values.treatment}
-          onChange={(event) => update("treatment", event.target.value)}
-          placeholder={current?.treatment ? `Vigente: ${current.treatment}` : "Técnicas, frecuencia y cantidad de sesiones"}
-          maxLength={CLINICAL_TEXT_MAX_LENGTH}
-          rows={2}
-        />
-        <p className="text-xs text-muted-foreground">Completalo solo si es el primero o si cambia.</p>
+        <p id={id("evolution-hint")} className="text-xs text-muted-foreground">
+          Orden sugerido: cómo llegó (dolor EVA 0–10), qué se hizo, cómo respondió e indicaciones para casa.
+        </p>
       </FormField>
 
       {errors.form && (

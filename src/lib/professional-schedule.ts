@@ -22,6 +22,12 @@ export function getWeekdayLabelFromAppDate(dateStr: string): string | null {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+/** "Domingo" → "domingos", "Lunes" → "lunes": para frases como "no atiende los domingos". */
+function weekdayPlural(label: string): string {
+  const lower = label.toLocaleLowerCase("es-AR");
+  return lower.endsWith("s") ? lower : `${lower}s`;
+}
+
 function normalizeWeekday(day: string): string {
   return day
     .toLowerCase()
@@ -65,7 +71,7 @@ export function validateProfessionalAppointmentSlot(
   if (!professionalWorksOnDay(professional, date)) {
     const weekday = getWeekdayLabelFromAppDate(date);
     return {
-      day: `${professional.name} no atiende los ${weekday ?? "ese día"}. Días: ${professional.days.join(", ")}.`,
+      day: `${professional.name} no atiende ${weekday ? `los ${weekdayPlural(weekday)}` : "ese día"}. Días: ${professional.days.join(", ")}.`,
     };
   }
 

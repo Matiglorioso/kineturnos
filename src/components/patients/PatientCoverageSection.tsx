@@ -2,6 +2,7 @@
 
 import { AuthorizationDialog } from "@/components/patients/AuthorizationDialog";
 import { CoverageBadge } from "@/components/patients/CoverageBadge";
+import { DetailRow, DetailSection, detailRowsClassName } from "@/components/shared/DetailSection";
 import { Button } from "@/components/ui/button";
 import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
 import {
@@ -17,7 +18,7 @@ import { AUTHORIZATION_STATE_LABELS } from "@/lib/insurance";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { Authorization, Patient, PatientCoverage } from "@/types";
-import { Pencil, Plus, Shield, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 const STATE_STYLES: Record<Authorization["state"], string> = {
@@ -31,17 +32,26 @@ interface PatientCoverageSectionProps {
   canManage: boolean;
   /** Avisa que cambió la cobertura (para refrescar la lista de pacientes). */
   onChanged?: () => void;
+  className?: string;
+  /** "mobile": como el boceto del celular (tarjeta de datos, autorizaciones con barra y la acción abajo). */
+  variant?: "desktop" | "mobile";
 }
 
 function period(authorization: Authorization): string {
   const from = formatAppDate(authorization.validFrom, APP_DATE_FORMAT);
   return authorization.validUntil
     ? `${from} al ${formatAppDate(authorization.validUntil, APP_DATE_FORMAT)}`
-    : `Desde ${from}, sin vencimiento`;
+    : `desde ${from}`;
 }
 
 /** Obra social, datos de afiliado y autorizaciones del paciente (RF07, RF14, RF15). */
-export function PatientCoverageSection({ patient, canManage, onChanged }: PatientCoverageSectionProps) {
+export function PatientCoverageSection({
+  patient,
+  canManage,
+  onChanged,
+  className,
+  variant = "desktop",
+}: PatientCoverageSectionProps) {
   const [authorizations, setAuthorizations] = useState<Authorization[] | null>(null);
   const [coverage, setCoverage] = useState<PatientCoverage | undefined>(patient.coverage);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -93,131 +103,8 @@ export function PatientCoverageSection({ patient, canManage, onChanged }: Patien
     }
   };
 
-  return (
-    <section aria-labelledby="cobertura-titulo" className="space-y-3 border-t border-slate-100 pt-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h3 id="cobertura-titulo" className="flex items-center gap-2 font-semibold text-slate-900">
-          <Shield className="h-4 w-4 text-slate-500" />
-          Cobertura
-        </h3>
-        {canManage && hasInsurance && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setDialog({ open: true, authorization: null })}
-          >
-            <Plus className="h-4 w-4" />
-            Nueva autorización
-          </Button>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-700">
-        <span className="font-medium">{patient.insurance}</span>
-        {patient.affiliateNumber && <span>Afiliado Nº {patient.affiliateNumber}</span>}
-        {patient.insurancePlan && <span>Plan {patient.insurancePlan}</span>}
-        <CoverageBadge coverage={coverage} />
-      </div>
-
-      {!hasInsurance ? (
-        <p className="text-sm text-muted-foreground">
-          Paciente particular. Para cargar autorizaciones, primero elegí su obra social en “Editar paciente”.
-        </p>
-      ) : loadError ? (
-        <p className="text-sm text-destructive">{loadError}</p>
-      ) : authorizations === null ? (
-        <p className="text-sm text-muted-foreground">Cargando autorizaciones…</p>
-      ) : authorizations.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Todavía no hay autorizaciones cargadas.</p>
-      ) : (
-        <ul className="space-y-2">
-          {authorizations.map((authorization) => {
-            const percent = Math.min(100, Math.round((authorization.used / authorization.sessions) * 100));
-            return (
-              <li
-                key={authorization.id}
-                aria-label={`Autorización ${authorization.number ?? "sin número"}`}
-                className={cn(
-                  "rounded-xl border border-slate-200 p-3",
-                  !authorization.current && "opacity-60"
-                )}
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 space-y-1">
-                    <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
-                      {authorization.number ? `Nº ${authorization.number}` : "Sin número"}
-                      <span
-                        className={cn(
-                          "rounded-md px-1.5 py-0.5 text-xs font-medium",
-                          STATE_STYLES[authorization.state]
-                        )}
-                      >
-                        {AUTHORIZATION_STATE_LABELS[authorization.state]}
-                      </span>
-                      {!authorization.current && (
-                        <span className="text-xs font-normal text-muted-foreground">
-                          ({authorization.insuranceName})
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{period(authorization)}</p>
-                  </div>
-                  {canManage && (
-                    <div className="flex shrink-0 gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        aria-label="Editar autorización"
-                        onClick={() => setDialog({ open: true, authorization })}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        aria-label="Eliminar autorización"
-                        onClick={() => setToDelete(authorization)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-2 flex items-center gap-3">
-                  <div
-                    className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"
-                    role="progressbar"
-                    aria-label="Sesiones usadas"
-                    aria-valuemin={0}
-                    aria-valuemax={authorization.sessions}
-                    aria-valuenow={authorization.used}
-                  >
-                    <div
-                      className={cn(
-                        "h-full rounded-full",
-                        authorization.used >= authorization.sessions ? "bg-red-400" : "bg-brand-500"
-                      )}
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <span className="shrink-0 text-xs font-medium text-slate-700">
-                    {authorization.used} de {authorization.sessions} sesiones
-                  </span>
-                </div>
-                {authorization.notes && (
-                  <p className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">{authorization.notes}</p>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
+  const dialogs = (
+    <>
       {canManage && (
         <AuthorizationDialog
           open={dialog.open}
@@ -225,6 +112,14 @@ export function PatientCoverageSection({ patient, canManage, onChanged }: Patien
           insuranceName={patient.insurance}
           authorization={dialog.authorization}
           onSubmit={save}
+          onDelete={
+            variant === "mobile" && dialog.authorization
+              ? () => {
+                  setToDelete(dialog.authorization);
+                  setDialog((current) => ({ ...current, open: false }));
+                }
+              : undefined
+          }
         />
       )}
 
@@ -237,6 +132,216 @@ export function PatientCoverageSection({ patient, canManage, onChanged }: Patien
         onConfirm={() => void remove()}
         destructive
       />
-    </section>
+    </>
+  );
+
+  if (variant === "mobile") {
+    return (
+      <>
+        <div className={cn("flex-1 overflow-y-auto px-3 pb-3", className)}>
+          <dl className="rounded-2xl border border-slate-200/80 bg-white">
+            <MobileRow label="Obra social">{patient.insurance}</MobileRow>
+            {patient.affiliateNumber && <MobileRow label="Afiliado">{patient.affiliateNumber}</MobileRow>}
+            {patient.insurancePlan && <MobileRow label="Plan">{patient.insurancePlan}</MobileRow>}
+          </dl>
+
+          {hasInsurance && (
+            <p className="mx-1 mb-1.5 mt-3 text-[11px] font-bold uppercase tracking-wide text-brand-800">
+              Autorizaciones
+            </p>
+          )}
+          {!hasInsurance ? (
+            <p className="mx-1 mt-2.5 text-xs text-muted-foreground">
+              Paciente particular. Para cargar autorizaciones, primero elegí su obra social en “Editar paciente”.
+            </p>
+          ) : loadError ? (
+            <p className="mx-1 text-sm text-destructive">{loadError}</p>
+          ) : authorizations === null ? (
+            <p className="mx-1 text-xs text-muted-foreground">Cargando autorizaciones…</p>
+          ) : authorizations.length === 0 ? (
+            <p className="mx-1 text-xs text-muted-foreground">Todavía no hay autorizaciones cargadas.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+              {authorizations.map((authorization) => {
+                const percent = Math.min(
+                  100,
+                  Math.round((authorization.used / Math.max(1, authorization.sessions)) * 100)
+                );
+                const body = (
+                  <>
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-semibold text-slate-900">
+                        {authorization.number ? `Nº ${authorization.number}` : "Sin número"}
+                      </span>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                          STATE_STYLES[authorization.state]
+                        )}
+                      >
+                        {AUTHORIZATION_STATE_LABELS[authorization.state]}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {period(authorization)} · {authorization.used} de {authorization.sessions} sesiones
+                    </span>
+                    <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <span
+                        className={cn(
+                          "block h-full rounded-full",
+                          authorization.used >= authorization.sessions ? "bg-red-500" : "bg-brand-600"
+                        )}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </span>
+                  </>
+                );
+                return (
+                  <li
+                    key={authorization.id}
+                    aria-label={`Autorización ${authorization.number ?? "sin número"}`}
+                    className={cn(!authorization.current && "opacity-60")}
+                  >
+                    {canManage ? (
+                      <button
+                        type="button"
+                        className="block w-full px-3.5 py-3 text-left"
+                        onClick={() => setDialog({ open: true, authorization })}
+                      >
+                        {body}
+                      </button>
+                    ) : (
+                      <div className="px-3.5 py-3">{body}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {canManage && hasInsurance && (
+          <div className="border-t border-slate-200/80 bg-background p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <Button
+              type="button"
+              className="h-12 w-full text-[15px]"
+              onClick={() => setDialog({ open: true, authorization: null })}
+            >
+              Nueva autorización
+            </Button>
+          </div>
+        )}
+        {dialogs}
+      </>
+    );
+  }
+
+  return (
+    <DetailSection
+      title="Obra social"
+      className={className}
+      action={
+        canManage && hasInsurance ? (
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto px-0 py-0 text-xs"
+            onClick={() => setDialog({ open: true, authorization: null })}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nueva autorización
+          </Button>
+        ) : undefined
+      }
+    >
+      <dl className={detailRowsClassName}>
+        <DetailRow label="Obra social">
+          <span className="flex flex-wrap items-center gap-2">
+            {patient.insurance}
+            <CoverageBadge coverage={coverage} />
+          </span>
+        </DetailRow>
+        {patient.affiliateNumber && <DetailRow label="Afiliado">{patient.affiliateNumber}</DetailRow>}
+        {patient.insurancePlan && <DetailRow label="Plan">{patient.insurancePlan}</DetailRow>}
+      </dl>
+
+      {!hasInsurance ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Paciente particular. Para cargar autorizaciones, primero elegí su obra social en “Editar paciente”.
+        </p>
+      ) : loadError ? (
+        <p className="mt-2 text-sm text-destructive">{loadError}</p>
+      ) : authorizations === null ? (
+        <p className="mt-2 text-xs text-muted-foreground">Cargando autorizaciones…</p>
+      ) : authorizations.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">Todavía no hay autorizaciones cargadas.</p>
+      ) : (
+        // Una autorización por renglón: número, estado, sesiones usadas y período.
+        <ul className="mt-2 divide-y divide-slate-100 border-t border-slate-100">
+          {authorizations.map((authorization) => (
+            <li
+              key={authorization.id}
+              aria-label={`Autorización ${authorization.number ?? "sin número"}`}
+              className={cn("flex flex-wrap items-center gap-x-2 gap-y-0.5 py-1.5 text-sm", !authorization.current && "opacity-60")}
+              title={authorization.notes ?? undefined}
+            >
+              <span className="min-w-0 truncate font-medium text-slate-900">
+                {authorization.number ? `Nº ${authorization.number}` : "Sin número"}
+              </span>
+              <span
+                className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-xs font-medium", STATE_STYLES[authorization.state])}
+              >
+                {AUTHORIZATION_STATE_LABELS[authorization.state]}
+              </span>
+              <span
+                className={cn(
+                  "shrink-0 text-xs tabular-nums",
+                  authorization.used >= authorization.sessions ? "font-semibold text-red-600" : "text-slate-600"
+                )}
+              >
+                {authorization.used}/{authorization.sessions} ses.
+              </span>
+              <span className="order-last basis-full text-xs text-muted-foreground">{period(authorization)}</span>
+              {canManage && (
+                <span className="ml-auto flex shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label="Editar autorización"
+                    onClick={() => setDialog({ open: true, authorization })}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    aria-label="Eliminar autorización"
+                    onClick={() => setToDelete(authorization)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {dialogs}
+    </DetailSection>
+  );
+}
+
+/** Renglón de la tarjeta del celular: etiqueta a la izquierda, valor a la derecha. */
+export function MobileRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-t border-slate-100 px-3.5 py-3 text-sm first:border-t-0">
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-words text-right font-semibold text-slate-900">{children}</dd>
+    </div>
   );
 }

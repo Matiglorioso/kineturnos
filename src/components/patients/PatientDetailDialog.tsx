@@ -1,11 +1,11 @@
 "use client";
 
 import { PatientStatusBadge } from "@/components/appointments/StatusBadge";
-import { AppointmentListSection } from "@/components/shared/AppointmentListSection";
-import { InfoRow } from "@/components/shared/InfoRow";
+import { CompactAppointmentList } from "@/components/shared/CompactAppointmentList";
+import { DetailRow, DetailSection, detailRowsClassName } from "@/components/shared/DetailSection";
 import { PatientCoverageSection } from "@/components/patients/PatientCoverageSection";
-import { emptyStates } from "@/lib/empty-states";
-import { pluralize } from "@/lib/pluralize";
+import { PatientDetailMobile } from "@/components/patients/PatientDetailMobile";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useDisplayEntity } from "@/hooks/use-display-entity";
 import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
@@ -17,30 +17,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { countPatientAppointments } from "@/lib/patient-appointments";
 import { splitPatientAppointments } from "@/lib/patient-appointments";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Appointment, Patient } from "@/types";
 import { formatAppDate } from "@/lib/date-utils";
 import { formatAge } from "@/lib/birth-date";
 import { formatCuil } from "@/lib/document-validation";
-import {
-  Cake,
-  Calendar,
-  CalendarClock,
-  CalendarPlus,
-  FileHeart,
-  History,
-  IdCard,
-  Mail,
-  Phone,
-  Trash2,
-  Pencil,
-  User,
-  UserX,
-} from "lucide-react";
+import { CalendarPlus, FileHeart, Pencil, Trash2, UserX } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+
+/** Turnos que se muestran de cada lista (el resto, con "Ver todos"): así la ficha entra sin scroll. */
+const UPCOMING_SHOWN = 3;
+
+const HISTORY_SHOWN = 5;
 
 interface PatientDetailDialogProps {
   patient: Patient | null;
@@ -65,152 +55,159 @@ export function PatientDetailDialog({
   onCoverageChange,
 }: PatientDetailDialogProps) {
   const { activeEntity: activePatient } = useDisplayEntity(patient, open);
+  const isDesktop = useIsDesktop();
   const { can, canSchedule } = usePermissions();
 
-  const { upcoming, past, totalAppointments } = useMemo(() => {
-    if (!activePatient) {
-      return { upcoming: [], past: [], totalAppointments: 0 };
-    }
-
-    const split = splitPatientAppointments(appointments, activePatient.id);
-
-    return {
-      ...split,
-      totalAppointments: countPatientAppointments(
-        appointments,
-        activePatient.id
-      ),
-    };
-  }, [appointments, activePatient]);
+  const { upcoming, past } = useMemo(
+    () =>
+      activePatient
+        ? splitPatientAppointments(appointments, activePatient.id)
+        : { upcoming: [], past: [] },
+    [appointments, activePatient]
+  );
 
   if (!activePatient) return null;
 
-  const createdAtLabel = activePatient.createdAt
-    ? formatAppDate(activePatient.createdAt)
-    : null;
+  const canBook = canSchedule && activePatient.status === "activo";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent
+        hideClose={!isDesktop}
+        className={cn(
+          "max-h-[90vh] overflow-y-auto focus:outline-none sm:max-w-3xl lg:max-w-4xl",
+          // Celular: pantalla completa (boceto, pantallas 5 a 7).
+          "max-lg:!inset-0 max-lg:!flex max-lg:!h-[100dvh] max-lg:!max-h-[100dvh] max-lg:!w-full max-lg:!max-w-none max-lg:!translate-x-0 max-lg:!translate-y-0 max-lg:!flex-col max-lg:!gap-0 max-lg:!overflow-hidden max-lg:!rounded-none max-lg:!border-0 max-lg:!p-0"
+        )}
+        // Abre con el foco en el cuadro, sin resaltar el primer botón.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus();
+        }}
+      >
+        {!isDesktop ? (
+          <PatientDetailMobile
+            patient={activePatient}
+            upcoming={upcoming}
+            past={past}
+            onEdit={onEdit}
+            onToggleStatus={onToggleStatus}
+            onDeleteRequest={onDeleteRequest}
+            onCoverageChange={onCoverageChange}
+          />
+        ) : (
+          <>
         <DialogHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-700 text-lg font-bold text-white shadow-sm">
-              {getInitials(activePatient.name)}
-            </div>
-            <div className="min-w-0 flex-1 text-left">
-              <DialogTitle className="text-xl">{activePatient.name}</DialogTitle>
-              <DialogDescription className="mt-1">
-                Ficha del paciente y historial de turnos
-              </DialogDescription>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <PatientStatusBadge
-                  active={activePatient.status === "activo"}
-                />
-                {canSchedule && activePatient.status === "activo" && (
-                  <Button asChild size="sm">
-                    <Link
-                      href={`/agenda?nuevo=1&paciente=${encodeURIComponent(activePatient.id)}`}
-                    >
-                      <CalendarPlus className="h-4 w-4" />
-                      Agendar turno
-                    </Link>
-                  </Button>
-                )}
-                {can("clinical:read") && (
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/pacientes/${encodeURIComponent(activePatient.id)}/historia`}>
-                      <FileHeart className="h-4 w-4" />
-                      Historia clínica
-                    </Link>
-                  </Button>
-                )}
+          {/* Una sola línea: nombre y estado a la izquierda; las acciones a la derecha. */}
+          <div className="flex items-center gap-3 pr-8 sm:justify-between">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <DialogTitle className="truncate text-left text-lg">{activePatient.name}</DialogTitle>
+                <PatientStatusBadge active={activePatient.status === "activo"} />
               </div>
+              <DialogDescription className="sr-only">Ficha del paciente</DialogDescription>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {canBook && (
+                <Button asChild size="sm" className="h-8 px-3 text-xs">
+                  <Link href={`/agenda?nuevo=1&paciente=${encodeURIComponent(activePatient.id)}`}>
+                    <CalendarPlus className="h-3.5 w-3.5" />
+                    Agendar turno
+                  </Link>
+                </Button>
+              )}
+              {can("clinical:read") && (
+                <Button asChild size="sm" variant="outline" className="h-8 px-3 text-xs">
+                  <Link href={`/pacientes/${encodeURIComponent(activePatient.id)}/historia`}>
+                    <FileHeart className="h-3.5 w-3.5" />
+                    Historia clínica
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <InfoRow icon={User} label="DNI" value={activePatient.dni} />
-            <InfoRow
-              icon={IdCard}
-              label="CUIL"
-              value={activePatient.cuil ? formatCuil(activePatient.cuil) : "No registrado"}
+        {/* Dos columnas en la computadora: a la izquierda quién es (datos y obra social), a la derecha sus turnos. */}
+        <div className="grid min-w-0 grid-cols-2 gap-4">
+          <div className="flex min-w-0 flex-col gap-4">
+            <div>
+              <DetailSection title="Datos del paciente">
+                {/* Los datos opcionales que no están cargados no se muestran. */}
+                <dl className={detailRowsClassName}>
+                  <DetailRow label="DNI">{activePatient.dni}</DetailRow>
+                  <DetailRow label="Teléfono">
+                    <a href={`tel:${activePatient.phone.replace(/[^\d+]/g, "")}`}>
+                      {activePatient.phone}
+                    </a>
+                  </DetailRow>
+                  {activePatient.cuil && <DetailRow label="CUIL">{formatCuil(activePatient.cuil)}</DetailRow>}
+                  {activePatient.birthDate && (
+                    <DetailRow label="Nacimiento">
+                      {formatAppDate(activePatient.birthDate)} ({formatAge(activePatient.birthDate)})
+                    </DetailRow>
+                  )}
+                  {activePatient.email && <DetailRow label="Email">{activePatient.email}</DetailRow>}
+                  {activePatient.notes?.trim() && (
+                    <DetailRow label="Observaciones">{activePatient.notes.trim()}</DetailRow>
+                  )}
+                </dl>
+              </DetailSection>
+            </div>
+
+            <PatientCoverageSection
+              key={activePatient.id}
+              patient={activePatient}
+              canManage={can("insurances:write")}
+              onChanged={onCoverageChange}
+              className="flex-1"
             />
-            <InfoRow
-              icon={Cake}
-              label="Fecha de nacimiento"
-              value={
-                activePatient.birthDate
-                  ? `${formatAppDate(activePatient.birthDate)} (${formatAge(activePatient.birthDate)})`
-                  : "No registrada"
-              }
-            />
-            <InfoRow icon={Phone} label="Teléfono" value={activePatient.phone} />
-            <InfoRow
-              icon={Mail}
-              label="Email"
-              value={activePatient.email || "No registrado"}
-            />
-            {createdAtLabel && (
-              <InfoRow
-                icon={Calendar}
-                label="Fecha de alta"
-                value={createdAtLabel}
-              />
-            )}
           </div>
 
-          <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Observaciones
-            </p>
-            <p className="mt-1 text-sm text-slate-700">
-              {activePatient.notes?.trim() || "Sin observaciones registradas."}
-            </p>
-          </div>
-
-          <PatientCoverageSection
-            key={activePatient.id}
-            patient={activePatient}
-            canManage={can("insurances:write")}
-            onChanged={onCoverageChange}
-          />
-
-          <div className={cn("space-y-6 border-t border-slate-100 pt-6")}>
-            <AppointmentListSection
+          <div className="flex min-w-0 flex-col gap-4">
+            <CompactAppointmentList
               title="Próximos turnos"
-              icon={CalendarClock}
               appointments={upcoming}
-              emptyPreset={emptyStates.patientDetail.noUpcoming}
+              show="professional"
+              emptyText="No tiene turnos próximos."
+              limit={UPCOMING_SHOWN}
+              showSessionType={false}
             />
-
-            <AppointmentListSection
+            <CompactAppointmentList
               title="Historial de turnos"
-              icon={History}
               appointments={past}
-              emptyPreset={emptyStates.patientDetail.noHistory}
+              show="professional"
+              emptyText="Todavía no tiene turnos pasados."
+              limit={HISTORY_SHOWN}
+              showSessionType={false}
+              className="flex-1"
             />
           </div>
         </div>
 
         {(onEdit || onToggleStatus || onDeleteRequest) && (
-          <DialogFooter className="flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="w-full text-xs text-muted-foreground sm:max-w-[45%]">
-              {/* El total se desglosa para que cierre con las dos listas de arriba. */}
-              {totalAppointments > 0
-                ? `${pluralize(totalAppointments, "turno")} en total: ${pluralize(upcoming.length, "próximo")} y ${past.length} en el historial.`
-                : "Este paciente no tiene turnos registrados."}
-            </p>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+          <DialogFooter className="flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Eliminar queda a la izquierda, separado de las acciones de todos los días. */}
+            {onDeleteRequest && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-8 w-full border-red-200 px-3 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                onClick={() => onDeleteRequest(activePatient)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Eliminar paciente
+              </Button>
+            )}
+            <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
               {onEdit && (
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full sm:w-auto"
+                  className="h-8 w-full px-3 text-xs sm:w-auto"
                   onClick={() => onEdit(activePatient)}
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="h-3.5 w-3.5" />
                   Editar paciente
                 </Button>
               )}
@@ -218,28 +215,19 @@ export function PatientDetailDialog({
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full sm:w-auto"
+                  className="h-8 w-full px-3 text-xs sm:w-auto"
                   onClick={() => onToggleStatus(activePatient)}
                 >
-                  <UserX className="h-4 w-4" />
+                  <UserX className="h-3.5 w-3.5" />
                   {activePatient.status === "activo"
                     ? "Desactivar paciente"
                     : "Activar paciente"}
                 </Button>
               )}
-              {onDeleteRequest && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
-                  onClick={() => onDeleteRequest(activePatient)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar paciente
-                </Button>
-              )}
             </div>
           </DialogFooter>
+        )}
+          </>
         )}
       </DialogContent>
     </Dialog>

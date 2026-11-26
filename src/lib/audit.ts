@@ -7,6 +7,9 @@
  * nunca entra al registro un hash de contraseña ni una contraseña temporal.
  */
 
+import { roleFromLabel } from "@/lib/auth/roles";
+import type { AuditLogItem } from "@/types";
+
 export type AuditEntity =
   | "turno"
   | "paciente"
@@ -29,6 +32,12 @@ export type AuditAction =
   | "ingreso_fallido"
   | "cambio_password"
   | "restablecimiento_password";
+
+/**
+ * Acciones que muestra la pantalla de auditoría: las de la tabla `auditoria` más las
+ * consultas a la historia clínica, que salen de `accesos_historia_clinica`.
+ */
+export type AuditLogAction = AuditAction | "consulta";
 
 type FieldKind = "text" | "date" | "time" | "bool" | "list";
 
@@ -84,6 +93,7 @@ export const AUDIT_FIELDS: Record<AuditEntity, Record<string, FieldSpec>> = {
     sesiones: { label: "Sesiones" },
     fechaDesde: { label: "Desde", kind: "date" },
     vencimiento: { label: "Vencimiento", kind: "date" },
+    diagnostico: { label: "Diagnóstico" },
     observaciones: { label: "Observaciones" },
   },
   historia_clinica: {
@@ -123,7 +133,8 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntity, string> = {
   sesion: "Ingreso al sistema",
 };
 
-export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
+export const AUDIT_ACTION_LABELS: Record<AuditLogAction, string> = {
+  consulta: "Consultó",
   alta: "Alta",
   modificacion: "Modificación",
   baja: "Baja",
@@ -283,4 +294,40 @@ export function describeUserAgent(userAgent: string | null): string | null {
               : null;
   if (browser && system) return `${browser} en ${system}`;
   return browser ?? system;
+}
+
+/** Lectura de una historia clínica (`accesos_historia_clinica`), como fila de la auditoría. */
+export function clinicalReadToAuditItem(read: {
+  id: string;
+  fecha: Date;
+  usuarioId: string;
+  usuarioNombre: string;
+  usuarioRol: string;
+  pacienteId: string;
+  pacienteNombre: string;
+}): AuditLogItem {
+  return {
+    id: read.id,
+    at: read.fecha.toISOString(),
+    userId: read.usuarioId,
+    userName: read.usuarioNombre,
+    userRole: roleFromLabel(read.usuarioRol) ?? read.usuarioRol,
+    action: "consulta",
+    entity: "historia_clinica",
+    entityId: read.pacienteId,
+    label: read.pacienteNombre,
+    changes: [],
+    ip: null,
+    userAgent: null,
+  };
+}
+
+/** Junta dos listas ya ordenadas por fecha, del más reciente al más viejo, con el tope. */
+export function mergeAuditItems(
+  a: AuditLogItem[],
+  b: AuditLogItem[],
+  max: number
+): { items: AuditLogItem[]; truncated: boolean } {
+  const all = [...a, ...b].sort((x, y) => y.at.localeCompare(x.at) || y.id.localeCompare(x.id));
+  return { items: all.slice(0, max), truncated: all.length > max };
 }

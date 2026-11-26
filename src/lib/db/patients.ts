@@ -8,6 +8,7 @@ import {
 } from "@/lib/db/patient-write";
 import { ACTIVE_APPOINTMENT_STATUSES } from "@/lib/appointment-status";
 import { DeleteBlockedError, DuplicateFieldError } from "@/lib/db/errors";
+import { activeAppointmentsBlockMessage } from "@/lib/deactivation-rules";
 import { syncTurnoPatientName } from "@/lib/db/sync";
 import {
   appDateToDb,
@@ -165,6 +166,15 @@ export async function updatePatientInDb(
 
   const existing = await getPatientByIdFromDb(id);
   const writeData = toPacienteWriteData(input);
+
+  // Desactivar con turnos activos se bloquea (quedarían vigentes, con recordatorios).
+  if (existing?.status === "activo" && writeData.estado === "inactivo") {
+    const activeCount = await prisma.turno.count({
+      where: { pacienteId: id, estado: { in: [...ACTIVE_APPOINTMENT_STATUSES] } },
+    });
+    const blocked = activeAppointmentsBlockMessage("paciente", activeCount);
+    if (blocked) throw new DeleteBlockedError(blocked);
+  }
 
   const record = await prisma.paciente.update({
     where: { id },

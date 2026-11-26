@@ -6,7 +6,8 @@ export const metadata = createPageMetadata("cambiarContrasena");
 
 export default function CambiarContrasenaPage() {
   return (
-    <AuthPageShell>
+    // Celular: "Volver" arriba de todo, como en los formularios.
+    <AuthPageShell className="max-lg:pt-[calc(env(safe-area-inset-top)+0.5rem)]">
       <ChangePasswordForm />
     </AuthPageShell>
   );

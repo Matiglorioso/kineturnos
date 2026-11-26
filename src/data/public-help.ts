@@ -10,7 +10,7 @@ export const publicHelpFaqs: { question: string; answer: string }[] = [
   {
     question: "¿Quién me da usuario y contraseña?",
     answer:
-      "El administrador del consultorio crea las cuentas del equipo. Si no tenés acceso, contactá soporte.",
+      "El administrador del consultorio crea las cuentas del equipo. Si no tenés acceso, pedíselo a Administración.",
   },
   {
     question: "Olvidé mi contraseña, ¿qué hago?",
@@ -29,7 +29,9 @@ export const publicHelpFaqs: { question: string; answer: string }[] = [
   },
 ];
 
-export function getSupportMailto(): string {
+/** Enlace para escribir a soporte, o null si no hay mail configurado. */
+export function getSupportMailto(): string | null {
+  if (!siteConfig.supportEmail) return null;
   return `mailto:${siteConfig.supportEmail}?subject=${encodeURIComponent(
     `Soporte ${siteConfig.name} - ${siteConfig.clinicName}`
   )}`;

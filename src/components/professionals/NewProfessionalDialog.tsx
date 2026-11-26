@@ -141,7 +141,7 @@ export function NewProfessionalDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent mobileFullScreen className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
@@ -283,8 +283,8 @@ export function NewProfessionalDialog({
             />
           </FormField>
 
-          <DialogFooter className="gap-2 pt-2 sm:gap-0">
-            <Button
+          <DialogFooter className="pt-2">
+            <Button data-cancel
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}

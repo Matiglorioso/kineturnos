@@ -6,7 +6,7 @@ import {
   ValidationError,
 } from "@/lib/db/errors";
 import {
-  resolveAppointmentId,
+  newAppointmentId,
   toAppointmentFormInput,
   toTurnoWriteData,
   type AppointmentWriteInput,
@@ -218,7 +218,7 @@ export async function createAppointmentInDb(
       try {
         created = await tx.turno.create({
           data: {
-            id: resolveAppointmentId(input),
+            id: newAppointmentId(),
             ...toTurnoWriteData(input, names),
           },
         });

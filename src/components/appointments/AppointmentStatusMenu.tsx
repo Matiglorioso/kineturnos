@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getAppointmentStatusLabel, getStatusMenuOptions } from "@/lib/appointment-status";
-import { formatAppointmentSlotLabel } from "@/lib/datetime-format";
 import { getTodayAppDate } from "@/lib/date-utils";
+import { statusChangeConfirmation } from "@/lib/status-confirm";
 import { cn } from "@/lib/utils";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { Ban, Check, CheckCircle2, ChevronDown, UserX } from "lucide-react";
@@ -20,8 +20,8 @@ const OPTIONS: Record<
   Exclude<AppointmentStatus, "pendiente">,
   { label: string; icon: typeof Check; className: string }
 > = {
-  confirmado: { label: "Confirmado", icon: Check, className: "text-brand-700" },
-  atendido: { label: "Atendido", icon: CheckCircle2, className: "text-emerald-600" },
+  confirmado: { label: "Confirmado", icon: Check, className: "text-sky-700" },
+  atendido: { label: "Atendido", icon: CheckCircle2, className: "text-brand-700" },
   ausente: { label: "Ausente", icon: UserX, className: "text-slate-500" },
   cancelado: { label: "Cancelado", icon: Ban, className: "text-red-600" },
 };
@@ -39,21 +39,21 @@ export function AppointmentStatusMenu({
   onStatusChange: (appointment: Appointment, status: AppointmentStatus) => void;
   className?: string;
 }) {
-  const [confirming, setConfirming] = useState<"ausente" | "cancelado" | null>(null);
+  const [confirming, setConfirming] = useState<AppointmentStatus | null>(null);
   const options = getStatusMenuOptions(appointment, getTodayAppDate());
 
   if (options.length === 0) {
     return <StatusBadge status={appointment.status} className={className} />;
   }
 
-  const slot = formatAppointmentSlotLabel(appointment.date, appointment.time);
+  const confirmation = confirming ? statusChangeConfirmation(appointment, confirming) : null;
 
   return (
     <>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           aria-label={`Estado: ${getAppointmentStatusLabel(appointment.status)}. Cambiar estado del turno de ${appointment.patientName}`}
-          className={cn("rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", className)}
+          className={cn("rounded-full lg:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", className)}
         >
           <StatusBadge
             status={appointment.status}
@@ -70,8 +70,8 @@ export function AppointmentStatusMenu({
                 key={status}
                 className={status === "cancelado" ? "text-red-600 focus:text-red-600" : undefined}
                 onSelect={() => {
-                  // Ausente y cancelado se confirman; el resto se aplica directo.
-                  if (status === "ausente" || status === "cancelado") setConfirming(status);
+                  // Los estados finales (atendido, ausente, cancelado) se confirman; confirmar va directo.
+                  if (statusChangeConfirmation(appointment, status)) setConfirming(status);
                   else onStatusChange(appointment, status);
                 }}
               >
@@ -84,21 +84,14 @@ export function AppointmentStatusMenu({
       </DropdownMenu>
 
       <ConfirmAlertDialog
-        open={confirming === "cancelado"}
+        open={Boolean(confirmation)}
         onOpenChange={(open) => !open && setConfirming(null)}
-        title="Cancelar turno"
-        description={`Se cancelará el turno de ${appointment.patientName} el ${slot}. Esta acción no elimina el registro, solo cambia su estado.`}
-        confirmLabel="Sí, cancelar turno"
-        destructive
-        onConfirm={() => onStatusChange(appointment, "cancelado")}
-      />
-      <ConfirmAlertDialog
-        open={confirming === "ausente"}
-        onOpenChange={(open) => !open && setConfirming(null)}
-        title="Marcar turno como ausente"
-        description={`Se marcará como ausente el turno de ${appointment.patientName} el ${slot}.`}
-        confirmLabel="Sí, marcar ausente"
-        onConfirm={() => onStatusChange(appointment, "ausente")}
+        title={confirmation?.title ?? ""}
+        description={confirmation?.description ?? ""}
+        confirmLabel={confirmation?.confirmLabel ?? ""}
+        cancelLabel="Volver"
+        destructive={confirmation?.destructive}
+        onConfirm={() => confirming && onStatusChange(appointment, confirming)}
       />
     </>
   );

@@ -34,6 +34,29 @@ const SheetContent = React.forwardRef<
 ));
 SheetContent.displayName = "SheetContent";
 
+
+/** Panel que sube desde abajo (celular): acciones al alcance del pulgar. */
+const BottomSheetContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col gap-3 overflow-y-auto rounded-t-3xl bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 shadow-elevated duration-300 focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        className
+      )}
+      {...props}
+    >
+      <div aria-hidden className="mx-auto h-1 w-10 shrink-0 rounded-full bg-slate-300" />
+      {children}
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+BottomSheetContent.displayName = "BottomSheetContent";
+
 const SheetTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
@@ -58,4 +81,4 @@ const SheetDescription = React.forwardRef<
 ));
 SheetDescription.displayName = "SheetDescription";
 
-export { Sheet, SheetContent, SheetDescription, SheetTitle };
+export { BottomSheetContent, Sheet, SheetContent, SheetDescription, SheetTitle };

@@ -1,5 +1,11 @@
 import { differenceInYears } from "date-fns";
-import { getTodayAppDate, isValidAppDate, parseAppDate } from "@/lib/date-utils";
+import {
+  NONEXISTENT_DATE_MESSAGE,
+  getTodayAppDate,
+  isAppDateFormat,
+  isValidAppDate,
+  parseAppDate,
+} from "@/lib/date-utils";
 
 const MAX_AGE = 120;
 
@@ -19,6 +25,7 @@ export function birthDateValidationError(
   if (!normalized) return undefined;
 
   if (!isValidAppDate(normalized)) {
+    if (isAppDateFormat(normalized)) return NONEXISTENT_DATE_MESSAGE;
     return "Ingresá la fecha con el formato dd-mm-aaaa";
   }
 

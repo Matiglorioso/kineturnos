@@ -76,9 +76,11 @@ test.describe("rol profesional", () => {
     // Desde un turno, "Nueva evolución" se abre sola con ese turno elegido.
     const composer = page.getByRole("dialog", { name: "Nueva evolución" });
     await expect(composer).toBeVisible();
-    await expect(composer.getByRole("combobox", { name: "Sesión" })).toContainText("10:00");
-    await composer.getByRole("textbox", { name: "Evolución de la sesión *" }).fill("Buena tolerancia al ejercicio.");
-    await composer.getByRole("textbox", { name: "Diagnóstico" }).fill("Tendinitis rotuliana");
+    // Fecha y profesional salen del turno y no se pueden cambiar.
+    await expect(composer.getByRole("textbox", { name: "Fecha *" })).toHaveValue(date);
+    await expect(composer.getByRole("textbox", { name: "Fecha *" })).toBeDisabled();
+    await expect(composer.getByRole("textbox", { name: "Profesional *" })).toBeDisabled();
+    await composer.getByRole("textbox", { name: "Evolución *" }).fill("Buena tolerancia al ejercicio.");
     await composer.getByRole("button", { name: "Guardar en la historia" }).click();
 
     await expect(page.getByText("Sesión registrada")).toBeVisible();
@@ -89,8 +91,6 @@ test.describe("rol profesional", () => {
     await expect(entry).toContainText("Turno de la agenda");
     await expect(entry).toContainText("Editable");
     await expect(entry.getByRole("button", { name: "Corregir" })).toBeVisible();
-    await expect(page.getByText("Diagnóstico vigente")).toBeVisible();
-    await expect(page.getByText("Tendinitis rotuliana").first()).toBeVisible();
     // El registro de accesos es solo para Administración.
     await expect(page.getByRole("heading", { name: "Registro de accesos" })).toHaveCount(0);
   });

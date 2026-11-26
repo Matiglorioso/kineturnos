@@ -56,7 +56,7 @@ describe("fecha de nacimiento", () => {
 
   it("rechaza formato inválido, fechas inexistentes, futuras y de hace más de 120 años", () => {
     assert.equal(birthDateValidationError("1990-03-05", today), "Ingresá la fecha con el formato dd-mm-aaaa");
-    assert.equal(birthDateValidationError("31-02-1990", today), "Ingresá la fecha con el formato dd-mm-aaaa");
+    assert.equal(birthDateValidationError("31-02-1990", today), "Esa fecha no existe. Revisá el día y el mes.");
     assert.equal(birthDateValidationError("20-10-2026", today), "La fecha de nacimiento no puede ser futura");
     assert.equal(birthDateValidationError("01-01-1900", today), "Revisá la fecha de nacimiento");
     assert.equal(birthDateValidationError("19-10-2026", today), undefined);

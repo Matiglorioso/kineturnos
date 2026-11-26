@@ -24,9 +24,11 @@ interface InsuranceDialogProps {
   /** null = alta. */
   insurance: Insurance | null;
   onSubmit: (body: InsuranceRequest) => Promise<void>;
+  /** Al editar, ofrece eliminarla (en el celular no hay botón en la fila). */
+  onDelete?: () => void;
 }
 
-export function InsuranceDialog({ open, onOpenChange, insurance, onSubmit }: InsuranceDialogProps) {
+export function InsuranceDialog({ open, onOpenChange, insurance, onSubmit, onDelete }: InsuranceDialogProps) {
   const [name, setName] = useState("");
   const [active, setActive] = useState(true);
   const [notes, setNotes] = useState("");
@@ -61,7 +63,7 @@ export function InsuranceDialog({ open, onOpenChange, insurance, onSubmit }: Ins
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent mobileFullScreen className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{insurance ? "Editar obra social" : "Nueva obra social"}</DialogTitle>
           <DialogDescription>
@@ -104,7 +106,18 @@ export function InsuranceDialog({ open, onOpenChange, insurance, onSubmit }: Ins
             </label>
           )}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            {insurance && onDelete && (
+              <Button
+                type="button"
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:mr-auto"
+                onClick={onDelete}
+                disabled={saving}
+              >
+                Eliminar
+              </Button>
+            )}
+            <Button data-cancel type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
               Cancelar
             </Button>
             <Button type="submit" disabled={saving}>

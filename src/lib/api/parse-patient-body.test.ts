@@ -205,3 +205,13 @@ describe("parsePatientWriteInput: CUIL y fecha de nacimiento (RF08)", () => {
     assert.equal(parsePatientWriteInput(validBody({ birthDate: "31-02-1990" })).field, "birthDate");
   });
 });
+
+describe("parsePatientWriteInput: observaciones", () => {
+  it("rechaza observaciones de más de 1000 caracteres", () => {
+    assert.deepEqual(parsePatientWriteInput(validBody({ notes: "x".repeat(1001) })), {
+      error: "Las observaciones no pueden superar los 1000 caracteres.",
+      field: "notes",
+    });
+    assert.equal(parsePatientWriteInput(validBody({ notes: "x".repeat(1000) })).error, undefined);
+  });
+});

@@ -8,7 +8,6 @@ import {
   DataTableRow,
 } from "@/components/ui/DataTable";
 import { Patient } from "@/types";
-import { getInitials } from "@/lib/utils";
 import { formatAppDate } from "@/lib/date-utils";
 import {
   Tooltip,
@@ -18,7 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { usePermissions } from "@/hooks/use-permissions";
-import { Eye, FileHeart } from "lucide-react";
+import { FileHeart } from "lucide-react";
 import Link from "next/link";
 
 interface PatientTableProps {
@@ -54,15 +53,21 @@ export function PatientTable({
         className={className}
       >
         {patients.map((patient) => (
-          <DataTableRow key={patient.id}>
+          <DataTableRow key={patient.id} onClick={() => onViewDetail(patient)}>
             <DataTableCell>
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-700">
-                  {getInitials(patient.name)}
-                </div>
-                <span className="font-medium text-slate-900">
+                {/* Toda la fila abre la ficha; el nombre es el botón para el teclado y los lectores. */}
+                <button
+                  type="button"
+                  className="rounded font-medium text-slate-900 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Ver detalle de ${patient.name}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onViewDetail(patient);
+                  }}
+                >
                   {patient.name}
-                </span>
+                </button>
               </div>
             </DataTableCell>
             <DataTableCell className="font-mono text-xs text-slate-600">
@@ -90,21 +95,6 @@ export function PatientTable({
             <DataTableCell>
               {/* Solo íconos; el nombre de cada acción aparece al pasar el mouse (y lo leen los lectores de pantalla). */}
               <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-slate-600 hover:text-brand-800"
-                      aria-label="Ver detalle"
-                      onClick={() => onViewDetail(patient)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Ver detalle</TooltipContent>
-                </Tooltip>
                 {showClinical && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -117,6 +107,7 @@ export function PatientTable({
                         <Link
                           href={`/pacientes/${encodeURIComponent(patient.id)}/historia`}
                           aria-label="Historia clínica"
+                          onClick={(event) => event.stopPropagation()}
                         >
                           <FileHeart className="h-4 w-4" />
                         </Link>

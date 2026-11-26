@@ -43,6 +43,14 @@ export function getTodayAppDate(referenceDate: Date = new Date()): string {
   return `${day}-${month}-${year}`;
 }
 
+/** Para fechas bien escritas que no existen en el calendario (31-02, 30-02…). */
+export const NONEXISTENT_DATE_MESSAGE = "Esa fecha no existe. Revisá el día y el mes.";
+
+/** Tiene la forma dd-mm-aaaa, exista o no la fecha. */
+export function isAppDateFormat(dateStr: string): boolean {
+  return APP_DATE_REGEX.test(dateStr);
+}
+
 export function isValidAppDate(dateStr: string): boolean {
   if (!APP_DATE_REGEX.test(dateStr)) return false;
   return parseAppDate(dateStr) !== null;

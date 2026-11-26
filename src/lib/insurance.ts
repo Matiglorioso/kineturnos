@@ -1,5 +1,13 @@
 import type { ParseResult } from "@/lib/api/parse-result";
-import { APP_DATE_FORMAT, compareAppDates, formatAppDate, isValidAppDate, normalizeAppDate } from "@/lib/date-utils";
+import {
+  APP_DATE_FORMAT,
+  NONEXISTENT_DATE_MESSAGE,
+  compareAppDates,
+  formatAppDate,
+  isAppDateFormat,
+  isValidAppDate,
+  normalizeAppDate,
+} from "@/lib/date-utils";
 
 export const PARTICULAR = "Particular";
 
@@ -259,10 +267,13 @@ export type AuthorizationInput = {
   sessions: number;
   validFrom: string;
   validUntil: string | null;
+  /** Diagnóstico de la orden médica. */
+  diagnosis: string | null;
   notes: string | null;
 };
 
 export const MAX_AUTHORIZED_SESSIONS = 100;
+export const AUTHORIZATION_DIAGNOSIS_MAX_LENGTH = 300;
 
 function text(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -289,16 +300,30 @@ export function parseAuthorizationInput(body: unknown): ParseResult<Authorizatio
   }
 
   const validFrom = text(raw.validFrom);
+  if (validFrom && isAppDateFormat(validFrom) && !isValidAppDate(validFrom)) {
+    return { error: NONEXISTENT_DATE_MESSAGE, field: "validFrom" };
+  }
   if (!validFrom || !isValidAppDate(validFrom)) {
     return { error: "Indicá desde qué fecha vale la autorización (dd-mm-aaaa).", field: "validFrom" };
   }
 
   const validUntil = text(raw.validUntil);
+  if (validUntil && isAppDateFormat(validUntil) && !isValidAppDate(validUntil)) {
+    return { error: NONEXISTENT_DATE_MESSAGE, field: "validUntil" };
+  }
   if (validUntil && !isValidAppDate(validUntil)) {
     return { error: "Fecha de vencimiento inválida (dd-mm-aaaa).", field: "validUntil" };
   }
   if (validUntil && compareAppDates(validUntil, validFrom) < 0) {
     return { error: "El vencimiento no puede ser anterior a la fecha de inicio.", field: "validUntil" };
+  }
+
+  const diagnosis = text(raw.diagnosis);
+  if (diagnosis && diagnosis.length > AUTHORIZATION_DIAGNOSIS_MAX_LENGTH) {
+    return {
+      error: `El diagnóstico no puede superar los ${AUTHORIZATION_DIAGNOSIS_MAX_LENGTH} caracteres.`,
+      field: "diagnosis",
+    };
   }
 
   return {
@@ -308,6 +333,7 @@ export function parseAuthorizationInput(body: unknown): ParseResult<Authorizatio
       sessions,
       validFrom: normalizeAppDate(validFrom),
       validUntil: validUntil ? normalizeAppDate(validUntil) : null,
+      diagnosis,
       notes: text(raw.notes),
     },
   };

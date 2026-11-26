@@ -302,6 +302,8 @@ model Autorizacion {
   sesiones        Int
   fechaDesde      DateTime           @map("fecha_desde") @db.Date
   vencimiento     DateTime?          @db.Date
+  /// Diagnóstico de la orden médica que trae el paciente.
+  diagnostico     String?
   observaciones   String?
   creadoPorNombre String             @map("creado_por_nombre")
   creadoEn        DateTime           @default(now()) @map("creado_en") @db.Timestamptz(6)

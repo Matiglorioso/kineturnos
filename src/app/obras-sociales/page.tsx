@@ -7,7 +7,8 @@ import { DataLoadError } from "@/components/shared/DataLoadError";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useInsurances } from "@/hooks/use-insurances";
-import { pageMetadata } from "@/lib/site-config";
+import { MobilePageTitle, MobileSegmented } from "@/components/mobile/MobileUi";
+import { pageMetadata, siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ClipboardList, FileCheck2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -23,6 +24,8 @@ const TABS: { value: Tab; label: string; shortLabel: string; icon: typeof Shield
 export default function ObrasSocialesPage() {
   const { insurances, isLoading, error, refresh } = useInsurances();
   const [tab, setTab] = useState<Tab>("autorizaciones");
+  // El "+" del celular (en Catálogo) le pide al catálogo que abra el alta.
+  const [newInsuranceRequest, setNewInsuranceRequest] = useState(0);
 
   // Atajo del panel: ?pestana=planilla abre esa pestaña; después se limpia la URL.
   useEffect(() => {
@@ -38,15 +41,34 @@ export default function ObrasSocialesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="print:hidden">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Celular (boceto 8 a 10): consultorio, título, "+" en Catálogo y pestañas en segmentado. */}
+      <MobilePageTitle
+        className="print:hidden"
+        eyebrow={siteConfig.clinicName}
+        title="Obras sociales"
+        action={
+          tab === "catalogo"
+            ? { label: "Nueva obra social", onClick: () => setNewInsuranceRequest((count) => count + 1) }
+            : undefined
+        }
+      />
+      <MobileSegmented
+        label="Secciones de obras sociales"
+        className="lg:hidden print:hidden"
+        items={TABS.map(({ value, shortLabel }) => ({ value, label: shortLabel }))}
+        value={tab}
+        onChange={setTab}
+      />
+
+      <div className="max-lg:hidden print:hidden">
         <PageHeader title="Obras sociales" description={pageMetadata.obrasSociales.description} />
       </div>
 
       <div
         role="tablist"
         aria-label="Secciones de obras sociales"
-        className="inline-flex w-full rounded-xl bg-muted p-1 sm:w-auto print:hidden"
+        className="inline-flex w-full rounded-xl bg-muted p-1 sm:w-auto max-lg:hidden print:hidden"
       >
         {TABS.map(({ value, label, shortLabel, icon: Icon }) => (
           <button
@@ -74,7 +96,7 @@ export default function ObrasSocialesPage() {
       ) : tab === "autorizaciones" ? (
         <AuthorizationsList insurances={insurances} />
       ) : tab === "catalogo" ? (
-        <InsuranceCatalog insurances={insurances} onChange={refresh} />
+        <InsuranceCatalog insurances={insurances} onChange={refresh} newRequest={newInsuranceRequest} />
       ) : (
         <AttendanceReportView insurances={insurances} />
       )}

@@ -42,6 +42,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const supportMailto = getSupportMailto();
   const [formError, setFormError] = useState<string | null>(null);
 
   const authNotice = useMemo(
@@ -90,16 +91,21 @@ export function LoginForm() {
   return (
     <div className="space-y-5 sm:space-y-6 lg:space-y-5">
       <div className="text-center lg:text-left">
-        <div className="mb-4 flex justify-center lg:hidden">
-          <Logo size="lg" />
+        {/* Celular (boceto 14): la marca, el nombre y el consultorio, centrados. */}
+        <div className="mb-3 flex justify-center lg:hidden">
+          <Logo size="lg" showText={false} />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700 max-lg:hidden">
           {siteConfig.clinicName}
         </p>
-        <h1 className="mt-1.5 text-2xl font-semibold text-slate-900 lg:text-[1.65rem]">
-          Ingresá a {siteConfig.name}
+        <h1 className="text-[22px] font-bold text-slate-900 lg:mt-1.5 lg:text-[1.65rem] lg:font-semibold">
+          <span className="lg:hidden">{siteConfig.name}</span>
+          <span className="max-lg:hidden">Ingresá a {siteConfig.name}</span>
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="mt-1 text-[13px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
+          {siteConfig.clinicName}
+        </p>
+        <p className="mt-1.5 text-sm text-muted-foreground max-lg:hidden">
           Acceso para administración y profesionales.
         </p>
       </div>
@@ -116,7 +122,7 @@ export function LoginForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:space-y-4 lg:p-5"
+        className="space-y-3.5 max-lg:pt-3 lg:space-y-4 lg:rounded-2xl lg:border lg:border-slate-200/80 lg:bg-white lg:p-5 lg:shadow-sm"
         noValidate
       >
         <FormField id="email" label="Email">
@@ -134,7 +140,7 @@ export function LoginForm() {
             placeholder="nombre@consultorio.com"
             required
             aria-invalid={Boolean(formError)}
-            className="h-11 sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10"
           />
         </FormField>
 
@@ -149,7 +155,7 @@ export function LoginForm() {
             }}
             required
             aria-invalid={Boolean(formError)}
-            className="h-11 sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10"
           />
         </FormField>
 
@@ -166,35 +172,44 @@ export function LoginForm() {
 
         <Button
           type="submit"
-          className="h-11 w-full sm:h-10"
+          className="h-12 w-full text-[15px] sm:h-10 sm:text-sm"
           disabled={loading}
         >
           {loading ? "Ingresando…" : "Ingresar"}
         </Button>
       </form>
 
-      <div className="space-y-2 text-center text-sm text-muted-foreground lg:text-left">
+      <p className="text-center text-xs text-muted-foreground lg:hidden">
+        ¿Olvidaste la contraseña? Pedila a Administración.
+      </p>
+      <div className="space-y-2 text-center text-sm text-muted-foreground max-lg:hidden lg:text-left">
         <p className="leading-relaxed">
-          ¿Olvidaste tu contraseña? Pedile a Administración que te la restablezca o{" "}
-          <a
-            href={getSupportMailto()}
-            className="font-medium text-brand-700 hover:underline"
-          >
-            contactá soporte
-          </a>
+          ¿Olvidaste tu contraseña? Pedile a Administración que te la restablezca
+          {supportMailto ? (
+            <>
+              {" "}o{" "}
+              <a href={supportMailto} className="font-medium text-brand-700 hover:underline">
+                contactá soporte
+              </a>
+            </>
+          ) : (
+            "."
+          )}
           <span className="hidden lg:inline"> · </span>
           <Link href="/ayuda" className="font-medium text-brand-700 hover:underline lg:inline">
             Ayuda
           </Link>
         </p>
-        <p className="text-xs leading-relaxed">
-          <a
-            href={getSupportMailto()}
-            className="break-all font-medium text-brand-700 hover:underline lg:break-normal"
-          >
-            {siteConfig.supportEmail}
-          </a>
-        </p>
+        {supportMailto && (
+          <p className="text-xs leading-relaxed">
+            <a
+              href={supportMailto}
+              className="break-all font-medium text-brand-700 hover:underline lg:break-normal"
+            >
+              {siteConfig.supportEmail}
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );

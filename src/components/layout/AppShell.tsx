@@ -1,6 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
+import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -70,10 +71,12 @@ export function AppShell({ children }: AppShellProps) {
         )}
       >
         <Header />
-        <main className="animate-fade-in px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:p-0">
+        {/* En el celular, lugar abajo para la barra de navegación. */}
+        <main className="animate-fade-in px-4 pb-24 pt-[calc(env(safe-area-inset-top)+1.25rem)] sm:px-6 lg:px-8 lg:py-8 print:p-0">
           {children}
         </main>
       </div>
+      <MobileTabBar />
       <Toaster />
     </div>
   );

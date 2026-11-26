@@ -29,7 +29,6 @@ const EXPECTED: Record<Permission, Record<RolUsuario, boolean>> = {
   // El profesional, solo de pacientes con turno (canAccessClinicalHistory).
   "clinical:read": { superadmin: true, admin: true, profesional: true },
   "clinical:write": { superadmin: true, admin: true, profesional: true },
-  "clinical:audit": { superadmin: true, admin: true, profesional: false },
   "insurances:read": { superadmin: true, admin: true, profesional: true },
   "insurances:write": { superadmin: true, admin: true, profesional: false },
   "users:manage": { superadmin: true, admin: true, profesional: false },
@@ -86,9 +85,9 @@ describe("permisos: helpers por capacidad", () => {
 });
 
 describe("permisos: acceso a páginas", () => {
-  it("todos los roles acceden a inicio, agenda, pacientes y proyecto", () => {
+  it("todos los roles acceden a inicio, agenda, pacientes, proyecto y Más", () => {
     for (const role of ROLES) {
-      for (const path of ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena"]) {
+      for (const path of ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena", "/mas"]) {
         assert.equal(canAccessPage(role, path), true, `${role} → ${path}`);
       }
     }

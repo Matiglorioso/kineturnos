@@ -94,7 +94,7 @@ export function PeriodIndicators({ appointments, patients, showProfessionals }: 
 
   return (
     <section aria-labelledby="indicadores-titulo" className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 id="indicadores-titulo" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
             <BarChart3 className="h-5 w-5 text-brand-700" />
@@ -102,7 +102,7 @@ export function PeriodIndicators({ appointments, patients, showProfessionals }: 
           </h2>
           <p className="text-sm text-muted-foreground">{formatRangeLabel(range)} · contra el período anterior</p>
         </div>
-        <div role="tablist" aria-label="Período de los indicadores" className="inline-flex rounded-xl bg-muted p-1">
+        <div role="tablist" aria-label="Período de los indicadores" className="inline-flex max-w-full flex-wrap self-start rounded-xl bg-muted p-1 sm:self-auto">
           {PERIODS.map((option) => (
             <button
               key={option.value}
@@ -111,7 +111,7 @@ export function PeriodIndicators({ appointments, patients, showProfessionals }: 
               aria-selected={preset === option.value}
               onClick={() => setPreset(option.value)}
               className={cn(
-                "flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-all sm:flex-none",
+                "flex-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none",
                 preset === option.value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"

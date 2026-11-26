@@ -13,16 +13,14 @@ import { useAppointments } from "@/hooks/use-appointments";
 import { useProfessionals } from "@/hooks/use-professionals";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
-import { getTodayAppDate } from "@/lib/date-utils";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
 import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
-import {
-  countProfessionalAppointments,
-  getProfessionalTodayCount,
-} from "@/lib/professional-utils";
+import { countProfessionalAppointments } from "@/lib/professional-utils";
 import { showSuccessToast } from "@/lib/toast";
 import { Professional } from "@/types";
-import { UserPlus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { ListPagination } from "@/components/ui/ListPagination";
 import { getClinicScheduleLabel } from "@/lib/professional-utils";
@@ -40,7 +38,6 @@ export default function ProfesionalesPage() {
   } = useProfessionals();
   const { appointments } = useAppointments();
   const { canManageProfessionals } = usePermissions();
-  const [today] = useState(() => getTodayAppDate());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editingProfessional, setEditingProfessional] =
@@ -165,8 +162,24 @@ export default function ProfesionalesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Celular: cantidad, título y "+" (como Pacientes). */}
+      <div className="flex items-end justify-between gap-3 lg:hidden">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+            {professionals.length} {professionals.length === 1 ? "profesional" : "profesionales"}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Profesionales</h1>
+        </div>
+        {canManageProfessionals && (
+          <Button type="button" size="icon" aria-label="Nuevo profesional" className="h-10 w-10 rounded-xl" onClick={openCreateDialog}>
+            <Plus className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
       <PageHeader
+        className="max-lg:hidden"
         title="Profesionales"
         // El horario es el mismo para todos: se dice una vez acá y no en cada tarjeta.
         description={`El equipo de kinesiólogos. Horario del consultorio: ${getClinicScheduleLabel()}.`}
@@ -191,21 +204,38 @@ export default function ProfesionalesPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {/* Celular: una fila por profesional (nombre arriba; especialidad y días abajo). */}
+          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white lg:hidden">
+            {pagination.items.map((professional) => (
+              <li key={professional.id}>
+                <button
+                  type="button"
+                  aria-label={`Ver detalle de ${professional.name}`}
+                  className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left active:bg-muted/60"
+                  onClick={() => openDetailDialog(professional)}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold text-slate-900">{professional.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {professional.specialty} · {professional.days.map((day) => day.slice(0, 3)).join(" · ")}
+                    </span>
+                  </span>
+                  {/* Solo se avisa lo que no es lo normal. */}
+                  {!professional.active && (
+                    <Badge variant="neutral" className="shrink-0 py-0.5 text-[11px]">
+                      Inactivo
+                    </Badge>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden gap-6 sm:grid-cols-2 lg:grid xl:grid-cols-3">
             {pagination.items.map((professional) => (
               <ProfessionalCard
                 key={professional.id}
                 professional={professional}
-                todayAppointments={getProfessionalTodayCount(
-                  appointments,
-                  professional.id,
-                  today
-                )}
                 onViewDetail={openDetailDialog}
-                onEdit={canManageProfessionals ? openEditDialog : undefined}
-                onToggleActive={
-                  canManageProfessionals ? handleToggleActive : undefined
-                }
               />
             ))}
           </div>
@@ -235,6 +265,12 @@ export default function ProfesionalesPage() {
         onDeleteRequest={
           canManageProfessionals ? handleDeleteRequest : undefined
         }
+        onEdit={
+          canManageProfessionals
+            ? (professional) => runAfterDetailClose(() => openEditDialog(professional))
+            : undefined
+        }
+        onToggleActive={canManageProfessionals ? handleToggleActive : undefined}
       />
 
       <ConfirmAlertDialog
@@ -245,7 +281,7 @@ export default function ProfesionalesPage() {
         title="Desactivar profesional"
         description={
           professionalToDeactivate
-            ? `${professionalToDeactivate.name} dejara de aparecer al crear turnos nuevos. Los turnos existentes no se modifican.`
+            ? `${professionalToDeactivate.name} dejará de aparecer al crear turnos nuevos y su usuario no podrá ingresar. Si tiene turnos pendientes o confirmados, primero hay que cancelarlos o registrar la asistencia.`
             : ""
         }
         confirmLabel="Sí, desactivar"

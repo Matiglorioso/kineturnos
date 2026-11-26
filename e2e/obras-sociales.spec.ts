@@ -161,9 +161,10 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
     const rows = page.getByRole("table").getByRole("row").filter({ hasText: name });
     await expect(rows).toHaveCount(2);
 
-    // La situación se filtra con los chips, que cuentan solo lo de esta obra social.
+    // La situación se filtra con los chips: sin contadores (UX mínima), solo aparecen
+    // las situaciones que tienen autorizaciones de esta obra social.
     const situation = page.getByRole("group", { name: "Situación" });
-    await expect(situation.getByRole("button", { name: /^Todas/ })).toHaveText(/2$/);
+    await expect(situation.getByRole("button", { name: "Todas", exact: true })).toHaveText("Todas");
     await situation.getByRole("button", { name: /^En trámite/ }).click();
     await expect(situation.getByRole("button", { name: /^En trámite/ })).toHaveAttribute("aria-pressed", "true");
     await expect(rows).toHaveCount(1);

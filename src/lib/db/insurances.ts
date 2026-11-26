@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { ApiSessionUser } from "@/lib/auth/require-session";
+import { duplicateAuthorizationNumberMessage } from "@/lib/authorization-number";
 import { getTodayAppDate } from "@/lib/date-utils";
 import { appDateToDb, dbDateToApp, optionalDbDateToApp } from "@/lib/db/date-codec";
 import {
@@ -210,6 +211,7 @@ function mapAuthorization(record: AutorizacionWithUsage, currentInsuranceId: str
     used: usage.used,
     validFrom: usage.validFrom,
     validUntil: usage.validUntil,
+    diagnosis: record.diagnostico,
     notes: record.observaciones,
     createdByName: record.creadoPorNombre,
     current: record.obraSocialId === currentInsuranceId,
@@ -346,8 +348,37 @@ function authorizationData(input: AuthorizationInput) {
     sesiones: input.sessions,
     fechaDesde: appDateToDb(input.validFrom, "validFrom"),
     vencimiento: input.validUntil ? appDateToDb(input.validUntil, "validUntil") : null,
+    diagnostico: input.diagnosis,
     observaciones: input.notes,
   };
+}
+
+/** Un número de autorización no se repite dentro de la misma obra social (sin importar mayúsculas). */
+async function assertAuthorizationNumberAvailable(
+  tx: DbClient,
+  input: AuthorizationInput,
+  patientId: string,
+  insuranceId: string,
+  excludeId?: string
+): Promise<void> {
+  const number = input.number?.trim();
+  if (!number) return;
+  const existing = await tx.autorizacion.findFirst({
+    where: {
+      obraSocialId: insuranceId,
+      numero: { equals: number, mode: "insensitive" },
+      ...(excludeId ? { NOT: { id: excludeId } } : {}),
+    },
+    include: { paciente: { select: { nombre: true } }, obraSocial: { select: { nombre: true } } },
+  });
+  if (!existing) return;
+  throw new DuplicateFieldError(
+    "number",
+    duplicateAuthorizationNumberMessage(number, existing.obraSocial.nombre, {
+      patientName: existing.paciente.nombre,
+      samePatient: existing.pacienteId === patientId,
+    })
+  );
 }
 
 function authorName(user: ApiSessionUser): string {
@@ -369,6 +400,8 @@ export async function createAuthorizationInDb(
         "insuranceId"
       );
     }
+
+    await assertAuthorizationNumberAvailable(tx, input, patientId, patient.obraSocialId);
 
     const created = await tx.autorizacion.create({
       data: {
@@ -407,6 +440,8 @@ export async function updateAuthorizationInDb(
         "sessions"
       );
     }
+
+    await assertAuthorizationNumberAvailable(tx, input, patientId, existing.obraSocialId, authorizationId);
 
     await tx.turno.updateMany({ where: { autorizacionId: authorizationId }, data: { autorizacionId: null } });
     await tx.autorizacion.update({ where: { id: authorizationId }, data: authorizationData(input) });

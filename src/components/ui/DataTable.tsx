@@ -42,11 +42,18 @@ export function DataTable({ headers, children, className }: DataTableProps) {
 interface DataTableRowProps {
   children: ReactNode;
   className?: string;
+  /** Toda la fila abre el detalle (el teclado usa el botón de la primera celda). */
+  onClick?: () => void;
 }
 
-export function DataTableRow({ children, className }: DataTableRowProps) {
+export function DataTableRow({ children, className, onClick }: DataTableRowProps) {
   return (
-    <TableRow className={cn("hover:bg-muted/30", className)}>{children}</TableRow>
+    <TableRow
+      className={cn("hover:bg-muted/30", onClick && "cursor-pointer", className)}
+      onClick={onClick}
+    >
+      {children}
+    </TableRow>
   );
 }
 

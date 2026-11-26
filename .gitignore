@@ -15,6 +15,7 @@ coverage/
 .next/
 .next-perf/
 .next-demo/
+.next-demo-*/
 out/
 
 # production
@@ -47,3 +48,6 @@ next-env.d.ts
 
 # Cobertura (npm run test:coverage)
 /coverage/
+
+# Notas locales del entorno de desarrollo
+CLAUDE.md

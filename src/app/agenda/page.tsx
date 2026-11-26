@@ -12,12 +12,14 @@ import {
   AppointmentActions,
   type AppointmentActionsVariant,
 } from "@/components/appointments/AppointmentActions";
+import { AppointmentActionSheet } from "@/components/appointments/AppointmentActionSheet";
 import { AppointmentStatusMenu } from "@/components/appointments/AppointmentStatusMenu";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
 import { DataLoadError } from "@/components/shared/DataLoadError";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 import {
   areSameAppDay,
   getTodayAppDate,
@@ -29,14 +31,15 @@ import { useAppointments } from "@/hooks/use-appointments";
 import { useProfessionals } from "@/hooks/use-professionals";
 import { usePatients } from "@/hooks/use-patients";
 import { filterAgendaAppointments, sortAppointmentsByTime } from "@/lib/agenda-list";
-import { countAppointmentsByDay } from "@/lib/agenda-calendar";
+import { countAppointmentsByDay, formatCalendarMonth, getCalendarMonth } from "@/lib/agenda-calendar";
 import { buildProfessionalDayGrid } from "@/lib/agenda-professionals";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
 import type { EmptyStatePreset } from "@/lib/empty-states";
 import { Appointment, AppointmentStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
-import { Columns3, List, Plus } from "lucide-react";
+import { agendaUrlForDate } from "@/lib/agenda-url";
+import { ChevronDown, Columns3, List, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 type AgendaViewMode = "list" | "professionals";
@@ -60,6 +63,7 @@ export default function AgendaPage() {
     deleteAppointment,
   } = useAppointments();
   const {
+    can,
     canSchedule,
     isScopedProfessional,
     professionalId: sessionProfessionalId,
@@ -82,6 +86,9 @@ export default function AgendaPage() {
     null
   );
   const [detailOpen, setDetailOpen] = useState(false);
+  /** Celular: turno elegido en la lista, con sus acciones abiertas desde abajo. */
+  const [sheetAppointment, setSheetAppointment] = useState<Appointment | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [slotPreset, setSlotPreset] = useState<{ professionalId: string; time: string } | null>(null);
   const [presetPatientId, setPresetPatientId] = useState<string | undefined>();
   const today = getTodayAppDate();
@@ -133,11 +140,6 @@ export default function AgendaPage() {
     [selectedListDate, professionals, filteredByCommon, appointments, filters]
   );
 
-  const pageDescription =
-    viewMode === "list"
-      ? `Turnos del ${selectedListDateLabel}`
-      : `Por profesional — ${selectedListDateLabel}`;
-
   const hasActiveFilters =
     filters.status !== "todos" ||
     filters.patientQuery.trim() !== "" ||
@@ -174,10 +176,11 @@ export default function AgendaPage() {
 
   // Enlaces desde otras pantallas: ?fecha=dd-MM-yyyy abre ese día (panel, "Ver en la
   // agenda"); ?nuevo=1 abre el alta, con ?paciente= ya elegido (ficha del paciente).
-  // Se leen cuando ya se conoce el perfil (para saber si puede agendar) y después
-  // se limpian de la URL.
+  // Se leen cuando ya se conoce el perfil (para saber si puede agendar); después la URL
+  // solo conserva la fecha elegida (ver el efecto de abajo).
+  const [urlRead, setUrlRead] = useState(false);
   useEffect(() => {
-    if (!permissionsReady) return;
+    if (!permissionsReady || urlRead) return;
     const params = new URLSearchParams(window.location.search);
     const date = params.get("fecha");
     if (date && isValidAppDate(date)) {
@@ -188,8 +191,17 @@ export default function AgendaPage() {
       setPresetPatientId(params.get("paciente") ?? undefined);
       setFormDialogOpen(true);
     }
-    if (params.size > 0) window.history.replaceState(null, "", "/agenda");
-  }, [permissionsReady, canSchedule]);
+    setUrlRead(true);
+  }, [permissionsReady, canSchedule, urlRead]);
+
+  // El día elegido queda en la URL: recargar la página no vuelve a hoy.
+  useEffect(() => {
+    if (!urlRead) return;
+    const url = agendaUrlForDate(selectedListDate, getTodayAppDate());
+    if (window.location.pathname + window.location.search !== url) {
+      window.history.replaceState(null, "", url);
+    }
+  }, [urlRead, selectedListDate]);
 
   const openEditDialog = (appointment: Appointment) => {
     setEditingAppointment(appointment);
@@ -275,10 +287,52 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Celular: el mes (abre el calendario), el título, la vista y el "+". */}
+      <div className="flex items-end justify-between gap-3 lg:hidden">
+        <div className="min-w-0">
+          <button
+            type="button"
+            aria-label="Ver calendario"
+            onClick={() => setCalendarOpen(true)}
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-brand-700"
+          >
+            {formatCalendarMonth(getCalendarMonth(selectedListDate))}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Agenda</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {viewOptions.length > 1 && (
+            <div role="group" aria-label="Vista de la agenda" className="inline-flex rounded-xl bg-muted p-1">
+              {viewOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={viewMode === value}
+                  aria-label={label}
+                  onClick={() => setViewMode(value)}
+                  className={cn(
+                    "rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                    viewMode === value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                  )}
+                >
+                  {value === "list" ? "Día" : "Profes."}
+                </button>
+              ))}
+            </div>
+          )}
+          {canSchedule && (
+            <Button type="button" size="icon" aria-label="Agendar turno" className="h-10 w-10 rounded-xl" onClick={openCreateDialog}>
+              <Plus className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      </div>
+
       <PageHeader
+        className="max-lg:hidden"
         title="Agenda"
-        description={pageDescription}
         actionLabel={
           canSchedule ? emptyStateActions.scheduleAppointment : undefined
         }
@@ -286,14 +340,15 @@ export default function AgendaPage() {
         onAction={canSchedule ? openCreateDialog : undefined}
       />
 
-      <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
+      {/* En el celular los controles van sueltos (sin tarjeta) para ganar lugar. */}
+      <div className="flex flex-col gap-3 lg:gap-4 lg:rounded-2xl lg:border lg:bg-card lg:p-4 lg:shadow-card">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           {/* El Profesional tiene una sola vista: no hay nada que elegir. */}
           {viewOptions.length > 1 && (
             <div
               role="group"
               aria-label="Vista de la agenda"
-              className="inline-flex w-full shrink-0 rounded-xl bg-muted p-1 sm:w-auto"
+              className="hidden w-full shrink-0 rounded-xl bg-muted p-1 sm:w-auto lg:inline-flex"
             >
               {viewOptions.map(({ value, label, icon: Icon }) => (
                 <button
@@ -324,12 +379,15 @@ export default function AgendaPage() {
           />
         </div>
 
-        <div className="border-t border-slate-100 pt-4">
+        {/* Celular: la tira de días va primero (como el boceto). */}
+        <div className="max-lg:order-first lg:border-t lg:border-slate-100 lg:pt-4">
           <AgendaDayStrip
             value={selectedListDate}
             today={today}
             counts={dayCounts}
             onChange={setListDate}
+            calendarOpen={calendarOpen}
+            onCalendarOpenChange={setCalendarOpen}
           />
         </div>
       </div>
@@ -340,6 +398,7 @@ export default function AgendaPage() {
           dateLabel={selectedListDateLabel}
           onAppointmentClick={openDetailDialog}
           onFreeSlotClick={canSchedule ? openCreateForSlot : undefined}
+          onMobileAppointmentClick={setSheetAppointment}
         />
       ) : (
         <AgendaListView
@@ -348,12 +407,23 @@ export default function AgendaPage() {
           isToday={selectedListDate === today}
           renderActions={renderActions}
           renderStatus={renderStatus}
+          onSelectAppointment={setSheetAppointment}
           onCreateAppointment={canSchedule ? openCreateDialog : undefined}
           emptyPreset={agendaEmptyPreset}
           showClearFilters={hasActiveFilters && appointments.length > 0}
           onClearFilters={clearAgendaFilters}
         />
       )}
+
+
+      <AppointmentActionSheet
+        appointment={sheetAppointment}
+        onOpenChange={(open) => !open && setSheetAppointment(null)}
+        onStatusChange={handleStatusChange}
+        onReschedule={canSchedule ? openEditDialog : undefined}
+        onDelete={canSchedule ? handleDeleteAppointment : undefined}
+        canSeeClinical={can("clinical:read")}
+      />
 
       {canSchedule && (
         <NewAppointmentDialog

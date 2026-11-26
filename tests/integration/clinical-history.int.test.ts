@@ -25,11 +25,7 @@ type Entry = {
 };
 type History = {
   entries: Entry[];
-  summary: { diagnosis: { text: string } | null };
   sessionOptions: { id: string }[];
-  profile: { alerts: string | null; background: string | null } | null;
-  goals: { id: string; description: string; achieved: boolean }[];
-  nextAppointment: { date: string; time: string } | null;
 };
 
 function daysAgo(days: number): string {
@@ -100,7 +96,7 @@ describe("acceso a la historia clínica (RNF06)", () => {
 });
 
 describe("registro de sesiones (RF11-RF13)", () => {
-  it("el profesional registra la sesión de su turno; el diagnóstico queda vigente", async () => {
+  it("el profesional registra la sesión de su turno", async () => {
     const patient = await createPatient();
     const date = daysAgo(2);
     const turno = await createAppointmentInDb({
@@ -119,8 +115,8 @@ describe("registro de sesiones (RF11-RF13)", () => {
       auth: profe,
       body: {
         appointmentId: turno.id,
+        // Diagnóstico y plan ya no se cargan en la evolución: se ignoran.
         diagnosis: "Lumbalgia mecánica",
-        treatment: "",
         evolution: "Primera evaluación. Dolor 7/10.",
       },
     });
@@ -128,6 +124,7 @@ describe("registro de sesiones (RF11-RF13)", () => {
     assert.equal(created.data?.date, date);
     assert.equal(created.data?.professionalName, ownProfessional.nombre);
     assert.equal(created.data?.editable, true);
+    assert.equal(created.data?.diagnosis, null);
 
     const again = await api(historia(patient.id), {
       method: "POST",
@@ -137,7 +134,6 @@ describe("registro de sesiones (RF11-RF13)", () => {
     assert.equal(again.status, 409);
 
     const after = await api<History>(historia(patient.id), { auth: profe });
-    assert.equal(after.data?.summary.diagnosis?.text, "Lumbalgia mecánica");
     assert.ok(!after.data?.sessionOptions.some((option) => option.id === turno.id));
   });
 
@@ -181,6 +177,27 @@ describe("registro de sesiones (RF11-RF13)", () => {
       body: { appointmentId: otherTurno.id, evolution: "Turno ajeno" },
     });
     assert.equal(res.status, 403);
+  });
+
+  it("administración elige qué profesional atendió una sesión sin turno (400 si no lo elige)", async () => {
+    const patient = await createPatient();
+    const kine = await createProfessional();
+    const missing = await api(historia(patient.id), {
+      method: "POST",
+      auth: admin,
+      body: { evolution: "Sin profesional" },
+    });
+    assert.equal(missing.status, 400);
+    assert.equal(missing.field, "professionalId");
+
+    const created = await api<Entry>(historia(patient.id), {
+      method: "POST",
+      auth: admin,
+      body: { evolution: "Con profesional", professionalId: kine.id },
+    });
+    assert.equal(created.status, 201, created.error);
+    const stored = await prisma.historiaClinica.findUniqueOrThrow({ where: { id: created.data!.id } });
+    assert.equal(stored.profesionalId, kine.id);
   });
 
   it("la evolución es obligatoria (400)", async () => {
@@ -247,35 +264,23 @@ describe("corrección de registros: solo el autor, dentro de las 24 h", () => {
 });
 
 describe("trazabilidad (RNF07) y conservación", () => {
-  it("registra lecturas, altas y correcciones; solo administración ve el registro", async () => {
+  it("las consultas a la historia quedan en la auditoría del Superadmin; ya no hay «Ver accesos»", async () => {
     const patient = await createPatient();
-    const created = await api<Entry>(historia(patient.id), {
-      method: "POST",
-      auth: admin,
-      body: { evolution: "Sesión inicial" },
-    });
-    assert.equal(created.status, 201, created.error);
-    await api(`${historia(patient.id)}/${created.data!.id}`, {
-      method: "PATCH",
-      auth: admin,
-      body: { evolution: "Sesión inicial (corregida)" },
-    });
     await api(historia(patient.id), { auth: admin });
 
-    const log = await api<{ action: string; userRole: string }[]>(
-      `${historia(patient.id)}/accesos`,
-      { auth: admin }
+    // El registro por paciente se sacó de la pantalla y de la API.
+    assert.equal((await api(`${historia(patient.id)}/accesos`, { auth: admin })).status, 404);
+
+    const superadmin = await login("superadmin@kineturnos.local");
+    const log = await api<{ items: { action: string; entity: string; entityId: string | null }[] }>(
+      "/api/auditoria?dias=1",
+      { auth: superadmin }
     );
     assert.equal(log.status, 200, log.error);
-    assert.deepEqual(
-      log.data?.map((item) => item.action).sort(),
-      ["alta", "edicion", "lectura"]
-    );
-    assert.equal(log.data?.[0].userRole, "Administración");
-
-    assert.equal(
-      (await api(`${historia(patient.id)}/accesos`, { auth: profe })).status,
-      403
+    assert.ok(
+      log.data?.items.some(
+        (item) => item.action === "consulta" && item.entity === "historia_clinica" && item.entityId === patient.id
+      )
     );
   });
 
@@ -284,7 +289,7 @@ describe("trazabilidad (RNF07) y conservación", () => {
     await api(historia(patient.id), {
       method: "POST",
       auth: admin,
-      body: { evolution: "Registro a conservar" },
+      body: { evolution: "Registro a conservar", professionalId: (await createProfessional()).id },
     });
     const res = await api(`/api/patients/${patient.id}`, { method: "DELETE", auth: admin });
     assert.equal(res.status, 409);
@@ -292,106 +297,21 @@ describe("trazabilidad (RNF07) y conservación", () => {
   });
 });
 
-describe("alertas, antecedentes y objetivos del tratamiento", () => {
-  it("se guardan y vuelven con la historia; cada cambio queda registrado", async () => {
+describe("la historia es solo la evolución", () => {
+  it("sin alertas, antecedentes, objetivos ni resumen; sus APIs ya no existen", async () => {
     const patient = await createPatient();
-    const ficha = await api(`${historia(patient.id)}/ficha`, {
-      method: "PUT",
-      auth: admin,
-      body: { alerts: "Marcapasos", background: "Hernia L4-L5" },
-    });
-    assert.equal(ficha.status, 200, ficha.error);
-
-    const goal = await api<{ id: string }>(`${historia(patient.id)}/objetivos`, {
-      method: "POST",
-      auth: admin,
-      body: { description: "Volver a correr" },
-    });
-    assert.equal(goal.status, 201, goal.error);
-    const toggled = await api<{ achieved: boolean }>(
-      `${historia(patient.id)}/objetivos/${goal.data!.id}`,
-      { method: "PATCH", auth: admin, body: { achieved: true } }
+    const history = await api<Record<string, unknown>>(historia(patient.id), { auth: admin });
+    assert.equal(history.status, 200, history.error);
+    for (const key of ["profile", "goals", "nextAppointment", "summary"]) {
+      assert.ok(!(key in (history.data ?? {})), key);
+    }
+    assert.equal(
+      (await api(`${historia(patient.id)}/ficha`, { method: "PUT", auth: admin, body: { alerts: "x" } })).status,
+      404
     );
-    assert.equal(toggled.data?.achieved, true);
-    await api(`${historia(patient.id)}/objetivos`, {
-      method: "POST",
-      auth: admin,
-      body: { description: "A quitar" },
-    });
-
-    const read = await api<History>(historia(patient.id), { auth: admin });
-    assert.deepEqual(read.data?.profile && {
-      alerts: read.data.profile.alerts,
-      background: read.data.profile.background,
-    }, { alerts: "Marcapasos", background: "Hernia L4-L5" });
-    assert.deepEqual(
-      read.data?.goals.map((item) => [item.description, item.achieved]),
-      [["Volver a correr", true], ["A quitar", false]]
+    assert.equal(
+      (await api(`${historia(patient.id)}/objetivos`, { method: "POST", auth: admin, body: { description: "x" } })).status,
+      404
     );
-
-    const toRemove = read.data!.goals[1].id;
-    const removed = await api(`${historia(patient.id)}/objetivos/${toRemove}`, {
-      method: "DELETE",
-      auth: admin,
-    });
-    assert.equal(removed.status, 200, removed.error);
-    assert.equal(await prisma.objetivoTratamiento.count({ where: { pacienteId: patient.id } }), 1);
-
-    const log = await prisma.accesoHistoriaClinica.findMany({ where: { pacienteId: patient.id } });
-    // ficha (edición), 2 altas de objetivo, marcar cumplido, quitar, y la lectura.
-    assert.equal(log.length, 6);
-  });
-
-  it("el objetivo es obligatorio (400) y achieved tiene que ser booleano", async () => {
-    const patient = await createPatient();
-    const empty = await api(`${historia(patient.id)}/objetivos`, {
-      method: "POST",
-      auth: admin,
-      body: { description: " " },
-    });
-    assert.equal(empty.status, 400);
-    const goal = await api<{ id: string }>(`${historia(patient.id)}/objetivos`, {
-      method: "POST",
-      auth: admin,
-      body: { description: "Caminar 1 h" },
-    });
-    const bad = await api(`${historia(patient.id)}/objetivos/${goal.data!.id}`, {
-      method: "PATCH",
-      auth: admin,
-      body: { achieved: "si" },
-    });
-    assert.equal(bad.status, 400);
-  });
-
-  it("el profesional sin turnos con el paciente no los modifica (403)", async () => {
-    const patient = await createPatient();
-    const ficha = await api(`${historia(patient.id)}/ficha`, {
-      method: "PUT",
-      auth: profe,
-      body: { alerts: "No", background: "" },
-    });
-    assert.equal(ficha.status, 403);
-    const goal = await api(`${historia(patient.id)}/objetivos`, {
-      method: "POST",
-      auth: profe,
-      body: { description: "No" },
-    });
-    assert.equal(goal.status, 403);
-  });
-
-  it("muestra el próximo turno activo del paciente", async () => {
-    const patient = await createPatient();
-    const date = futureWorkday(9);
-    await createAppointmentInDb({
-      patient,
-      professional: ownProfessional,
-      date,
-      time: "16:00",
-    });
-    const read = await api<History>(historia(patient.id), { auth: admin });
-    assert.deepEqual(read.data?.nextAppointment && {
-      date: read.data.nextAppointment.date,
-      time: read.data.nextAppointment.time,
-    }, { date, time: "16:00" });
   });
 });

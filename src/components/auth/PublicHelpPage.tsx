@@ -13,6 +13,7 @@ import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
 
 export function PublicHelpPage() {
+  const supportMailto = getSupportMailto();
   return (
     <AuthPageShell className="items-start lg:items-center" contentMaxWidth="2xl">
       <div className="w-full space-y-6 sm:space-y-8">
@@ -54,12 +55,14 @@ export function PublicHelpPage() {
               Volver al login
             </Link>
           </Button>
-          <Button variant="outline" asChild className="w-full sm:flex-1">
-            <a href={getSupportMailto()}>
-              <Mail className="h-4 w-4" />
-              Escribir a soporte
-            </a>
-          </Button>
+          {supportMailto && (
+            <Button variant="outline" asChild className="w-full sm:flex-1">
+              <a href={supportMailto}>
+                <Mail className="h-4 w-4" />
+                Escribir a soporte
+              </a>
+            </Button>
+          )}
         </div>
       </div>
     </AuthPageShell>

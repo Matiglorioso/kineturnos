@@ -1,4 +1,5 @@
 import { ACTIVE_APPOINTMENT_STATUSES } from "@/lib/appointment-status";
+import { dbDateToApp } from "@/lib/db/date-codec";
 import { mapProfessional } from "@/lib/db/mappers";
 import { DeleteBlockedError, DuplicateFieldError } from "@/lib/db/errors";
 import {
@@ -8,6 +9,12 @@ import {
   type ProfessionalWriteInput,
 } from "@/lib/db/professional-write";
 import { syncTurnoProfessionalName } from "@/lib/db/sync";
+import {
+  activeAppointmentsBlockMessage,
+  appointmentsOnRemovedDays,
+  removedDaysBlockMessage,
+  removedWorkDays,
+} from "@/lib/deactivation-rules";
 import {
   DUPLICATE_LICENSE_MESSAGE,
   normalizeLicense,
@@ -75,9 +82,15 @@ export async function updateProfessionalInDb(
   const existing = await getProfessionalByIdFromDb(id);
   const writeData = toProfesionalWriteData(input);
 
-  const record = await prisma.profesional.update({
-    where: { id },
-    data: writeData,
+  if (existing) await assertProfessionalChangeAllowed(id, existing, input);
+
+  const record = await prisma.$transaction(async (tx) => {
+    const updated = await tx.profesional.update({ where: { id }, data: writeData });
+    // Su usuario acompaña al profesional: se desactiva con él y vuelve con él.
+    if (existing && existing.active !== input.active) {
+      await tx.usuario.updateMany({ where: { profesionalId: id }, data: { activo: input.active } });
+    }
+    return updated;
   });
 
   if (existing && existing.name !== writeData.nombre) {
@@ -85,6 +98,38 @@ export async function updateProfessionalInDb(
   }
 
   return mapProfessional(record);
+}
+
+/**
+ * Con turnos activos no se puede desactivar al profesional ni sacarle un día de atención
+ * en el que ya tiene turnos: quedarían turnos fuera de su agenda.
+ */
+async function assertProfessionalChangeAllowed(
+  id: string,
+  existing: Professional,
+  input: ProfessionalWriteInput
+): Promise<void> {
+  const deactivating = existing.active && !input.active;
+  const removedDays = removedWorkDays(existing.days, input.days);
+  if (!deactivating && removedDays.length === 0) return;
+
+  const active = await prisma.turno.findMany({
+    where: { profesionalId: id, estado: { in: [...ACTIVE_APPOINTMENT_STATUSES] } },
+    select: { fecha: true },
+    orderBy: [{ fecha: "asc" }, { hora: "asc" }],
+  });
+
+  if (deactivating) {
+    const blocked = activeAppointmentsBlockMessage("profesional", active.length);
+    if (blocked) throw new DeleteBlockedError(blocked);
+  }
+
+  const dates = appointmentsOnRemovedDays(
+    active.map((turno) => ({ date: dbDateToApp(turno.fecha) })),
+    removedDays
+  );
+  const blocked = removedDaysBlockMessage(removedDays, dates);
+  if (blocked) throw new DeleteBlockedError(blocked);
 }
 
 export async function countProfessionalAppointmentsInDb(

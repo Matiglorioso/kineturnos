@@ -157,4 +157,19 @@ describe("API de pacientes", () => {
     assert.equal(res.status, 400);
     assert.equal(res.field, "cuil");
   });
+
+  it("no deja desactivarlo con turnos activos (409)", async () => {
+    const professional = await createProfessional();
+    const patient = await createPatient();
+    await createAppointmentInDb({ patient, professional, date: futureWorkday(9), time: "11:00" });
+
+    const current = (await api<Record<string, unknown>>(`/api/patients/${patient.id}`)).data!;
+    const res = await api(`/api/patients/${patient.id}`, {
+      method: "PATCH",
+      body: { ...current, status: "inactivo" },
+    });
+    assert.equal(res.status, 409);
+    assert.match(res.error ?? "", /No se puede desactivar al paciente/);
+    assert.equal((await prisma.paciente.findUniqueOrThrow({ where: { id: patient.id } })).estado, "activo");
+  });
 });

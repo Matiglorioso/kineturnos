@@ -213,6 +213,13 @@ export async function createPatient(
 }
 
 /** Turno directo en DB: permite estados/fechas que la API no deja crear (p. ej. atendido pasado). */
+/** Alta por la API (201) y devuelve el id que generó el servidor. */
+export async function createAppointmentViaApi(body: unknown): Promise<{ id: string }> {
+  const res = await api<{ id: string }>("/api/appointments", { method: "POST", body });
+  if (res.status !== 201 || !res.data) throw new Error(`Alta de turno: ${res.status} ${res.error ?? ""}`);
+  return { id: res.data.id };
+}
+
 export async function createAppointmentInDb(input: {
   patient: { id: string; nombre: string };
   professional: { id: string; nombre: string };

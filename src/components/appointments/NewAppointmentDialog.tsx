@@ -29,7 +29,7 @@ import {
   isActiveAppointmentStatus,
   isFinalAppointmentStatus,
 } from "@/lib/appointment-status";
-import { listHourlySlotOptionsForForm } from "@/lib/appointment-slots";
+import { listHourlySlotOptionsForForm, noSlotsReason } from "@/lib/appointment-slots";
 import {
   getStatusOptionsForAppointmentDate,
   validateAppointmentForm,
@@ -51,6 +51,7 @@ import {
 } from "@/types";
 import { AlertTriangle, CalendarDays, CalendarPlus, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NOTES_MAX_LENGTH } from "@/lib/notes";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 export interface NewAppointmentFormValues {
@@ -259,6 +260,11 @@ export function NewAppointmentDialog({
   const availableSlotOptions = hourlySlotOptions.filter(
     (slot) => slot.available
   );
+  // Si no hay ningún horario para elegir, se explica por qué (no atiende, ocupado, ya pasó).
+  const noSlotsMessage = useMemo(
+    () => noSlotsReason(selectedProfessional, form.date, hourlySlotOptions),
+    [selectedProfessional, form.date, hourlySlotOptions]
+  );
 
   useEffect(() => {
     if (!form.time) return;
@@ -341,7 +347,7 @@ export function NewAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent mobileFullScreen className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
@@ -478,7 +484,7 @@ export function NewAppointmentDialog({
                       !form.professionalId || !form.date
                         ? "Elegí profesional y fecha"
                         : availableSlotOptions.length === 0
-                          ? "Sin bloques disponibles"
+                          ? "Sin horarios disponibles"
                           : "Seleccionar horario"
                     }
                   />
@@ -496,6 +502,9 @@ export function NewAppointmentDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {noSlotsMessage && !errors.time && !errors.overlap && !errors.date && (
+                <p className="text-xs text-muted-foreground">{noSlotsMessage}</p>
+              )}
             </FormField>
           </div>
 
@@ -549,6 +558,7 @@ export function NewAppointmentDialog({
           <FormField id="notes" label="Observaciones">
             <Textarea
               id="notes"
+              maxLength={NOTES_MAX_LENGTH}
               value={form.notes}
               onChange={(e) => updateField("notes", e.target.value)}
               placeholder="Indicaciones, molestias, objetivos de la sesión…"
@@ -564,8 +574,8 @@ export function NewAppointmentDialog({
             </div>
           )}
 
-          <DialogFooter className="gap-2 pt-2 sm:gap-0">
-            <Button
+          <DialogFooter className="pt-2">
+            <Button data-cancel
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}

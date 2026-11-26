@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { getTodayAppDate } from "../src/lib/date-utils";
 import { cleanupTestData, createPatient, prisma, storageStateFor, uniqueName } from "./helpers";
 
 test.use({ storageState: storageStateFor("recepcionista") });
@@ -20,37 +21,34 @@ test.describe("historia clínica (Administración)", () => {
     await expect(page.getByRole("heading", { name: patient.nombre, level: 1 })).toBeVisible();
     await expect(page.getByText("Empezá la historia clínica")).toBeVisible();
 
-    // Alertas: una por renglón, se muestran arriba como etiquetas.
-    const profile = page.getByRole("region", { name: "Alertas y antecedentes" });
-    await profile.getByRole("button", { name: "Editar" }).click();
-    await profile.getByRole("textbox", { name: "Alertas clínicas (una por renglón)" }).fill(
-      "Alergia al ibuprofeno\nMarcapasos"
-    );
-    await profile.getByRole("textbox", { name: "Antecedentes" }).fill("Hernia de disco L4-L5");
-    await profile.getByRole("button", { name: "Guardar" }).click();
-    const alerts = page.getByRole("list", { name: "Alertas clínicas" });
-    await expect(alerts.getByRole("listitem")).toHaveText(["Alergia al ibuprofeno", "Marcapasos"]);
-    await expect(profile).toContainText("Hernia de disco L4-L5");
+    // La historia muestra solo el paciente y su evolución: sin alertas, objetivos ni resumen.
+    await expect(page.getByRole("region", { name: "Alertas y antecedentes" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Objetivos del tratamiento" })).toHaveCount(0);
+    await expect(page.getByText("Sesiones registradas")).toHaveCount(0);
+    await expect(page.getByText("Próximo turno")).toHaveCount(0);
 
-    // Objetivos: se agregan y se marcan como cumplidos.
-    const goals = page.getByRole("region", { name: "Objetivos del tratamiento" });
-    await goals.getByRole("textbox", { name: "Agregar un objetivo" }).fill("Volver a correr");
-    await goals.getByRole("button", { name: "Agregar" }).click();
-    const goal = goals.getByRole("checkbox", { name: "Volver a correr" });
-    await expect(goal).not.toBeChecked();
-    await goal.check();
-    await expect(goals).toContainText("1 de 1 cumplidos");
-
-    // Nueva evolución en el panel lateral.
-    await page.getByRole("button", { name: "Nueva evolución" }).first().click();
+    // "Nueva evolución" está en el encabezado del paciente; el panel lateral pide solo
+    // fecha (hoy por defecto), profesional y evolución.
+    await page.getByRole("region", { name: patient.nombre }).getByRole("button", { name: "Nueva evolución" }).click();
     const composer = page.getByRole("dialog", { name: "Nueva evolución" });
-    await composer.getByRole("textbox", { name: "Evolución de la sesión *" }).fill("Evaluación inicial.");
+    await expect(composer.getByRole("textbox", { name: "Fecha *" })).toHaveValue(getTodayAppDate());
+    await expect(composer.getByRole("textbox", { name: "Diagnóstico" })).toHaveCount(0);
+    await expect(composer.getByRole("textbox", { name: "Plan de tratamiento" })).toHaveCount(0);
+    await composer.getByRole("textbox", { name: "Evolución *" }).fill("Evaluación inicial.");
+    // Administración no es profesional: sin turno, tiene que elegir quién atendió.
     await composer.getByRole("button", { name: "Guardar en la historia" }).click();
-    await expect(page.getByRole("article", { name: /Sesión 1/ })).toContainText("Evaluación inicial.");
+    await expect(composer.getByText("Elegí qué profesional atendió la sesión.")).toBeVisible();
+    await composer.getByRole("combobox", { name: "Profesional *" }).click();
+    const firstProfessional = page.getByRole("option").first();
+    const professionalName = (await firstProfessional.textContent())?.trim() ?? "";
+    await firstProfessional.click();
+    await composer.getByRole("button", { name: "Guardar en la historia" }).click();
+    const session = page.getByRole("article", { name: /Sesión 1/ });
+    await expect(session).toContainText("Evaluación inicial.");
+    await expect(session).toContainText(professionalName);
 
-    // Trazabilidad visible para Administración.
-    await page.getByRole("button", { name: "Ver accesos" }).click();
-    await expect(page.getByText("Registró una sesión").first()).toBeVisible();
+    // El registro de accesos ya no está en la historia: queda en la auditoría del Superadmin.
+    await expect(page.getByRole("button", { name: "Ver accesos" })).toHaveCount(0);
   });
 
   test("muestra 3 evoluciones por página, de la más reciente a la más antigua", async ({ page }) => {

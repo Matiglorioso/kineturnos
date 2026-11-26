@@ -44,6 +44,7 @@ export type AuthorizationRequest = {
   sessions: number;
   validFrom: string;
   validUntil: string;
+  diagnosis: string;
   notes: string;
 };
 

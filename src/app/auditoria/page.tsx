@@ -23,7 +23,9 @@ import {
 } from "@/lib/audit";
 import { cn } from "@/lib/utils";
 import type { AuditLogItem } from "@/types";
-import { History, X } from "lucide-react";
+import { History, SlidersHorizontal, X } from "lucide-react";
+import { MobilePageTitle } from "@/components/mobile/MobileUi";
+import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const PAGE_TITLE = "Auditoría";
@@ -34,6 +36,8 @@ export default function AuditoriaPage() {
   const [filters, setFilters] = useState<AuditEntryFilters>(DEFAULT_AUDIT_FILTERS);
   const [data, setData] = useState<{ items: AuditLogItem[]; truncated: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Celular: usuario y tipo de registro, detrás de "Filtros".
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const load = useCallback(async (period: number) => {
     setError(null);
@@ -88,12 +92,20 @@ export default function AuditoriaPage() {
     );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={PAGE_TITLE} description={PAGE_DESCRIPTION} />
+    <div className="space-y-4 lg:space-y-6">
+      {/* Celular (boceto 12): el período arriba del título. */}
+      <MobilePageTitle
+        eyebrow={AUDIT_PERIODS.find((period) => period.days === days)?.label ?? ""}
+        title={PAGE_TITLE}
+      />
+      <PageHeader className="max-lg:hidden" title={PAGE_TITLE} description={PAGE_DESCRIPTION} />
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="flex flex-wrap gap-2 sm:items-center">
         <Select value={String(days)} onValueChange={(value) => setDays(Number(value))}>
-          <SelectTrigger aria-label="Período" className="h-10 w-full sm:w-48">
+          <SelectTrigger
+            aria-label="Período"
+            className="h-11 min-w-0 flex-1 font-semibold max-lg:bg-white sm:w-48 sm:flex-none lg:h-10 lg:font-normal"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -104,8 +116,25 @@ export default function AuditoriaPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={filtersOpen}
+          className="h-11 shrink-0 bg-white lg:hidden"
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filtros
+        </Button>
 
-        <div role="group" aria-label="Filtros de auditoría" className="flex w-full items-center gap-1 rounded-xl bg-muted p-1 sm:w-auto">
+        <div
+          role="group"
+          aria-label="Filtros de auditoría"
+          className={cn(
+            "w-full items-center gap-1 rounded-xl bg-muted p-1 sm:w-auto lg:flex",
+            filtersOpen ? "flex" : "hidden"
+          )}
+        >
           <Select value={filters.userKey} onValueChange={(userKey) => setFilters((current) => ({ ...current, userKey }))}>
             <SelectTrigger aria-label="Usuario" className={segment(filters.userKey !== "todos")}>
               <SelectValue />
