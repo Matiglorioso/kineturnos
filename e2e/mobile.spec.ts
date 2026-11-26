@@ -136,11 +136,12 @@ test.describe("mobile (390 px)", () => {
     await page.goto("/profesionales");
     await page.getByRole("button", { name: `Ver detalle de ${professional.nombre}` }).filter({ visible: true }).click();
     const dialog = page.getByRole("dialog", { name: professional.nombre });
+    await expect(dialog.getByRole("button", { name: "Profesionales" })).toBeVisible();
+    // Las acciones están en "⋯": editar abre el formulario a pantalla completa.
     await dialog.getByRole("button", { name: "Más acciones" }).click();
-    await expect(page.getByRole("menuitem", { name: "Editar profesional" })).toBeVisible();
-    await page.keyboard.press("Escape");
-    await dialog.getByRole("button", { name: "Profesionales" }).click();
-    await expect(dialog).toBeHidden();
+    await page.getByRole("menuitem", { name: "Editar profesional" }).click();
+    const form = page.getByRole("dialog", { name: "Editar profesional" });
+    await expect(form.getByRole("button", { name: "Volver" })).toBeVisible();
   });
 });
 

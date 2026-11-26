@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 interface DetailSectionProps {
   title: string;
@@ -13,10 +13,16 @@ interface DetailSectionProps {
 
 /** Bloque de una ficha con su título: separa bien cada sección sin ocupar espacio de más. */
 export function DetailSection({ title, action, children, className, flush }: DetailSectionProps) {
+  const titleId = useId();
   return (
-    <section className={cn("overflow-hidden rounded-xl border border-slate-200/80 bg-white", className)}>
+    <section
+      aria-labelledby={titleId}
+      className={cn("overflow-hidden rounded-xl border border-slate-200/80 bg-white", className)}
+    >
       <div className="flex min-h-9 items-center justify-between gap-2 border-b border-slate-100 bg-muted/40 px-4 py-1.5">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-800">{title}</h3>
+        <h3 id={titleId} className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+          {title}
+        </h3>
         {action}
       </div>
       <div className={flush ? undefined : "px-4 py-3"}>{children}</div>

@@ -10,7 +10,7 @@ test.describe("historia clínica (Administración)", () => {
     const patient = await createPatient(uniqueName("Hc"));
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(patient.dni);
+    await page.getByRole("textbox", { name: "Buscar pacientes", exact: true }).fill(patient.dni);
     // Esperar a que la lista quede filtrada antes del click (si no, el enlace se re-renderiza en el medio).
     const row = page.getByRole("row").filter({ hasText: patient.nombre });
     await expect(row).toBeVisible();
@@ -51,9 +51,9 @@ test.describe("historia clínica (Administración)", () => {
     await expect(page.getByRole("button", { name: "Ver accesos" })).toHaveCount(0);
   });
 
-  test("muestra 3 evoluciones por página, de la más reciente a la más antigua", async ({ page }) => {
+  test("muestra 8 evoluciones por página, de la más reciente a la más antigua", async ({ page }) => {
     const patient = await createPatient(uniqueName("Pag"));
-    for (let day = 1; day <= 4; day++) {
+    for (let day = 1; day <= 10; day++) {
       await prisma.historiaClinica.create({
         data: {
           id: `it-hc-${patient.id}-${day}`,
@@ -68,15 +68,15 @@ test.describe("historia clínica (Administración)", () => {
 
     await page.goto(`/pacientes/${patient.id}/historia`);
     const sessions = page.getByRole("article");
-    await expect(sessions).toHaveCount(3);
-    await expect(sessions.first()).toContainText("Sesión 4");
+    await expect(sessions).toHaveCount(8);
+    await expect(sessions.first()).toContainText("Sesión 10");
     const pager = page.getByRole("navigation", { name: "Páginas de la evolución" });
-    await expect(pager).toContainText("1–3 de 4");
+    await expect(pager).toContainText("1–8 de 10");
     await expect(pager.getByRole("button", { name: "Más recientes" })).toBeDisabled();
 
     await pager.getByRole("button", { name: "Más antiguas" }).click();
-    await expect(sessions).toHaveCount(1);
-    await expect(sessions.first()).toContainText("Sesión 1");
-    await expect(pager).toContainText("4–4 de 4");
+    await expect(sessions).toHaveCount(2);
+    await expect(sessions.first()).toContainText("Sesión 2");
+    await expect(pager).toContainText("9–10 de 10");
   });
 });

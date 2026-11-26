@@ -23,7 +23,7 @@ test.describe("lista de pacientes: orden y filtro por obra social", () => {
     });
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(tag);
+    await page.getByRole("textbox", { name: "Buscar pacientes", exact: true }).fill(tag);
     const table = page.getByRole("table");
     await expect(table.getByRole("row").filter({ hasText: other.nombre })).toBeVisible();
 
@@ -52,7 +52,7 @@ test.describe("lista de pacientes: paginación", () => {
     }
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(tag);
+    await page.getByRole("textbox", { name: "Buscar pacientes", exact: true }).fill(tag);
     const rows = page.getByRole("table").getByRole("row").filter({ hasText: tag });
     const pages = page.getByRole("navigation", { name: "Páginas de pacientes" });
     await expect(pages.getByText("1–10 de 12 pacientes")).toBeVisible();
@@ -68,7 +68,7 @@ test.describe("lista de pacientes: paginación", () => {
 
     // La cantidad elegida se recuerda al volver a la lista.
     await page.reload();
-    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(tag);
+    await page.getByRole("textbox", { name: "Buscar pacientes", exact: true }).fill(tag);
     await expect(rows).toHaveCount(12);
   });
 });
@@ -81,7 +81,7 @@ test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
     const cuil = `${prefix}-${dni}-${cuilCheckDigit(prefix + dni)}`;
 
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(patient.nombre);
+    await page.getByRole("textbox", { name: "Buscar pacientes", exact: true }).fill(patient.nombre);
     await page.getByRole("row").filter({ hasText: patient.nombre }).getByRole("button", { name: "Ver detalle" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Editar paciente" }).click();
 
@@ -90,7 +90,7 @@ test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
     await form.getByLabel("Fecha de nacimiento").fill("31/02/1990");
     await form.getByRole("button", { name: "Guardar cambios" }).click();
     await expect(form.getByText("El CUIL no corresponde al DNI")).toBeVisible();
-    await expect(form.getByText("Ingresá la fecha con el formato dd-mm-aaaa")).toBeVisible();
+    await expect(form.getByText("Esa fecha no existe. Revisá el día y el mes.")).toBeVisible();
 
     await form.getByLabel("CUIL").fill(cuil.replaceAll("-", ""));
     await form.getByLabel("Fecha de nacimiento").fill("5/3/1990");
@@ -115,7 +115,7 @@ test.describe("ficha del paciente: CUIL y fecha de nacimiento (RF08)", () => {
     await prisma.paciente.update({ where: { id: patient.id }, data: { cuil } });
 
     await page.goto("/pacientes");
-    const search = page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…");
+    const search = page.getByRole("textbox", { name: "Buscar pacientes", exact: true });
     const row = page.getByRole("row").filter({ hasText: patient.nombre });
 
     await search.fill(`${cuil.slice(0, 2)}-${cuil.slice(2, 10)}-${cuil.slice(10)}`);

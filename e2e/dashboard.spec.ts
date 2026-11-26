@@ -59,6 +59,8 @@ test.describe("panel del consultorio", () => {
     await page.goto("/");
     const todo = page.getByRole("region", { name: "Para hacer" });
     await todo.getByRole("button", { name: `Marcar atendido: ${attended.nombre}` }).click();
+    // Atendido es final: se confirma antes.
+    await page.getByRole("alertdialog").getByRole("button", { name: "Sí, marcar atendido" }).click();
     await expect(todo.getByText(attended.nombre)).toHaveCount(0);
 
     await todo.getByRole("button", { name: `Confirmar turno: ${toConfirm.nombre}` }).click();

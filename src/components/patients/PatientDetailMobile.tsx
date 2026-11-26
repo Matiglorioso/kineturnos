@@ -68,7 +68,7 @@ export function PatientDetailMobile({
           Pacientes
         </DialogClose>
         {hasMenu && (
-          <DropdownMenu modal={false}>
+          <DropdownMenu>
             <DropdownMenuTrigger
               aria-label="Más acciones"
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"

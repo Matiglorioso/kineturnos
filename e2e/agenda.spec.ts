@@ -134,6 +134,8 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     // Confirmado → Atendido, desde la etiqueta de estado.
     await row.getByRole("button", { name: /^Estado: Confirmado/ }).click();
     await page.getByRole("menuitem", { name: "Atendido" }).click();
+    // Es un estado final: se confirma antes.
+    await page.getByRole("alertdialog").getByRole("button", { name: "Sí, marcar atendido" }).click();
     await expect(page.getByText("Sesión atendida")).toBeVisible();
     await expect(row).toContainText("Atendido");
 

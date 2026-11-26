@@ -51,3 +51,4 @@ next-env.d.ts
 
 # Notas locales del entorno de desarrollo
 CLAUDE.md
+.next-e2e/
