@@ -172,8 +172,8 @@ export function AppointmentActionSheet({
       <ConfirmAlertDialog
         open={confirming === "eliminar"}
         onOpenChange={(value) => !value && setConfirming(null)}
-        title="Eliminar turno permanentemente"
-        description={`Se eliminará de forma permanente el turno de ${appointment.patientName}. Esta acción no se puede deshacer.`}
+        title="Eliminar turno"
+        description={`Se elimina el turno de ${appointment.patientName}.`}
         confirmLabel="Sí, eliminar turno"
         cancelLabel="Volver"
         destructive

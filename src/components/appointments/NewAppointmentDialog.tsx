@@ -362,9 +362,7 @@ export function NewAppointmentDialog({
           <DialogDescription>
             {isFinalEditing && editingAppointment
               ? `Este turno está ${APPOINTMENT_STATUS_LABELS[editingAppointment.status].toLowerCase()}: no se puede reprogramar. Podés editar el tipo de sesión y las observaciones.`
-              : isEditing
-                ? "Modificá los datos del turno seleccionado."
-                : "Programá una sesión indicando paciente, profesional, fecha y bloque horario (turnos de 1 hora)."}
+              : "Turnos de 1 hora."}
           </DialogDescription>
         </DialogHeader>
 

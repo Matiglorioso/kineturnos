@@ -64,11 +64,11 @@ const config: Config = {
         // Neutros cálidos (papel, no gris azulado): reemplazan a slate en toda la app.
         slate: {
           50: "#f8f7f3",
-          100: "#f1efe9",
-          200: "#e3e0d7",
+          100: "#e9e6de",
+          200: "#d6d1c6",
           300: "#cfcabe",
-          400: "#a19c90",
-          500: "#706c63",
+          400: "#757066",
+          500: "#5f5b53",
           600: "#5a574f",
           700: "#46443e",
           800: "#2f2e2a",
@@ -82,8 +82,8 @@ const config: Config = {
         },
         ink: {
           DEFAULT: "#1f1e1b",
-          muted: "#6b675f",
-          subtle: "#9a958a",
+          muted: "#57544c",
+          subtle: "#757066",
         },
       },
       fontFamily: {

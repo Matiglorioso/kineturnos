@@ -29,7 +29,6 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const PAGE_TITLE = "Auditoría";
-const PAGE_DESCRIPTION = "Quién cambió qué, cuándo y desde dónde.";
 
 export default function AuditoriaPage() {
   const [days, setDays] = useState<number>(DEFAULT_AUDIT_PERIOD_DAYS);
@@ -98,7 +97,7 @@ export default function AuditoriaPage() {
         eyebrow={AUDIT_PERIODS.find((period) => period.days === days)?.label ?? ""}
         title={PAGE_TITLE}
       />
-      <PageHeader className="max-lg:hidden" title={PAGE_TITLE} description={PAGE_DESCRIPTION} />
+      <PageHeader className="max-lg:hidden" title={PAGE_TITLE} />
 
       <div className="flex flex-wrap gap-2 sm:items-center">
         <Select value={String(days)} onValueChange={(value) => setDays(Number(value))}>

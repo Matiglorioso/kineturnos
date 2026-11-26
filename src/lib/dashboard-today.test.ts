@@ -6,7 +6,6 @@ import {
   getNextWorkday,
   getPendingAttendance,
   getUnconfirmed,
-  greetingFor,
   phoneHref,
   summarizeDay,
 } from "./dashboard-today";
@@ -83,10 +82,7 @@ describe("para hacer", () => {
     );
   });
 
-  it("saludo y teléfono para llamar", () => {
-    assert.equal(greetingFor(at(9)), "Buen día");
-    assert.equal(greetingFor(at(15)), "Buenas tardes");
-    assert.equal(greetingFor(at(21)), "Buenas noches");
+  it("teléfono para llamar", () => {
     assert.equal(phoneHref("+54 11 2345-6789"), "tel:+541123456789");
   });
 });

@@ -100,7 +100,7 @@ describe("API de pacientes", () => {
     assert.equal(await prisma.turno.count({ where: { pacienteId: patient.id } }), 1);
   });
 
-  it("con solo turnos finales, borra el paciente y su historial", async () => {
+  it("con turnos pasados no se borra (409): se da de baja y se conservan", async () => {
     const professional = await createProfessional();
     const patient = await createPatient();
     await createAppointmentInDb({
@@ -112,8 +112,10 @@ describe("API de pacientes", () => {
     });
 
     const res = await api(`/api/patients/${patient.id}`, { method: "DELETE" });
-    assert.equal(res.status, 200, res.error);
-    assert.equal(await prisma.turno.count({ where: { pacienteId: patient.id } }), 0);
+    assert.equal(res.status, 409);
+    assert.match(res.error ?? "", /Dalo de baja/);
+    assert.equal(await prisma.paciente.count({ where: { id: patient.id } }), 1);
+    assert.equal(await prisma.turno.count({ where: { pacienteId: patient.id } }), 1);
   });
 
   it("un body inválido responde 400 con el campo", async () => {
@@ -169,7 +171,7 @@ describe("API de pacientes", () => {
       body: { ...current, status: "inactivo" },
     });
     assert.equal(res.status, 409);
-    assert.match(res.error ?? "", /No se puede desactivar al paciente/);
+    assert.match(res.error ?? "", /No se puede dar de baja al paciente/);
     assert.equal((await prisma.paciente.findUniqueOrThrow({ where: { id: patient.id } })).estado, "activo");
   });
 });

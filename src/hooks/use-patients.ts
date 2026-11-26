@@ -2,7 +2,6 @@
 
 import {
   createPatientRequest,
-  deletePatientRequest,
   fetchPatients,
   updatePatientRequest,
 } from "@/lib/api/patients-client";
@@ -54,7 +53,7 @@ export function usePatients() {
     }
   }, []);
 
-  const updatePatient = useCallback(async (patient: Patient) => {
+  const updatePatient = useCallback(async (patient: Patient, successToast = appToasts.patient.updated) => {
     try {
       const updated = await updatePatientRequest(patient);
       setPatients((prev) =>
@@ -62,20 +61,8 @@ export function usePatients() {
           .map((item) => (item.id === updated.id ? updated : item))
           .sort((a, b) => a.name.localeCompare(b.name, "es"))
       );
-      appToasts.patient.updated(updated.name);
+      successToast(updated.name);
       return updated;
-    } catch (saveError) {
-      appToasts.patient.saveError(
-        saveError instanceof ApiError ? saveError.message : undefined
-      );
-      throw saveError;
-    }
-  }, []);
-
-  const deletePatient = useCallback(async (id: string) => {
-    try {
-      await deletePatientRequest(id);
-      setPatients((prev) => prev.filter((patient) => patient.id !== id));
     } catch (saveError) {
       appToasts.patient.saveError(
         saveError instanceof ApiError ? saveError.message : undefined
@@ -91,6 +78,5 @@ export function usePatients() {
     refresh,
     createPatient,
     updatePatient,
-    deletePatient,
   };
 }

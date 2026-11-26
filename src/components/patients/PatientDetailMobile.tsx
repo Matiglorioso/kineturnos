@@ -31,7 +31,6 @@ interface PatientDetailMobileProps {
   patient: Patient;
   upcoming: Appointment[];
   past: Appointment[];
-  onDeleteRequest?: (patient: Patient) => void;
   onToggleStatus?: (patient: Patient) => void;
   onEdit?: (patient: Patient) => void;
   onCoverageChange?: () => void;
@@ -45,7 +44,6 @@ export function PatientDetailMobile({
   patient,
   upcoming,
   past,
-  onDeleteRequest,
   onToggleStatus,
   onEdit,
   onCoverageChange,
@@ -57,7 +55,7 @@ export function PatientDetailMobile({
 
   const canBook = canSchedule && patient.status === "activo";
   const bookHref = `/agenda?nuevo=1&paciente=${encodeURIComponent(patient.id)}`;
-  const hasMenu = Boolean(onEdit || onToggleStatus || onDeleteRequest);
+  const hasMenu = Boolean(onEdit || onToggleStatus);
 
   return (
     <>
@@ -85,16 +83,7 @@ export function PatientDetailMobile({
               {onToggleStatus && (
                 <DropdownMenuItem onSelect={() => onToggleStatus(patient)}>
                   <UserX className="h-4 w-4" />
-                  {patient.status === "activo" ? "Desactivar paciente" : "Activar paciente"}
-                </DropdownMenuItem>
-              )}
-              {onDeleteRequest && (
-                <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600"
-                  onSelect={() => onDeleteRequest(patient)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar paciente
+                  {patient.status === "activo" ? "Dar de baja" : "Reactivar"}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

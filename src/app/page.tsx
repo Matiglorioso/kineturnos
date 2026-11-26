@@ -15,7 +15,6 @@ import {
   getNextWorkday,
   getPendingAttendance,
   getUnconfirmed,
-  greetingFor,
   summarizeDay,
 } from "@/lib/dashboard-today";
 import { summarizeCoverageAlerts, summarizeMonthInsuranceSessions } from "@/lib/dashboard-shortcuts";
@@ -23,7 +22,6 @@ import { pluralize } from "@/lib/pluralize";
 import { formatAppDate, getNowAppMinutes, getTodayAppDate } from "@/lib/date-utils";
 import type { Appointment, AppointmentStatus, Patient } from "@/types";
 import { CalendarDays, ClipboardList, FileCheck2 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 
 /** Minutos del día en el consultorio, actualizados cada minuto (turno en curso, asistencia por registrar). */
@@ -52,7 +50,6 @@ function coverageIssuesOf(patients: Patient[]): Patient[] {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
   const { patients, isLoading: patientsLoading, error: patientsError, refresh: refreshPatients } = usePatients();
   const {
     appointments,
@@ -120,7 +117,6 @@ export default function DashboardPage() {
         ]
       : []),
   ];
-  const firstName = session?.user?.name?.split(" ")[0];
   const handleStatusChange = async (appointment: Appointment, status: AppointmentStatus) => {
     await updateAppointmentStatus(appointment, status);
   };
@@ -157,12 +153,8 @@ export default function DashboardPage() {
       <header className="hidden flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:flex">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            {greetingFor(nowMinutes)}
-            {firstName ? `, ${firstName}` : ""}
+            Hoy <span className="font-semibold text-slate-500">· {formatAppDate(today, "EEEE dd-MM")}</span>
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500 first-letter:uppercase sm:mt-1 sm:text-base">
-            {formatAppDate(today, "EEEE d 'de' MMMM 'de' yyyy")}
-          </p>
         </div>
       </header>
 

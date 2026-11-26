@@ -21,7 +21,6 @@ import { usePatients } from "@/hooks/use-patients";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useSyncSelectedEntity } from "@/hooks/use-sync-selected-entity";
 import { closeDetailBeforeAction } from "@/lib/dialog-utils";
-import { buildPermanentDeleteDescription } from "@/lib/entity-messages";
 import { countPatientAppointments } from "@/lib/patient-appointments";
 import {
   ALL_INSURANCES,
@@ -32,7 +31,7 @@ import {
   type PatientSort,
   type PatientStatusFilter,
 } from "@/lib/patient-list";
-import { showSuccessToast } from "@/lib/toast";
+import { appToasts } from "@/lib/toast";
 import { Patient } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
@@ -63,7 +62,6 @@ function PacientesPageContent() {
     refresh,
     createPatient,
     updatePatient,
-    deletePatient,
   } = usePatients();
   const { appointments } = useAppointments();
   const { canManagePatients } = usePermissions();
@@ -76,7 +74,6 @@ function PacientesPageContent() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [patientToDeactivate, setPatientToDeactivate] =
     useState<Patient | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -108,10 +105,10 @@ function PacientesPageContent() {
     window.history.replaceState(null, "", "/pacientes");
   }, [searchParams, canManagePatients]);
 
-  const deleteAppointmentCount = useMemo(() => {
-    if (!patientToDelete) return 0;
-    return countPatientAppointments(appointments, patientToDelete.id);
-  }, [patientToDelete, appointments]);
+  const dischargeAppointmentCount = useMemo(() => {
+    if (!patientToDeactivate) return 0;
+    return countPatientAppointments(appointments, patientToDeactivate.id);
+  }, [patientToDeactivate, appointments]);
 
   const filtered = useMemo(
     () => filterAndSortPatients(patients, { search, insurance, status, sort }),
@@ -182,7 +179,7 @@ function PacientesPageContent() {
     if (patient.status === "inactivo") {
       setIsSaving(true);
       try {
-        await updatePatient({ ...patient, status: "activo" });
+        await updatePatient({ ...patient, status: "activo" }, appToasts.patient.reactivated);
       } finally {
         setIsSaving(false);
       }
@@ -197,30 +194,10 @@ function PacientesPageContent() {
 
     setIsSaving(true);
     try {
-      await updatePatient({ ...patientToDeactivate, status: "inactivo" });
+      await updatePatient({ ...patientToDeactivate, status: "inactivo" }, appToasts.patient.discharged);
       setPatientToDeactivate(null);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDeleteRequest = (patient: Patient) => {
-    runAfterDetailClose(() => setPatientToDelete(patient));
-  };
-
-  const confirmDeletePatient = async () => {
-    if (!patientToDelete) return;
-
-    const deletedName = patientToDelete.name;
-
-    setIsSaving(true);
-    try {
-      await deletePatient(patientToDelete.id);
-      setPatientToDelete(null);
-      showSuccessToast(
-        "Paciente eliminado",
-        `${deletedName} se elimino correctamente.`
-      );
+    } catch {
+      // El motivo (por ejemplo, turnos activos) ya se mostró en un aviso.
     } finally {
       setIsSaving(false);
     }
@@ -241,12 +218,6 @@ function PacientesPageContent() {
     }
   };
 
-  const deleteDescription = patientToDelete
-    ? buildPermanentDeleteDescription(
-        patientToDelete.name,
-        deleteAppointmentCount
-      )
-    : "";
 
   if (isLoading) {
     return <PageLoadingState title="Pacientes" />;
@@ -281,7 +252,6 @@ function PacientesPageContent() {
       <PageHeader
         className="max-lg:hidden"
         title="Pacientes"
-        description="Datos, cobertura, turnos e historia clínica de cada paciente."
         actionLabel={
           canManagePatients ? emptyStateActions.registerPatient : undefined
         }
@@ -415,9 +385,6 @@ function PacientesPageContent() {
         appointments={appointments}
         open={detailOpen}
         onOpenChange={handleDetailOpenChange}
-        onDeleteRequest={
-          canManagePatients ? handleDeleteRequest : undefined
-        }
         onToggleStatus={
           canManagePatients ? handleToggleStatus : undefined
         }
@@ -430,28 +397,18 @@ function PacientesPageContent() {
         onOpenChange={(open) => {
           if (!open) setPatientToDeactivate(null);
         }}
-        title="Desactivar paciente"
+        title={patientToDeactivate ? `Dar de baja a ${patientToDeactivate.name}` : "Dar de baja"}
         description={
-          patientToDeactivate
-            ? `${patientToDeactivate.name} quedará inactivo y no se le podrán agendar turnos nuevos. Si tiene turnos pendientes o confirmados, primero hay que cancelarlos o registrar la asistencia.`
-            : ""
+          dischargeAppointmentCount > 0
+            ? `Queda inactivo: no aparece al agendar ni se le pueden dar turnos nuevos. Sus datos, ${
+                dischargeAppointmentCount === 1 ? "su turno" : `sus ${dischargeAppointmentCount} turnos`
+              } y su historia clínica se conservan. Se puede reactivar cuando vuelva.`
+            : "Queda inactivo: no aparece al agendar ni se le pueden dar turnos nuevos. Sus datos se conservan. Se puede reactivar cuando vuelva."
         }
-        confirmLabel="Sí, desactivar"
-        destructive
+        confirmLabel="Dar de baja"
         onConfirm={confirmDeactivatePatient}
       />
 
-      <ConfirmAlertDialog
-        open={Boolean(patientToDelete)}
-        onOpenChange={(open) => {
-          if (!open) setPatientToDelete(null);
-        }}
-        title="Eliminar paciente"
-        description={deleteDescription}
-        confirmLabel="Sí, eliminar paciente"
-        destructive
-        onConfirm={confirmDeletePatient}
-      />
     </div>
   );
 }

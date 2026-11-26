@@ -15,7 +15,7 @@ describe("desactivar con turnos activos", () => {
   it("con turnos activos se bloquea y dice cuántos (en singular y en plural)", () => {
     assert.equal(
       activeAppointmentsBlockMessage("paciente", 1),
-      "No se puede desactivar al paciente porque tiene 1 turno activo (pendiente o confirmado). Cancelalo o registrá su asistencia antes de desactivarlo."
+      "No se puede dar de baja al paciente porque tiene 1 turno activo (pendiente o confirmado). Cancelalo o registrá su asistencia antes de darlo de baja."
     );
     assert.equal(
       activeAppointmentsBlockMessage("profesional", 3),

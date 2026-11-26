@@ -73,13 +73,6 @@ export function summarizeDay(schedule: Appointment[], nowMinutes: number): Today
   };
 }
 
-/** Saludo según la hora del consultorio. */
-export function greetingFor(nowMinutes: number): string {
-  if (nowMinutes < 12 * 60) return "Buen día";
-  if (nowMinutes < 20 * 60) return "Buenas tardes";
-  return "Buenas noches";
-}
-
 /** Teléfono para un link `tel:` (solo dígitos y +). */
 export function phoneHref(phone: string): string {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;

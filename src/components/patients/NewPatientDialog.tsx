@@ -143,10 +143,8 @@ export function NewPatientDialog({
             </span>
             {isEditing ? "Editar paciente" : "Nuevo paciente"}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Modificá los datos del paciente seleccionado."
-              : "Completá la ficha para sumar un paciente al consultorio."}
+          <DialogDescription className="sr-only">
+            {isEditing ? "Datos del paciente" : "Alta de paciente"}
           </DialogDescription>
         </DialogHeader>
 
