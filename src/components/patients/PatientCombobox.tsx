@@ -92,7 +92,8 @@ export function PatientCombobox({ id, patients, value, onChange, disabled, inval
         // Al escribir, el paciente elegido queda como referencia en el placeholder.
         placeholder={selected?.name ?? "Buscar por nombre o DNI…"}
         value={open ? query : selected?.name ?? ""}
-        onFocus={() => setOpen(true)}
+        // La lista se abre al tocar el campo o al escribir, no con el foco: así no se
+        // despliega sola al abrir el formulario.
         onClick={() => setOpen(true)}
         onBlur={() => {
           setOpen(false);

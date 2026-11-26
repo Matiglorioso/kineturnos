@@ -34,7 +34,7 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
 
     // Ficha del paciente: obra social del catálogo y número de afiliado.
     await page.goto("/pacientes");
-    await page.getByPlaceholder("Buscar por nombre, DNI, CUIL, teléfono u obra social…").fill(patient.dni);
+    await page.getByRole("textbox", { name: "Buscar pacientes", exact: true }).fill(patient.dni);
     await page.getByRole("button", { name: "Ver detalle" }).filter({ visible: true }).first().click();
     const detail = page.getByRole("dialog", { name: patient.nombre });
     await detail.getByRole("button", { name: "Editar paciente" }).click();
@@ -51,8 +51,8 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
 
     // Autorización desde la ficha.
     await row.getByRole("button", { name: "Ver detalle" }).click();
-    const coverage = page.getByRole("dialog", { name: patient.nombre }).getByRole("region", { name: "Cobertura" });
-    await expect(coverage).toContainText("Afiliado Nº 998877/02");
+    const coverage = page.getByRole("dialog", { name: patient.nombre }).getByRole("region", { name: "Obra social" });
+    await expect(coverage).toContainText("998877/02");
     await coverage.getByRole("button", { name: "Nueva autorización" }).click();
     const authorization = page.getByRole("dialog", { name: "Nueva autorización" });
     await authorization.getByRole("textbox", { name: "Nº de autorización" }).fill("A-777");
@@ -60,8 +60,7 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
     await authorization.getByRole("button", { name: "Guardar autorización" }).click();
     await expect(authorization).toBeHidden();
     await expect(coverage).toContainText("Nº A-777");
-    await expect(coverage).toContainText("8 de 8 sesiones disponibles");
-    await expect(coverage).toContainText("0 de 8 sesiones");
+    await expect(coverage).toContainText("0/8 ses.");
   });
 
   test("al agendar avisa si el paciente no tiene autorización vigente (sin bloquear)", async ({ page }) => {
@@ -161,9 +160,10 @@ test.describe("obras sociales y autorizaciones (RF07, RF14, RF15)", () => {
     const rows = page.getByRole("table").getByRole("row").filter({ hasText: name });
     await expect(rows).toHaveCount(2);
 
-    // La situación se filtra con los chips, que cuentan solo lo de esta obra social.
+    // La situación se filtra con los chips: sin contadores (UX mínima), solo aparecen
+    // las situaciones que tienen autorizaciones de esta obra social.
     const situation = page.getByRole("group", { name: "Situación" });
-    await expect(situation.getByRole("button", { name: /^Todas/ })).toHaveText(/2$/);
+    await expect(situation.getByRole("button", { name: "Todas", exact: true })).toHaveText("Todas");
     await situation.getByRole("button", { name: /^En trámite/ }).click();
     await expect(situation.getByRole("button", { name: /^En trámite/ })).toHaveAttribute("aria-pressed", "true");
     await expect(rows).toHaveCount(1);

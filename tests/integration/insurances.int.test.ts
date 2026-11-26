@@ -122,6 +122,18 @@ describe("obra social del paciente", () => {
 });
 
 describe("autorizaciones y consumo de sesiones (RF14-RF15)", () => {
+  it("guarda el diagnóstico de la orden médica", async () => {
+    const insurance = await createInsurance();
+    const patient = await patientWith(insurance);
+    const created = await api<{ id: string; diagnosis: string | null }>(`/api/patients/${patient.id}/autorizaciones`, {
+      method: "POST",
+      auth: admin,
+      body: { state: "aprobada", sessions: 10, validFrom: daysAgo(5), diagnosis: "Lumbalgia mecánica" },
+    });
+    assert.equal(created.status, 201, created.error);
+    assert.equal(created.data?.diagnosis, "Lumbalgia mecánica");
+  });
+
   it("un paciente particular no puede tener autorizaciones (400)", async () => {
     const patient = await createPatient();
     const res = await api(`/api/patients/${patient.id}/autorizaciones`, {
@@ -131,6 +143,28 @@ describe("autorizaciones y consumo de sesiones (RF14-RF15)", () => {
     });
     assert.equal(res.status, 400);
     assert.equal(res.field, "insuranceId");
+  });
+
+  it("no deja repetir el número en la misma obra social (409), sí en otra", async () => {
+    const insurance = await createInsurance();
+    const first = await patientWith(insurance);
+    const second = await patientWith(insurance);
+    const body = { number: "rep-77", state: "aprobada", sessions: 4, validFrom: daysAgo(5) };
+    const created = await api(`/api/patients/${first.id}/autorizaciones`, { method: "POST", auth: admin, body });
+    assert.equal(created.status, 201, created.error);
+
+    const repeated = await api(`/api/patients/${second.id}/autorizaciones`, {
+      method: "POST",
+      auth: admin,
+      body: { ...body, number: "REP-77" },
+    });
+    assert.equal(repeated.status, 409);
+    assert.equal(repeated.field, "number");
+    assert.match(repeated.error ?? "", new RegExp(first.nombre));
+
+    const other = await patientWith(await createInsurance());
+    const elsewhere = await api(`/api/patients/${other.id}/autorizaciones`, { method: "POST", auth: admin, body });
+    assert.equal(elsewhere.status, 201, elsewhere.error);
   });
 
   it("descuenta sesiones al atender, avisa al agotarse y la planilla las lista", async () => {

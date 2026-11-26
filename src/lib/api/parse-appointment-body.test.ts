@@ -43,9 +43,9 @@ describe("parseAppointmentWriteInput: payload válido", () => {
       validBody({ id: "a-1", date })
     );
 
+    // El id que manda el cliente se ignora: lo genera el servidor al crear el turno.
     assert.equal(error, undefined);
     assert.deepEqual(input, {
-      id: "a-1",
       patientId: "p-1",
       professionalId: "pro-1",
       date,
@@ -122,7 +122,11 @@ describe("parseAppointmentWriteInput: validación", () => {
       parseAppointmentWriteInput(validBody({ date: "" })).error,
       "La fecha es obligatoria"
     );
-    for (const date of ["2027-06-07", "31-02-2027", "7/6/2027"]) {
+    assert.equal(
+      parseAppointmentWriteInput(validBody({ date: "31-02-2027" })).error,
+      "Esa fecha no existe. Revisá el día y el mes."
+    );
+    for (const date of ["2027-06-07", "7/6/2027"]) {
       assert.match(
         parseAppointmentWriteInput(validBody({ date })).error ?? "",
         /formato dd-MM-yyyy/,
@@ -252,5 +256,15 @@ describe("parseAppointmentStatusInput", () => {
         error: "Cuerpo de solicitud invalido.",
       });
     }
+  });
+});
+
+describe("parseAppointmentWriteInput: observaciones", () => {
+  it("rechaza observaciones de más de 1000 caracteres (antes aceptaba 20.000)", () => {
+    assert.deepEqual(parseAppointmentWriteInput(validBody({ notes: "x".repeat(1001) })), {
+      error: "Las observaciones no pueden superar los 1000 caracteres.",
+      field: "notes",
+    });
+    assert.equal(parseAppointmentWriteInput(validBody({ notes: "x".repeat(1000) })).error, undefined);
   });
 });

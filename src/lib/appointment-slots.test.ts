@@ -6,6 +6,7 @@ import {
   isValidHourlySlotStart,
   listHourlySlotOptions,
   listHourlySlotOptionsForForm,
+  noSlotsReason,
   shouldResetSlotOnDateChange,
 } from "@/lib/appointment-slots";
 import type { Appointment, AppointmentStatus, Professional } from "@/types";
@@ -253,5 +254,34 @@ describe("slots: reset al cambiar de fecha", () => {
 
   it("resetea si cambia el día", () => {
     assert.equal(shouldResetSlotOnDateChange(MONDAY, WEDNESDAY), true);
+  });
+});
+
+describe("slots: por qué no hay horarios", () => {
+  const reason = (date: string, appointments: Appointment[] = [], now = new Date("2027-06-01T12:00:00Z")) =>
+    noSlotsReason(professional, date, listHourlySlotOptions(professional, date, appointments, undefined, { now }), now);
+
+  it("si hay horarios libres, no hay nada que explicar", () => {
+    assert.equal(reason(MONDAY), null);
+  });
+
+  it("el profesional no atiende ese día", () => {
+    assert.match(reason(SUNDAY) ?? "", /^Ana Gómez no atiende los domingo/i);
+  });
+
+  it("todos los bloques del día están ocupados", () => {
+    const full = CLINIC_SLOTS.map((time, index) => appointment({ id: `a-${index}`, time }));
+    assert.equal(
+      reason(MONDAY, full),
+      "Ana Gómez ya tiene ocupados todos los horarios de ese día. Elegí otra fecha u otro profesional."
+    );
+  });
+
+  it("es hoy y ya pasaron todos los horarios", () => {
+    // Lunes 07-06-2027 a las 17:30 ART.
+    assert.equal(
+      reason(MONDAY, [], new Date("2027-06-07T20:30:00Z")),
+      "Ya pasaron todos los horarios de hoy. Elegí otra fecha."
+    );
   });
 });

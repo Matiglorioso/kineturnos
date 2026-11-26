@@ -26,6 +26,15 @@ describe("nombres de personas", () => {
     assert.equal(toTitleCaseName("maría  gonzález-ruiz"), "María González-Ruiz");
   });
 
+  it("respeta apóstrofos y partículas de apellidos", () => {
+    assert.equal(toTitleCaseName("o'CONNOR"), "O'Connor");
+    assert.equal(toTitleCaseName("DE LA FUENTE"), "de la Fuente");
+    assert.equal(toTitleCaseName("maría de los ángeles"), "María de los Ángeles");
+    assert.equal(toTitleCaseName("van der berg"), "van der Berg");
+    // Una partícula sola no se toca: puede ser un nombre ("Del").
+    assert.equal(toTitleCaseName("del"), "Del");
+  });
+
   it("usa nombre y apellido explícitos, o los deduce del nombre completo", () => {
     assert.deepEqual(resolveNameParts("X Y", "Ana", "Torres"), {
       firstName: "Ana",

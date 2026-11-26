@@ -32,6 +32,7 @@ import { appToasts } from "@/lib/toast";
 import { Insurance, Patient, PatientStatus } from "@/types";
 import { PatientInsuranceFields } from "@/components/patients/PatientInsuranceFields";
 import { Pencil, UserPlus } from "lucide-react";
+import { NOTES_MAX_LENGTH } from "@/lib/notes";
 import { FormEvent, useEffect, useState } from "react";
 
 export type { PatientFormValues as NewPatientFormValues } from "@/lib/patient-form";
@@ -130,7 +131,7 @@ export function NewPatientDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent mobileFullScreen className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
@@ -234,6 +235,8 @@ export function NewPatientDialog({
               />
             </FormField>
 
+            {/* Un paciente nuevo siempre es Activo: el estado solo se cambia al editar. */}
+            {isEditing && (
             <FormField id="status" label="Estado">
               <Select
                 value={form.status}
@@ -250,6 +253,7 @@ export function NewPatientDialog({
                 </SelectContent>
               </Select>
             </FormField>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -268,14 +272,15 @@ export function NewPatientDialog({
           <FormField id="notes" label="Observaciones">
             <Textarea
               id="notes"
+              maxLength={NOTES_MAX_LENGTH}
               value={form.notes}
               onChange={(e) => updateField("notes", e.target.value)}
-              placeholder="Notas clinicas, preferencias de horario, etc."
+              placeholder="Preferencias de horario, datos de contacto, etc."
             />
           </FormField>
 
-          <DialogFooter className="gap-2 pt-2 sm:gap-0">
-            <Button
+          <DialogFooter className="pt-2">
+            <Button data-cancel
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}

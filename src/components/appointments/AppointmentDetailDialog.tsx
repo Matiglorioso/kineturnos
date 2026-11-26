@@ -67,16 +67,22 @@ export function AppointmentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto focus:outline-none sm:max-w-lg"
+        // Abre con el foco en el diálogo y no en "Cerrar" (si no, el botón aparece resaltado).
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus();
+        }}
+      >
         <DialogHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="text-left">
-              <DialogTitle>Detalle del turno</DialogTitle>
-              <DialogDescription className="mt-1">
-                {appointment.patientName}
-              </DialogDescription>
+          {/* pr-10: deja lugar para la cruz de cierre, que va arriba a la derecha. */}
+          <div className="pr-10 text-left">
+            <DialogTitle>Detalle del turno</DialogTitle>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <DialogDescription>{appointment.patientName}</DialogDescription>
+              <StatusBadge status={appointment.status} />
             </div>
-            <StatusBadge status={appointment.status} className="self-start" />
           </div>
         </DialogHeader>
 
@@ -108,7 +114,7 @@ export function AppointmentDetailDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>

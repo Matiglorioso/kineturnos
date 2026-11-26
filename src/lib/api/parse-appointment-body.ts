@@ -8,6 +8,7 @@ import {
 import { firstFieldError, type ParseResult } from "@/lib/api/parse-result";
 import { isValidTime } from "@/lib/time-utils";
 import type { AppointmentWriteInput } from "@/lib/db/appointment-write";
+import { notesLengthError } from "@/lib/notes";
 import type { AppointmentStatus, SessionType } from "@/types";
 
 /** Al editar, excludeId + previousDate evitan validar el turno como alta. */
@@ -75,15 +76,18 @@ export function parseAppointmentWriteInput(
   const invalid = firstFieldError(basicErrors);
   if (invalid) return invalid;
 
+  const notes = typeof payload.notes === "string" ? payload.notes : undefined;
+  const notesInvalid = notesLengthError(notes);
+  if (notesInvalid) return notesInvalid;
+
   const input: AppointmentWriteInput = {
-    id: typeof payload.id === "string" ? payload.id : undefined,
     patientId: values.patientId,
     professionalId: values.professionalId,
     date: values.date.trim(),
     time: values.time.trim(),
     status: values.status as AppointmentStatus,
     sessionType: values.sessionType as SessionType,
-    notes: typeof payload.notes === "string" ? payload.notes : undefined,
+    notes,
   };
 
   return { input };

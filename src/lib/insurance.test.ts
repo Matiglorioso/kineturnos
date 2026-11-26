@@ -134,10 +134,21 @@ describe("validación de la autorización", () => {
           sessions: 10,
           validFrom: "01-10-2026",
           validUntil: "31-12-2026",
+          diagnosis: null,
           notes: null,
         },
       }
     );
+  });
+
+  it("guarda el diagnóstico de la orden médica (opcional, hasta 300 caracteres)", () => {
+    const base = { sessions: 10, validFrom: "01-10-2026" };
+    assert.equal(
+      parseAuthorizationInput({ ...base, diagnosis: "  Esguince de tobillo grado II " }).input?.diagnosis,
+      "Esguince de tobillo grado II"
+    );
+    assert.equal(parseAuthorizationInput(base).input?.diagnosis, null);
+    assert.equal(parseAuthorizationInput({ ...base, diagnosis: "x".repeat(301) }).field, "diagnosis");
   });
 
   it("exige sesiones y fecha de inicio, y que el vencimiento no sea anterior", () => {
@@ -148,6 +159,18 @@ describe("validación de la autorización", () => {
     assert.equal(parseAuthorizationInput({ ...base, validUntil: "30-09-2026" }).field, "validUntil");
     assert.equal(parseAuthorizationInput({ ...base, state: "otra" }).field, "state");
     assert.equal(parseAuthorizationInput(base).input?.state, "pendiente");
+  });
+
+  it("avisa cuando la fecha no existe (31-02)", () => {
+    const base = { sessions: 10, validFrom: "01-10-2026" };
+    assert.equal(
+      parseAuthorizationInput({ ...base, validFrom: "31-02-2027" }).error,
+      "Esa fecha no existe. Revisá el día y el mes."
+    );
+    assert.equal(
+      parseAuthorizationInput({ ...base, validUntil: "31-02-2027" }).error,
+      "Esa fecha no existe. Revisá el día y el mes."
+    );
   });
 });
 

@@ -1,11 +1,9 @@
 "use client";
 
-import { AppointmentListSection } from "@/components/shared/AppointmentListSection";
-import { InfoRow } from "@/components/shared/InfoRow";
+import { CompactAppointmentList } from "@/components/shared/CompactAppointmentList";
+import { DetailRow, DetailSection, detailRowsClassName } from "@/components/shared/DetailSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { emptyStates } from "@/lib/empty-states";
-import { pluralize } from "@/lib/pluralize";
 import { useDisplayEntity } from "@/hooks/use-display-entity";
 import {
   Dialog,
@@ -16,24 +14,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  countProfessionalAppointments,
-  getClinicScheduleLabel,
   getProfessionalUpcomingAppointments,
 } from "@/lib/professional-utils";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Appointment, Professional } from "@/types";
-import {
-  Calendar,
-  Clock,
-  Mail,
-  Phone,
-  Stethoscope,
-  Trash2,
-  User,
-  UserCog,
-} from "lucide-react";
+import { Pencil, Stethoscope, Trash2, UserCog, UserX } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+import { ProfessionalDetailMobile } from "@/components/professionals/ProfessionalDetailMobile";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { usePermissions } from "@/hooks/use-permissions";
 import { readableAvatarColor } from "@/lib/professional-utils";
 
@@ -43,6 +32,8 @@ interface ProfessionalDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleteRequest?: (professional: Professional) => void;
+  onEdit?: (professional: Professional) => void;
+  onToggleActive?: (professional: Professional) => void;
 }
 
 export function ProfessionalDetailDialog({
@@ -51,42 +42,50 @@ export function ProfessionalDetailDialog({
   open,
   onOpenChange,
   onDeleteRequest,
+  onEdit,
+  onToggleActive,
 }: ProfessionalDetailDialogProps) {
   const { activeEntity: activeProfessional } = useDisplayEntity(professional, open);
   const { can } = usePermissions();
+  const isDesktop = useIsDesktop();
 
-  const stats = useMemo(() => {
-    if (!activeProfessional) {
-      return { total: 0, upcoming: [] as Appointment[] };
-    }
-
-    return {
-      total: countProfessionalAppointments(appointments, activeProfessional.id),
-      upcoming: getProfessionalUpcomingAppointments(
-        appointments,
-        activeProfessional.id,
-        5
-      ),
-    };
-  }, [activeProfessional, appointments]);
+  const upcoming = useMemo(
+    () =>
+      activeProfessional
+        ? getProfessionalUpcomingAppointments(appointments, activeProfessional.id, 5)
+        : [],
+    [activeProfessional, appointments]
+  );
 
   if (!activeProfessional) return null;
 
-  const scheduleLabel = getClinicScheduleLabel();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent
+        hideClose={!isDesktop}
+        className={cn(
+          "max-h-[90vh] overflow-y-auto focus:outline-none sm:max-w-3xl",
+          // Celular: pantalla completa, como la ficha del paciente.
+          "max-lg:!inset-0 max-lg:!flex max-lg:!h-[100dvh] max-lg:!max-h-[100dvh] max-lg:!w-full max-lg:!max-w-none max-lg:!translate-x-0 max-lg:!translate-y-0 max-lg:!flex-col max-lg:!gap-0 max-lg:!overflow-hidden max-lg:!rounded-none max-lg:!border-0 max-lg:!p-0"
+        )}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus();
+        }}
+      >
+        {!isDesktop ? (
+          <ProfessionalDetailMobile
+            professional={activeProfessional}
+            upcoming={upcoming}
+            onEdit={onEdit}
+            onToggleActive={onToggleActive}
+            onDeleteRequest={onDeleteRequest}
+          />
+        ) : (
+          <>
         <DialogHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div
-              className={cn(
-                "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm",
-                readableAvatarColor(activeProfessional.avatarColor)
-              )}
-            >
-              {getInitials(activeProfessional.name)}
-            </div>
+          <div className="flex items-stretch gap-3 pr-8">
+            <span aria-hidden className={cn("w-1 shrink-0 self-stretch rounded-sm", readableAvatarColor(activeProfessional.avatarColor))} />
             <div className="min-w-0 flex-1 text-left">
               <DialogTitle className="text-xl">
                 {activeProfessional.name}
@@ -106,115 +105,83 @@ export function ProfessionalDetailDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {activeProfessional.license && (
-              <InfoRow
-                icon={User}
-                label="Matrícula"
-                value={activeProfessional.license}
-              />
-            )}
-            {activeProfessional.phone && (
-              <InfoRow
-                icon={Phone}
-                label="Teléfono"
-                value={activeProfessional.phone}
-              />
-            )}
-            {activeProfessional.email && (
-              <InfoRow
-                icon={Mail}
-                label="Email"
-                value={activeProfessional.email}
-              />
-            )}
-          </div>
+        <div className="space-y-4">
+          <DetailSection title="Datos del profesional">
+            <dl className={detailRowsClassName}>
+              {activeProfessional.license && <DetailRow label="Matrícula">{activeProfessional.license}</DetailRow>}
+              {activeProfessional.phone && <DetailRow label="Teléfono">{activeProfessional.phone}</DetailRow>}
+              {activeProfessional.email && <DetailRow label="Email">{activeProfessional.email}</DetailRow>}
+              <DetailRow label="Días">
+                <span className="flex flex-wrap gap-1">
+                  {activeProfessional.days.map((day) => (
+                    <span key={day} className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                      {day}
+                    </span>
+                  ))}
+                </span>
+              </DetailRow>
+              {activeProfessional.notes && (
+                <DetailRow label="Observaciones">{activeProfessional.notes}</DetailRow>
+              )}
+            </dl>
+          </DetailSection>
 
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Días de atención (horario del consultorio)
-            </h3>
-            <div className="rounded-xl border border-slate-200/80 bg-muted/20 p-4">
-              <div className="flex flex-wrap gap-1.5">
-                {activeProfessional.days.map((day) => (
-                  <span
-                    key={day}
-                    className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm"
-                  >
-                    {day}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                {scheduleLabel}
-              </p>
-            </div>
-          </section>
-
-          {activeProfessional.notes && (
-            <section className="space-y-2">
-              <h3 className="text-sm font-semibold text-slate-900">Observaciones</h3>
-              <p className="rounded-xl bg-muted/40 px-4 py-3 text-sm text-slate-700">
-                {activeProfessional.notes}
-              </p>
-            </section>
-          )}
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-brand-700">
-                Turnos asignados
-              </p>
-              <p className="mt-1 text-2xl font-bold text-brand-800">{stats.total}</p>
-            </div>
-            <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Próximos turnos
-              </p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">
-                {stats.upcoming.length}
-              </p>
-            </div>
-          </div>
-
-          <AppointmentListSection
+          <CompactAppointmentList
             title="Próximos turnos"
-            icon={Calendar}
-            appointments={stats.upcoming}
-            emptyPreset={emptyStates.professionalDetail.noUpcoming}
+            appointments={upcoming}
+            show="patient"
+            emptyText="No tiene turnos próximos."
           />
         </div>
 
-        {onDeleteRequest && (
-          <DialogFooter className="flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between">
-            <p className="w-full text-xs text-muted-foreground sm:max-w-[50%]">
-              {stats.total > 0
-                ? `Este profesional tiene ${pluralize(stats.total, "turno")} ${stats.total === 1 ? "asignado" : "asignados"}.`
-                : "Este profesional no tiene turnos asignados."}
-            </p>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              {can("users:manage") && (
-                <Button asChild variant="outline" className="w-full sm:w-auto">
-                  {/* Abre su usuario si ya tiene, o el alta con este profesional elegido. */}
-                  <Link href={`/usuarios?profesional=${encodeURIComponent(activeProfessional.id)}`}>
-                    <UserCog className="h-4 w-4" />
-                    Acceso al sistema
-                  </Link>
-                </Button>
-              )}
+        {(onEdit || onToggleActive || onDeleteRequest) && (
+          <DialogFooter className="flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap sm:justify-end">
+            {/* Eliminar queda a la izquierda, separado de las acciones de todos los días. */}
+            {onDeleteRequest && (
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:mr-auto sm:w-auto"
                 onClick={() => onDeleteRequest(activeProfessional)}
               >
                 <Trash2 className="h-4 w-4" />
-                Eliminar profesional
+                Eliminar
               </Button>
-            </div>
+            )}
+            {onEdit && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => onEdit(activeProfessional)}
+              >
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Button>
+            )}
+            {onToggleActive && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => onToggleActive(activeProfessional)}
+              >
+                <UserX className="h-4 w-4" />
+                {activeProfessional.active ? "Desactivar" : "Activar"}
+              </Button>
+            )}
+            {can("users:manage") && (
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                {/* Abre su usuario si ya tiene, o el alta con este profesional elegido. */}
+                <Link href={`/usuarios?profesional=${encodeURIComponent(activeProfessional.id)}`}>
+                  <UserCog className="h-4 w-4" />
+                  Acceso al sistema
+                </Link>
+              </Button>
+            )}
           </DialogFooter>
+        )}
+          </>
         )}
       </DialogContent>
     </Dialog>

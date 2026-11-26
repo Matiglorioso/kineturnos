@@ -10,7 +10,9 @@ import {
   isFutureAppDate,
   isPastAppDate,
   isTodayAppDate,
+  isAppDateFormat,
   isValidAppDate,
+  NONEXISTENT_DATE_MESSAGE,
 } from "@/lib/date-utils";
 import {
   canTransitionAppointmentStatus,
@@ -253,6 +255,8 @@ export function validateAppointmentForm(
 
   if (!values.date) {
     errors.date = "La fecha es obligatoria";
+  } else if (isAppDateFormat(values.date) && !isValidAppDate(values.date)) {
+    errors.date = NONEXISTENT_DATE_MESSAGE;
   } else if (!isValidAppDate(values.date)) {
     errors.date = `Usá el formato ${APP_DATE_FORMAT} (ej: ${getTodayAppDate(now)})`;
   } else if (isPastAppDate(values.date, now)) {

@@ -135,6 +135,14 @@ describe("indicadores del período (RF16)", () => {
     assert.equal(timeline[0].title, "Semana del 1/10 al 4/10");
   });
 
+  it("incluye el último día del mes aunque quede solo en su semana (noviembre 2026 termina en lunes)", () => {
+    const november = getPeriodRange("mes", "18-11-2026");
+    const timeline = getTimeline([appointment("30-11-2026", "cancelado")], november);
+    const last = timeline[timeline.length - 1];
+    assert.equal(last.title, "Semana del 30/11 al 30/11");
+    assert.equal(last.cancelled, 1);
+  });
+
   it("arma la evolución por día y por mes", () => {
     assert.equal(getTimeline(items, getPeriodRange("semana", TODAY)).length, 7);
     const quarter = getTimeline(items, getPeriodRange("trimestre", TODAY));

@@ -12,6 +12,7 @@ import {
   createProfessional,
   futureWorkday,
   prisma,
+  createAppointmentViaApi,
 } from "./helpers";
 
 /**
@@ -57,30 +58,30 @@ describe("correos al paciente por cada cambio del turno", () => {
       time: "09:00",
     });
 
-    assert.equal((await api("/api/appointments", { method: "POST", body })).status, 201);
+    const { id } = await createAppointmentViaApi(body);
     assert.equal(
       (
-        await api(`/api/appointments/${body.id}`, {
+        await api(`/api/appointments/${id}`, {
           method: "PATCH",
           body: { status: "confirmado" },
         })
       ).status,
       200
     );
-    const moved = await api(`/api/appointments/${body.id}`, {
+    const moved = await api(`/api/appointments/${id}`, {
       method: "PATCH",
       body: { ...body, time: "11:00", status: "confirmado" },
     });
     assert.equal(moved.status, 200, moved.error);
     // Cambiar solo las observaciones no avisa.
-    const notes = await api(`/api/appointments/${body.id}`, {
+    const notes = await api(`/api/appointments/${id}`, {
       method: "PATCH",
       body: { ...body, time: "11:00", status: "confirmado", notes: "Traer estudios" },
     });
     assert.equal(notes.status, 200, notes.error);
     assert.equal(
       (
-        await api(`/api/appointments/${body.id}`, {
+        await api(`/api/appointments/${id}`, {
           method: "PATCH",
           body: { status: "cancelado" },
         })
@@ -88,7 +89,7 @@ describe("correos al paciente por cada cambio del turno", () => {
       200
     );
 
-    const rows = await notificationsOf(body.id, 4);
+    const rows = await notificationsOf(id, 4);
     assert.deepEqual(
       rows.map((row) => row.tipo),
       ["creacion", "confirmacion", "reprogramacion", "cancelacion"]
@@ -114,9 +115,9 @@ describe("correos al paciente por cada cambio del turno", () => {
       time: "10:00",
     });
 
-    assert.equal((await api("/api/appointments", { method: "POST", body })).status, 201);
+    const { id } = await createAppointmentViaApi(body);
 
-    const [row] = await notificationsOf(body.id, 1);
+    const [row] = await notificationsOf(id, 1);
     assert.equal(row.tipo, "creacion");
     assert.equal(row.estado, "omitida");
     assert.equal(row.destinatario, null);
@@ -137,7 +138,8 @@ describe("correos al paciente por cada cambio del turno", () => {
       time: "12:00",
     });
     assert.equal((await api("/api/appointments", { method: "POST", body })).status, 409);
-    assert.equal(await prisma.notificacion.count({ where: { turnoId: body.id } }), 0);
+    // Sin turno creado (409) no hay a qué colgarle un correo.
+    assert.equal(await prisma.turno.count({ where: { pacienteId: other.id } }), 0);
   });
 });
 

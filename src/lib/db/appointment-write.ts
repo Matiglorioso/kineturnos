@@ -44,8 +44,10 @@ export function toTurnoWriteData(
   };
 }
 
-export function resolveAppointmentId(input: AppointmentWriteInput): string {
-  return input.id?.trim() || `a-${Date.now()}`;
+/** Id de un turno nuevo: lo genera siempre el servidor (nunca el que manda el cliente). */
+export function newAppointmentId(): string {
+  // globalThis.crypto (Web Crypto): este módulo también lo importa el cliente, sin node:crypto.
+  return `a-${globalThis.crypto.randomUUID()}`;
 }
 
 export function toAppointmentFormInput(input: AppointmentWriteInput) {

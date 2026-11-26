@@ -24,28 +24,25 @@ export function TodayScheduleCard({ schedule, nowMinutes, showProfessional }: To
       {schedule.length === 0 ? (
         <DashboardEmpty icon={CalendarCheck} text="No hay turnos para hoy." />
       ) : (
-        <ol className="space-y-2">
+        <ol className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white lg:border-slate-100">
           {schedule.map((appointment) => {
             const start = timeToMinutes(normalizeTime(appointment.time));
             const now = isActiveAppointmentStatus(appointment.status) && nowMinutes >= start && nowMinutes < start + 60;
             return (
               <li
                 key={appointment.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl border px-3 py-2.5",
-                  now ? "border-brand-200 bg-brand-50/60" : "border-slate-100"
-                )}
+                className={cn("flex items-center gap-3 px-3 py-2.5", now && "bg-brand-50/60")}
               >
                 <span
                   className={cn(
-                    "w-12 shrink-0 text-sm font-semibold tabular-nums",
-                    now ? "text-brand-700" : "text-slate-700"
+                    "w-11 shrink-0 text-sm font-bold tabular-nums",
+                    now ? "text-brand-700" : "text-brand-800"
                   )}
                 >
                   {normalizeTime(appointment.time)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-slate-900">
+                  <span className="block truncate text-sm font-semibold text-slate-900">
                     {appointment.patientName}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">

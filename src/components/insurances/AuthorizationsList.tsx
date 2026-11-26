@@ -46,6 +46,16 @@ import type {
 } from "@/types";
 import { FileCheck2, Pencil, Search, UserRound, X } from "lucide-react";
 import Link from "next/link";
+import {
+  MobileLinkRow,
+  MobileList,
+  MobileListRow,
+  MobilePill,
+  mobileChipClass,
+  type MobilePillTone,
+} from "@/components/mobile/MobileUi";
+import { BottomSheetContent, Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const STATUS_STYLES: Record<
@@ -78,6 +88,16 @@ const STATUS_STYLES: Record<
   },
 };
 
+/** Color de la etiqueta en el celular: lo que hay que gestionar resalta. */
+const STATUS_TONES: Record<AuthorizationStatus, MobilePillTone> = {
+  agotada: "red",
+  vencida: "gray",
+  "por-renovar": "amber",
+  pendiente: "amber",
+  vigente: "green",
+  rechazada: "gray",
+};
+
 const EMPTY_FILTERS: AuthorizationListFilters = {
   search: "",
   insuranceId: "todas",
@@ -88,7 +108,7 @@ function StatusBadge({ status }: { status: AuthorizationStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-medium lg:rounded lg:border-transparent lg:px-1.5 lg:py-px lg:font-semibold",
         STATUS_STYLES[status].badge,
       )}
     >
@@ -142,6 +162,9 @@ export function AuthorizationsList({
   const [filters, setFilters] =
     useState<AuthorizationListFilters>(EMPTY_FILTERS);
   const [editing, setEditing] = useState<AuthorizationListItem | null>(null);
+  // Celular: la autorización tocada, con sus acciones desde abajo.
+  const [selected, setSelected] = useState<AuthorizationListItem | null>(null);
+  const chips = useDragScroll<HTMLDivElement>();
 
   const load = useCallback(async () => {
     try {
@@ -160,8 +183,9 @@ export function AuthorizationsList({
     void load();
   }, [load]);
 
-  // Los contadores respetan la búsqueda y la obra social: así cierran con los resultados.
-  const { counts, countsTotal } = useMemo(() => {
+  // Qué situaciones tienen autorizaciones con la búsqueda y la obra social elegidas: las
+  // demás no se muestran como chip. Sin contadores (UX mínima).
+  const counts = useMemo(() => {
     const scoped = filterAuthorizations(items ?? [], {
       ...filters,
       status: "todas",
@@ -169,7 +193,7 @@ export function AuthorizationsList({
     const result = new Map<AuthorizationStatus, number>();
     for (const item of scoped)
       result.set(item.status, (result.get(item.status) ?? 0) + 1);
-    return { counts: result, countsTotal: scoped.length };
+    return result;
   }, [items, filters]);
 
   const visible = useMemo(
@@ -200,12 +224,14 @@ export function AuthorizationsList({
         : "bg-transparent text-muted-foreground hover:text-foreground",
     );
 
+  // Celular: chips redondos (boceto 8); computadora: como estaban.
   const chip = (active: boolean) =>
     cn(
-      "inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-sm transition-colors",
+      mobileChipClass(active),
+      "gap-2 lg:h-auto lg:rounded-xl lg:px-3 lg:py-1.5 lg:text-sm",
       active
-        ? "border-primary bg-primary/5 font-medium text-slate-900"
-        : "border-slate-200 bg-white text-slate-700 hover:bg-muted",
+        ? "lg:border-primary lg:bg-primary/5 lg:font-medium lg:text-slate-900"
+        : "lg:border-slate-200 lg:bg-white lg:font-normal lg:text-slate-700 lg:hover:bg-muted",
     );
 
   const patientLink =(item: AuthorizationListItem) =>
@@ -234,12 +260,14 @@ export function AuthorizationsList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-3 lg:gap-4">
       {/* Único filtro por situación: cada chip muestra cuántas hay y filtra por ella. */}
       <div
         role="group"
         aria-label="Situación"
-        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap"
+        ref={chips.ref}
+        {...chips.handlers}
+        className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] lg:-mx-1 lg:flex-wrap lg:gap-2 lg:px-1 lg:pb-1 [&::-webkit-scrollbar]:hidden"
       >
         <button
           type="button"
@@ -250,7 +278,6 @@ export function AuthorizationsList({
           className={chip(filters.status === "todas")}
         >
           Todas
-          <span className="font-semibold">{countsTotal}</span>
         </button>
         {/* Las situaciones sin autorizaciones no se muestran, salvo la elegida (para poder salir). */}
         {AUTHORIZATION_STATUS_PRIORITY.filter(
@@ -272,22 +299,22 @@ export function AuthorizationsList({
             >
               <span
                 className={cn(
-                  "h-2 w-2 rounded-full",
+                  "h-2 w-2 rounded-full max-lg:hidden",
                   STATUS_STYLES[status].dot,
                 )}
               />
               {AUTHORIZATION_STATUS_LABELS[status]}
-              <span className="font-semibold">{counts.get(status) ?? 0}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Celular: el buscador va primero (boceto 8). */}
+      <div className="flex flex-col gap-3 max-lg:order-first lg:flex-row lg:items-center lg:justify-between">
         <div className="relative w-full lg:max-w-sm">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-10"
+            className="h-11 pl-10 max-lg:bg-white lg:h-10"
             aria-label="Buscar autorizaciones"
             placeholder="Paciente, DNI o Nº de autorización"
             value={filters.search}
@@ -299,7 +326,7 @@ export function AuthorizationsList({
             }
           />
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 max-lg:hidden">
           <div
             role="group"
             aria-label="Filtros de autorizaciones"
@@ -438,54 +465,64 @@ export function AuthorizationsList({
             </TooltipProvider>
           </div>
 
-          {/* Celular y tablet: tarjetas. */}
-          <ul
-            className="grid gap-3 sm:grid-cols-2 lg:hidden"
-            aria-label="Autorizaciones"
-          >
+          {/* Celular (boceto 8): una fila por autorización; al tocarla, sus acciones desde abajo. */}
+          <MobileList label="Autorizaciones" className="lg:hidden">
             {pagination.items.map((item) => (
-              <li key={item.id} className="surface-card space-y-3 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-900">
-                      {item.patientName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      DNI {item.patientDni} · {item.insuranceName}
-                    </p>
-                  </div>
-                  <StatusBadge status={item.status} />
-                </div>
-                <div className="flex items-center justify-between gap-3 text-xs text-slate-600">
-                  <span>
-                    {item.number ? `Nº ${item.number}` : "Sin número"}
-                  </span>
-                  <span>{period(item)}</span>
-                </div>
-                <SessionsBar used={item.used} sessions={item.sessions} />
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditing(item)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={patientLink(item)}>
-                      <UserRound className="h-4 w-4" />
-                      Ver paciente
-                    </Link>
-                  </Button>
-                </div>
-              </li>
+              <MobileListRow
+                key={item.id}
+                ariaLabel={`Autorización de ${item.patientName}`}
+                title={item.patientName}
+                detail={`${item.insuranceName} · ${item.number ? `Nº ${item.number}` : "Sin número"} · ${item.used} de ${item.sessions}`}
+                trailing={<MobilePill tone={STATUS_TONES[item.status]}>{AUTHORIZATION_STATUS_LABELS[item.status]}</MobilePill>}
+                onClick={() => setSelected(item)}
+              />
             ))}
-          </ul>
+          </MobileList>
           <ListPagination pagination={pagination} itemLabel="autorizaciones" itemLabelSingular="autorización" />
         </div>
       )}
+
+      <Sheet open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
+        {selected && (
+          <BottomSheetContent
+            className="lg:hidden"
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              (event.currentTarget as HTMLElement | null)?.focus();
+            }}
+          >
+            <div className="space-y-2 px-1">
+              <div className="flex items-start justify-between gap-3">
+                <SheetTitle className="min-w-0 pr-0 text-lg">{selected.patientName}</SheetTitle>
+                <MobilePill tone={STATUS_TONES[selected.status]}>{AUTHORIZATION_STATUS_LABELS[selected.status]}</MobilePill>
+              </div>
+              <SheetDescription asChild>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    {selected.insuranceName} · {selected.number ? `Nº ${selected.number}` : "Sin número"} · {period(selected)}
+                  </p>
+                  <SessionsBar used={selected.used} sessions={selected.sessions} />
+                </div>
+              </SheetDescription>
+            </div>
+            <Button
+              type="button"
+              className="h-12 w-full text-[15px]"
+              onClick={() => {
+                setEditing(selected);
+                setSelected(null);
+              }}
+            >
+              Editar autorización
+            </Button>
+            <div className="border-t border-slate-100">
+              <MobileLinkRow href={`/pacientes?paciente=${encodeURIComponent(selected.patientId)}`}>
+                Ficha del paciente
+              </MobileLinkRow>
+            </div>
+          </BottomSheetContent>
+        )}
+      </Sheet>
 
       <AuthorizationDialog
         open={editing !== null}

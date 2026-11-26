@@ -29,17 +29,21 @@ import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { Insurance } from "@/types";
 import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { MobileList, MobileListRow, MobilePill } from "@/components/mobile/MobileUi";
 
 interface InsuranceCatalogProps {
   insurances: Insurance[];
   onChange: () => Promise<void>;
+  /** Cada vez que cambia, abre el alta (el "+" del celular está en el título de la página). */
+  newRequest?: number;
 }
 
 /** Catálogo de obras sociales: alta, edición, desactivar y borrar las que no se usan. */
 export function InsuranceCatalog({
   insurances,
   onChange,
+  newRequest = 0,
 }: InsuranceCatalogProps) {
   const [dialog, setDialog] = useState<{
     open: boolean;
@@ -50,6 +54,10 @@ export function InsuranceCatalog({
   });
   const [toDelete, setToDelete] = useState<Insurance | null>(null);
   const pagination = usePagination(insurances, { storageKey: "obras-sociales" });
+
+  useEffect(() => {
+    if (newRequest > 0) setDialog({ open: true, insurance: null });
+  }, [newRequest]);
 
   const save = async (body: InsuranceRequest) => {
     if (dialog.insurance) {
@@ -106,7 +114,7 @@ export function InsuranceCatalog({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between max-lg:hidden">
         <p className="text-sm text-muted-foreground">
           Las obras sociales inactivas no se ofrecen al cargar un paciente.
         </p>
@@ -127,7 +135,7 @@ export function InsuranceCatalog({
         />
       ) : (
         <div className="space-y-4">
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <TooltipProvider delayDuration={200}>
               <DataTable
                 headers={["Obra social", "Pacientes", "Estado", "Acciones"]}
@@ -181,60 +189,24 @@ export function InsuranceCatalog({
             </TooltipProvider>
           </div>
 
-          {/* Celular: tarjetas. */}
-          <ul className="grid gap-3 md:hidden" aria-label="Obras sociales">
+          {/* Celular (boceto 9): una fila por obra social; tocarla la edita. */}
+          <MobileList label="Obras sociales" className="lg:hidden">
             {pagination.items.map((insurance) => (
-              <li key={insurance.id} className="surface-card space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-slate-900">
-                    {insurance.name}
-                  </p>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-lg px-2 py-0.5 text-xs font-medium",
-                      insurance.active
-                        ? "bg-emerald-50 text-emerald-800"
-                        : "bg-slate-100 text-slate-600",
-                    )}
-                  >
-                    {insurance.active ? "Activa" : "Inactiva"}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {pluralize(insurance.patientCount, "paciente")}
-                </p>
-                {insurance.notes && (
-                  <p className="text-xs text-muted-foreground">
-                    {insurance.notes}
-                  </p>
-                )}
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setDialog({ open: true, insurance })}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                  {insurance.patientCount === 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-destructive"
-                      onClick={() => setToDelete(insurance)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Eliminar
-                    </Button>
-                  )}
-                </div>
-              </li>
+              <MobileListRow
+                key={insurance.id}
+                ariaLabel={`Editar ${insurance.name}`}
+                title={insurance.name}
+                detail={[
+                  insurance.patientCount === 0 ? "Sin pacientes" : pluralize(insurance.patientCount, "paciente"),
+                  insurance.notes?.trim(),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+                trailing={insurance.active ? undefined : <MobilePill tone="gray">Inactiva</MobilePill>}
+                onClick={() => setDialog({ open: true, insurance })}
+              />
             ))}
-          </ul>
+          </MobileList>
           <ListPagination pagination={pagination} itemLabel="obras sociales" itemLabelSingular="obra social" />
         </div>
       )}
@@ -244,6 +216,14 @@ export function InsuranceCatalog({
         onOpenChange={(open) => setDialog((current) => ({ ...current, open }))}
         insurance={dialog.insurance}
         onSubmit={save}
+        onDelete={
+          dialog.insurance && dialog.insurance.patientCount === 0
+            ? () => {
+                setToDelete(dialog.insurance);
+                setDialog((current) => ({ ...current, open: false }));
+              }
+            : undefined
+        }
       />
       <ConfirmAlertDialog
         open={toDelete !== null}

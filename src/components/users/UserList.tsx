@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { DataTable, DataTableCell, DataTableRow } from "@/components/ui/DataTable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatLastLogin } from "@/lib/user-list";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { AppUser } from "@/types";
 import { KeyRound, Lock, Pencil, UserCheck, UserX, type LucideIcon } from "lucide-react";
+import { MobileList, MobileListRow, MobilePill } from "@/components/mobile/MobileUi";
+import { BottomSheetContent, Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { getRoleLabel } from "@/lib/auth/roles";
+import { useState } from "react";
 
 export interface UserActions {
   onEdit: (user: AppUser) => void;
@@ -102,14 +106,6 @@ function UserActionButtons({
 function UserIdentity({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-semibold",
-          user.active ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-500"
-        )}
-      >
-        {getInitials(user.name)}
-      </div>
       <div className="min-w-0">
         <p className="truncate font-medium text-slate-900">
           {user.name}
@@ -132,7 +128,82 @@ function LastLogin({ user }: { user: AppUser }) {
   );
 }
 
+/** "Hoy 08:52" → "hoy 08:52"; sin ingresos, "nunca ingresó". */
+function lastLoginShort(iso: string | null): string {
+  if (!iso) return "nunca ingresó";
+  // Fechas de este año sin el año ("23-11"), como en el resto del celular.
+  const year = String(new Date().getFullYear());
+  const label = formatLastLogin(iso).replace(new RegExp(`^(\\d{2}-\\d{2})-${year}$`), "$1");
+  return label.charAt(0).toLowerCase() + label.slice(1);
+}
+
+/** Acciones de un usuario en el celular: suben desde abajo, a lo ancho. */
+function UserActionSheet({
+  user,
+  isSelf,
+  manageable,
+  close,
+  onEdit,
+  onResetPassword,
+  onToggleActive,
+}: UserActions & { user: AppUser; isSelf: boolean; manageable: boolean; close: () => void }) {
+  const run = (action: () => void) => {
+    close();
+    action();
+  };
+  return (
+    <BottomSheetContent
+      className="lg:hidden"
+      onOpenAutoFocus={(event) => {
+        event.preventDefault();
+        (event.currentTarget as HTMLElement | null)?.focus();
+      }}
+    >
+      <div className="space-y-1 px-1">
+        <SheetTitle className="pr-0 text-lg">{user.name}</SheetTitle>
+        <SheetDescription className="truncate">
+          {user.email} · {getRoleLabel(user.role)}
+          {user.professionalName && user.professionalName !== user.name ? ` · ${user.professionalName}` : ""}
+        </SheetDescription>
+      </div>
+      {manageable ? (
+        <div className="grid gap-2">
+          <Button type="button" variant="outline" className="h-12 text-sm" onClick={() => run(() => onEdit(user))}>
+            Editar usuario
+          </Button>
+          {!isSelf && user.active && (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 text-sm"
+              onClick={() => run(() => onResetPassword(user))}
+            >
+              Restablecer contraseña
+            </Button>
+          )}
+          {!isSelf && (
+            <Button
+              type="button"
+              variant="outline"
+              className={cn("h-12 text-sm", user.active && "text-red-600 hover:text-red-700")}
+              onClick={() => run(() => onToggleActive(user))}
+            >
+              {user.active ? "Desactivar" : "Activar"}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <p className="flex items-center gap-1.5 px-1 pb-2 text-sm text-muted-foreground">
+          <Lock className="h-4 w-4" />
+          Lo gestiona un Superadmin
+        </p>
+      )}
+    </BottomSheetContent>
+  );
+}
+
 export function UserList({ users, currentUserId, canManage, ...actions }: UserListProps) {
+  const [selected, setSelected] = useState<AppUser | null>(null);
   return (
     <TooltipProvider delayDuration={200}>
       <div className="hidden lg:block">
@@ -164,44 +235,45 @@ export function UserList({ users, currentUserId, canManage, ...actions }: UserLi
         </DataTable>
       </div>
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:hidden" aria-label="Usuarios">
-        {users.map((user) => (
-          <li
-            key={user.id}
-            className={cn(
-              "flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card",
-              !user.active && "bg-slate-50/80"
-            )}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <UserIdentity user={user} isSelf={user.id === currentUserId} />
-              <PatientStatusBadge active={user.active} className="shrink-0" />
-            </div>
-            <dl className="grid grid-cols-2 gap-3 text-sm">
-              <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">Perfil</dt>
-                <dd className="mt-1">
-                  <UserRoleBadge role={user.role} />
-                </dd>
-              </div>
-              <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">Último ingreso</dt>
-                <dd className="mt-1">
-                  <LastLogin user={user} />
-                </dd>
-              </div>
-            </dl>
-            <div className="flex justify-end border-t border-slate-100 pt-2">
-              <UserActionButtons
-                user={user}
-                isSelf={user.id === currentUserId}
-                manageable={canManage(user)}
-                {...actions}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+      {/* Celular (boceto 11): una fila por usuario; al tocarlo, sus acciones desde abajo. */}
+      <MobileList label="Usuarios" className="lg:hidden">
+        {users.map((user) => {
+          const isSelf = user.id === currentUserId;
+          return (
+            <MobileListRow
+              key={user.id}
+              ariaLabel={`Usuario ${user.name}`}
+              title={
+                <>
+                  {user.name}
+                  {isSelf && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(vos)</span>}
+                </>
+              }
+              detail={`${getRoleLabel(user.role)} · ${lastLoginShort(user.lastLogin)}`}
+              trailing={
+                !user.active ? (
+                  <MobilePill tone="gray">Inactivo</MobilePill>
+                ) : user.mustChangePassword ? (
+                  <MobilePill tone="amber">Contraseña temporal</MobilePill>
+                ) : undefined
+              }
+              onClick={() => setSelected(user)}
+            />
+          );
+        })}
+      </MobileList>
+
+      <Sheet open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
+        {selected && (
+          <UserActionSheet
+            user={selected}
+            isSelf={selected.id === currentUserId}
+            manageable={canManage(selected)}
+            close={() => setSelected(null)}
+            {...actions}
+          />
+        )}
+      </Sheet>
     </TooltipProvider>
   );
 }

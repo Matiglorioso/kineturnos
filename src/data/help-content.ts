@@ -70,11 +70,11 @@ export const moduleGuides: {
   {
     icon: FileHeart,
     title: "Historia clínica",
-    summary: "Una evolución por sesión, con diagnóstico y plan vigentes, objetivos del tratamiento, alertas y antecedentes.",
+    summary: "Una evolución por sesión: fecha, profesional y lo que se trabajó. Se carga con «Nueva evolución», junto al nombre del paciente.",
     tips: [
       "La ven Administración y los profesionales que atendieron o atienden al paciente.",
       "Solo quien cargó una evolución puede corregirla, y dentro de las 24 horas; después queda cerrada.",
-      "Cada consulta y cada cambio quedan registrados en «Ver accesos».",
+      "Cada consulta y cada cambio quedan registrados en la auditoría del sistema.",
     ],
   },
   {
@@ -162,6 +162,11 @@ export const roleGuides: {
     name: "Profesional",
     description:
       "Su propia agenda, la asistencia de sus turnos y la historia clínica de sus pacientes.",
+  },
+  {
+    name: "Superadmin",
+    description:
+      "Equipo que gestiona KineTurnos: todo lo de Administración, más la auditoría de cambios e ingresos al sistema.",
   },
 ];
 

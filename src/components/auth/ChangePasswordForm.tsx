@@ -1,6 +1,5 @@
 "use client";
 
-import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -9,7 +8,7 @@ import { changeOwnPasswordRequest } from "@/lib/api/users-client";
 import { newPasswordValidationError, PASSWORD_MIN_LENGTH } from "@/lib/auth/password-policy";
 import { showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Check, Circle, KeyRound, LogOut } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, Circle, KeyRound, LogOut } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -91,15 +90,22 @@ export function ChangePasswordForm() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="text-center lg:text-left">
-        <div className="mb-4 flex justify-center lg:hidden">
-          <Logo size="lg" />
-        </div>
-        <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-700 lg:mx-0">
+    <div className="space-y-5 max-lg:pb-24">
+      {/* Celular: como los formularios (volver arriba, título a la izquierda, botón fijo abajo). */}
+      {!forced && (
+        <Link
+          href="/mas"
+          className="-ml-1 mb-1 flex h-10 w-fit items-center gap-0.5 rounded-lg px-1 text-[15px] font-semibold text-brand-800 lg:hidden"
+        >
+          <ChevronLeft className="h-5 w-5" />
+          Volver
+        </Link>
+      )}
+      <div className="text-left">
+        <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-700 max-lg:hidden">
           <KeyRound className="h-5 w-5" />
         </span>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-[22px] font-bold text-slate-900 lg:text-2xl lg:font-semibold">
           {forced ? "Elegí tu contraseña" : "Cambiar contraseña"}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -112,7 +118,7 @@ export function ChangePasswordForm() {
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:p-5"
+        className="space-y-4 lg:rounded-2xl lg:border lg:border-slate-200/80 lg:bg-white lg:p-5 lg:shadow-sm"
       >
         <FormField
           id="currentPassword"
@@ -124,7 +130,7 @@ export function ChangePasswordForm() {
             autoComplete="current-password"
             value={values.currentPassword}
             onChange={(event) => set("currentPassword", event.target.value)}
-            className="h-11 sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10"
           />
         </FormField>
 
@@ -134,7 +140,7 @@ export function ChangePasswordForm() {
             autoComplete="new-password"
             value={values.newPassword}
             onChange={(event) => set("newPassword", event.target.value)}
-            className="h-11 sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10"
           />
         </FormField>
 
@@ -144,7 +150,7 @@ export function ChangePasswordForm() {
             autoComplete="new-password"
             value={values.confirmPassword}
             onChange={(event) => set("confirmPassword", event.target.value)}
-            className="h-11 sm:h-10"
+            className="h-12 max-lg:bg-white sm:h-10"
           />
         </FormField>
 
@@ -160,12 +166,14 @@ export function ChangePasswordForm() {
           </p>
         )}
 
-        <Button type="submit" className="h-11 w-full sm:h-10" disabled={saving}>
-          {saving ? "Guardando…" : "Guardar contraseña"}
-        </Button>
+        <div className="max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:border-t max-lg:border-slate-200/80 max-lg:bg-background/95 max-lg:px-4 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom))] max-lg:pt-3 max-lg:backdrop-blur">
+          <Button type="submit" className="h-12 w-full text-[15px] lg:h-10 lg:text-sm" disabled={saving}>
+            {saving ? "Guardando…" : "Guardar contraseña"}
+          </Button>
+        </div>
       </form>
 
-      <div className="flex items-center justify-center gap-4 text-sm lg:justify-start">
+      <div className={cn("flex items-center gap-4 text-sm", !forced && "max-lg:hidden")}>
         {!forced && (
           <Link href="/" className="inline-flex items-center gap-1.5 font-medium text-brand-700 hover:underline">
             <ArrowLeft className="h-4 w-4" />

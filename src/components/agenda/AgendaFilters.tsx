@@ -141,13 +141,13 @@ export function AgendaFilters({
         <ul aria-label="Filtros aplicados" className="flex flex-wrap gap-2">
           {active.map((filter) => (
             <li key={filter.key}>
-              <span className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 py-0.5 pl-3 pr-1 text-sm text-brand-800">
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-200 lg:rounded-md bg-brand-50 py-0.5 pl-3 pr-1 text-sm text-brand-800">
                 {filter.label}
                 <button
                   type="button"
                   aria-label={`Quitar filtro: ${filter.label}`}
                   onClick={filter.clear}
-                  className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-brand-100"
+                  className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-brand-100 lg:rounded"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

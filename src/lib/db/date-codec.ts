@@ -1,4 +1,5 @@
 import { ValidationError } from "./errors";
+import { NONEXISTENT_DATE_MESSAGE } from "@/lib/date-utils";
 
 /**
  * Conversión entre el formato de la app (fecha `dd-MM-yyyy`, hora `HH:mm`)
@@ -42,7 +43,7 @@ export function appDateToDb(value: string, field = "date"): Date {
     date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   ) {
-    throw new ValidationError("Fecha inválida.", field);
+    throw new ValidationError(`Fecha inválida. ${NONEXISTENT_DATE_MESSAGE}`, field);
   }
 
   return date;

@@ -1,7 +1,7 @@
 "use client";
 
 import { NewPatientDialog } from "@/components/patients/NewPatientDialog";
-import { PatientCard } from "@/components/patients/PatientCard";
+import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { PatientDetailDialog } from "@/components/patients/PatientDetailDialog";
 import { PatientListControls } from "@/components/patients/PatientListControls";
 import { PatientTable } from "@/components/patients/PatientTable";
@@ -10,6 +10,7 @@ import { DataLoadError } from "@/components/shared/DataLoadError";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
 import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import { emptyStateActions, emptyStates } from "@/lib/empty-states";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ListPagination } from "@/components/ui/ListPagination";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -33,7 +34,8 @@ import {
 } from "@/lib/patient-list";
 import { showSuccessToast } from "@/lib/toast";
 import { Patient } from "@/types";
-import { Search, UserPlus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
@@ -78,6 +80,7 @@ function PacientesPageContent() {
   const [patientToDeactivate, setPatientToDeactivate] =
     useState<Patient | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     const query = searchParams.get("q");
@@ -85,6 +88,17 @@ function PacientesPageContent() {
       setSearch(query);
     }
   }, [searchParams]);
+
+  // ?paciente=<id> (desde las acciones de un turno): abre esa ficha y limpia la URL.
+  const requestedPatientId = searchParams.get("paciente");
+  useEffect(() => {
+    if (!requestedPatientId) return;
+    const patient = patients.find((item) => item.id === requestedPatientId);
+    if (!patient) return;
+    setSelectedPatient(patient);
+    setDetailOpen(true);
+    window.history.replaceState(null, "", "/pacientes");
+  }, [requestedPatientId, patients]);
 
   // Desde el panel ("Nuevo paciente"): abre el alta y limpia el parámetro de la URL.
   useEffect(() => {
@@ -248,8 +262,24 @@ function PacientesPageContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Celular: título y "+" (como el boceto). */}
+      <div className="flex items-end justify-between gap-3 lg:hidden">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+            {patients.length} {patients.length === 1 ? "paciente" : "pacientes"}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pacientes</h1>
+        </div>
+        {canManagePatients && (
+          <Button type="button" size="icon" aria-label="Nuevo paciente" className="h-10 w-10 rounded-xl" onClick={openDialog}>
+            <Plus className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
       <PageHeader
+        className="max-lg:hidden"
         title="Pacientes"
         description="Datos, cobertura, turnos e historia clínica de cada paciente."
         actionLabel={
@@ -261,18 +291,36 @@ function PacientesPageContent() {
 
       {/* Con tres filtros, el buscador va en su propia fila salvo en pantallas muy anchas. */}
       <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-        <div className="relative w-full 2xl:max-w-md">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-10"
-            aria-label="Buscar pacientes"
-            placeholder="Buscar por nombre, DNI, CUIL, teléfono u obra social…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            disabled={isSaving}
-          />
+        <div className="flex gap-2 2xl:max-w-md 2xl:flex-1">
+          <div className="relative w-full">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="h-11 pl-10 lg:h-10"
+              aria-label="Buscar pacientes"
+              placeholder="Nombre, DNI u obra social…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              disabled={isSaving}
+            />
+          </div>
+          {/* Celular: orden y filtros detrás de un botón, para que la lista arranque arriba. */}
+          <Button
+            type="button"
+            variant="outline"
+            aria-expanded={filtersOpen}
+            className="h-11 shrink-0 lg:hidden"
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filtros
+          </Button>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div
+          className={cn(
+            "flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 lg:flex",
+            filtersOpen ? "flex" : "hidden"
+          )}
+        >
           <PatientListControls
             sort={sort}
             onSortChange={setSort}
@@ -317,21 +365,34 @@ function PacientesPageContent() {
               onViewDetail={openPatientDetail}
             />
           </div>
-          <div className="grid gap-4 lg:hidden">
+          {/* Celular: un paciente por fila (nombre; DNI y obra social; aviso de cobertura si hay). */}
+          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white lg:hidden">
             {pagination.items.map((patient) => (
-              <PatientCard
-                key={patient.id}
-                patient={patient}
-                onViewDetail={openPatientDetail}
-                onToggleStatus={
-                  canManagePatients ? handleToggleStatus : undefined
-                }
-              />
+              <li key={patient.id}>
+                <button
+                  type="button"
+                  aria-label={`Ver detalle de ${patient.name}`}
+                  className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left active:bg-muted/60"
+                  onClick={() => openPatientDetail(patient)}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold text-slate-900">
+                      {patient.name}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      DNI {patient.dni} · {patient.insurance}
+                      {patient.status === "inactivo" ? " · Inactivo" : ""}
+                    </span>
+                  </span>
+                  <CoverageBadge coverage={patient.coverage} size="xs" short onlyIssues />
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
           <ListPagination pagination={pagination} itemLabel="pacientes" itemLabelSingular="paciente" />
         </div>
       )}
+
 
       {canManagePatients && (
         <NewPatientDialog
@@ -372,7 +433,7 @@ function PacientesPageContent() {
         title="Desactivar paciente"
         description={
           patientToDeactivate
-            ? `${patientToDeactivate.name} quedara marcado como inactivo. Sus turnos existentes no se modifican.`
+            ? `${patientToDeactivate.name} quedará inactivo y no se le podrán agendar turnos nuevos. Si tiene turnos pendientes o confirmados, primero hay que cancelarlos o registrar la asistencia.`
             : ""
         }
         confirmLabel="Sí, desactivar"

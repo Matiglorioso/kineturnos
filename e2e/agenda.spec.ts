@@ -32,6 +32,8 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     await createAppointmentInDb({ patient: other, professional, date, time: "10:00" });
 
     const dialog = await openNewAppointmentDialog(page);
+    // Al abrir el formulario no se despliega sola la lista de pacientes.
+    await expect(page.getByRole("listbox", { name: "Pacientes" })).toBeHidden();
     // El paciente se busca escribiendo (por DNI o nombre), no en una lista de cientos.
     await dialog.getByRole("combobox", { name: "Paciente *" }).fill(patient.dni);
     await expect(page.getByRole("option")).toHaveCount(1);
@@ -132,6 +134,8 @@ test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
     // Confirmado → Atendido, desde la etiqueta de estado.
     await row.getByRole("button", { name: /^Estado: Confirmado/ }).click();
     await page.getByRole("menuitem", { name: "Atendido" }).click();
+    // Es un estado final: se confirma antes.
+    await page.getByRole("alertdialog").getByRole("button", { name: "Sí, marcar atendido" }).click();
     await expect(page.getByText("Sesión atendida")).toBeVisible();
     await expect(row).toContainText("Atendido");
 

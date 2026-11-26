@@ -3,15 +3,23 @@
 import { DashboardCard, DashboardEmpty } from "@/components/dashboard/DashboardCard";
 import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { Button } from "@/components/ui/button";
-import { formatAppDate } from "@/lib/date-utils";
+import { ConfirmAlertDialog } from "@/components/ui/ConfirmAlertDialog";
+import { APP_DATE_FORMAT, formatAppDate, getTodayAppDate, parseAppDate } from "@/lib/date-utils";
+import { addDays, format } from "date-fns";
 import { phoneHref } from "@/lib/dashboard-today";
+import { statusChangeConfirmation } from "@/lib/status-confirm";
 import { normalizeTime } from "@/lib/time-utils";
 import type { Appointment, AppointmentStatus, Patient } from "@/types";
-import { CheckCircle2, ListChecks, Phone, UserX } from "lucide-react";
+import { Check, CheckCircle2, ListChecks, Phone, UserX, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 const MAX_ITEMS = 5;
+
+function getTomorrowAppDate(): string {
+  const today = parseAppDate(getTodayAppDate());
+  return today ? format(addDays(today, 1), APP_DATE_FORMAT) : "";
+}
 
 interface ActionCenterCardProps {
   pendingAttendance: Appointment[];
@@ -27,11 +35,14 @@ interface ActionCenterCardProps {
 
 function Group({
   title,
+  mobileTitle,
   count,
   more,
   children,
 }: {
   title: string;
+  /** Título en el celular (como el boceto), donde no está el de la tarjeta. */
+  mobileTitle?: string;
   count: number;
   more?: { label: string; href: string };
   children: React.ReactNode;
@@ -39,16 +50,17 @@ function Group({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {title} <span className="text-slate-900">{count}</span>
+        <h3 className="min-w-0 truncate text-xs font-bold uppercase tracking-wide text-brand-800 lg:font-semibold lg:text-muted-foreground">
+          <span className="lg:hidden">{mobileTitle ?? title}</span>
+          <span className="max-lg:hidden">{title}</span>
         </h3>
         {more && count > MAX_ITEMS && (
-          <Link href={more.href} className="-my-1 inline-flex min-h-6 items-center rounded-md px-1 text-xs font-medium text-brand-700 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Link href={more.href} className="-my-1 inline-flex min-h-6 shrink-0 items-center whitespace-nowrap rounded-md px-1 text-xs font-medium text-brand-700 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {more.label}
           </Link>
         )}
       </div>
-      <ul className="space-y-2">{children}</ul>
+      <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white lg:border-slate-100">{children}</ul>
     </div>
   );
 }
@@ -65,6 +77,9 @@ export function ActionCenterCard({
   onStatusChange,
 }: ActionCenterCardProps) {
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Atendido y ausente son finales: se confirman antes de aplicarlos, como en la Agenda.
+  const [confirming, setConfirming] = useState<{ appointment: Appointment; status: AppointmentStatus } | null>(null);
+  const confirmation = confirming ? statusChangeConfirmation(confirming.appointment, confirming.status) : null;
   const run = async (appointment: Appointment, status: AppointmentStatus) => {
     setBusyId(appointment.id);
     try {
@@ -75,11 +90,13 @@ export function ActionCenterCard({
   };
 
   const showUnconfirmed = canConfirm;
+  const tomorrow = getTomorrowAppDate();
   const total =
     pendingAttendance.length + (showUnconfirmed ? unconfirmed.length : 0) + (showCoverage ? coverageIssues.length : 0);
 
   return (
-    <DashboardCard title="Para hacer" icon={ListChecks} fixedHeight>
+    <>
+    <DashboardCard title="Para hacer" icon={ListChecks} fixedHeight hideMobileHeader={total > 0}>
       {total === 0 ? (
         <DashboardEmpty icon={CheckCircle2} text="Todo al día: no hay nada pendiente." />
       ) : (
@@ -87,21 +104,21 @@ export function ActionCenterCard({
           {pendingAttendance.length > 0 && (
             <Group
               title="Registrar asistencia"
+              mobileTitle="Para hacer · registrar asistencia"
               count={pendingAttendance.length}
               more={{ label: "Ver en la agenda", href: "/agenda" }}
             >
               {pendingAttendance.slice(0, MAX_ITEMS).map((appointment) => (
-                <li
-                  key={appointment.id}
-                  className="flex flex-col gap-2 rounded-xl border border-slate-100 px-3 py-2.5 sm:flex-row sm:items-center"
-                >
+                <li key={appointment.id} className="flex items-center gap-3 px-3 py-2.5">
+                  <span className="w-11 shrink-0 text-sm font-bold tabular-nums text-brand-800">
+                    {normalizeTime(appointment.time)}
+                  </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-slate-900">
+                    <span className="block truncate text-sm font-semibold text-slate-900">
                       {appointment.patientName}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {formatAppDate(appointment.date, "EEE d/MM")} · {normalizeTime(appointment.time)} ·{" "}
-                      {appointment.professionalName}
+                      {formatAppDate(appointment.date, "EEE dd-MM")} · {appointment.professionalName}
                     </span>
                   </span>
                   <span className="flex shrink-0 gap-1.5">
@@ -110,22 +127,26 @@ export function ActionCenterCard({
                       size="sm"
                       variant="outline"
                       disabled={busyId === appointment.id}
-                      onClick={() => void run(appointment, "atendido")}
+                      onClick={() => setConfirming({ appointment, status: "atendido" })}
                       aria-label={`Marcar atendido: ${appointment.patientName}`}
+                      className="h-8 w-9 px-0 lg:h-9 lg:w-auto lg:px-3"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      Atendido
+                      <Check className="h-4 w-4 lg:hidden" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 max-lg:hidden" />
+                      <span className="max-lg:hidden">Atendido</span>
                     </Button>
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
                       disabled={busyId === appointment.id}
-                      onClick={() => void run(appointment, "ausente")}
+                      onClick={() => setConfirming({ appointment, status: "ausente" })}
                       aria-label={`Marcar ausente: ${appointment.patientName}`}
+                      className="h-8 w-9 px-0 lg:h-9 lg:w-auto lg:px-3"
                     >
-                      <UserX className="h-4 w-4 text-slate-500" />
-                      Ausente
+                      <X className="h-4 w-4 lg:hidden" />
+                      <UserX className="h-4 w-4 text-slate-500 max-lg:hidden" />
+                      <span className="max-lg:hidden">Ausente</span>
                     </Button>
                   </span>
                 </li>
@@ -136,30 +157,35 @@ export function ActionCenterCard({
           {showUnconfirmed && unconfirmed.length > 0 && (
             <Group
               title={`Confirmar turnos del ${formatAppDate(unconfirmedDate, "EEEE d/MM")}`}
+              mobileTitle={
+                unconfirmedDate === tomorrow
+                  ? "Confirmar los de mañana"
+                  : `Confirmar los del ${formatAppDate(unconfirmedDate, "EEEE")}`
+              }
               count={unconfirmed.length}
               more={{ label: "Ver en la agenda", href: `/agenda?fecha=${unconfirmedDate}` }}
             >
               {unconfirmed.slice(0, MAX_ITEMS).map((appointment) => {
                 const phone = patientsById.get(appointment.patientId)?.phone;
                 return (
-                  <li
-                    key={appointment.id}
-                    className="flex flex-col gap-2 rounded-xl border border-slate-100 px-3 py-2.5 sm:flex-row sm:items-center"
-                  >
+                  <li key={appointment.id} className="flex items-center gap-3 px-3 py-2.5">
+                    <span className="w-11 shrink-0 text-sm font-bold tabular-nums text-brand-800">
+                      {normalizeTime(appointment.time)}
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-slate-900">
+                      <span className="block truncate text-sm font-semibold text-slate-900">
                         {appointment.patientName}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {normalizeTime(appointment.time)} · {appointment.professionalName}
-                        {phone ? ` · ${phone}` : ""}
+                        {appointment.professionalName}
+                        {phone ? <span className="hidden sm:inline"> · {phone}</span> : null}
                       </span>
                     </span>
                     <span className="flex shrink-0 gap-1.5">
                       {phone && (
-                        <Button asChild size="sm" variant="outline">
+                        <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs lg:h-9 lg:px-3 lg:text-sm">
                           <a href={phoneHref(phone)} aria-label={`Llamar a ${appointment.patientName}`}>
-                            <Phone className="h-4 w-4" />
+                            <Phone className="h-4 w-4 max-lg:hidden" />
                             Llamar
                           </a>
                         </Button>
@@ -171,9 +197,11 @@ export function ActionCenterCard({
                         disabled={busyId === appointment.id}
                         onClick={() => void run(appointment, "confirmado")}
                         aria-label={`Confirmar turno: ${appointment.patientName}`}
+                        className="h-8 px-2.5 text-xs max-lg:border-primary max-lg:bg-primary max-lg:text-primary-foreground lg:h-9 lg:px-3 lg:text-sm"
                       >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        Confirmar
+                        <CheckCircle2 className="h-4 w-4 text-brand-600 max-lg:hidden" />
+                        <span className="lg:hidden">OK</span>
+                        <span className="max-lg:hidden">Confirmar</span>
                       </Button>
                     </span>
                   </li>
@@ -189,10 +217,7 @@ export function ActionCenterCard({
               more={{ label: "Ver todas", href: "/obras-sociales" }}
             >
               {coverageIssues.slice(0, MAX_ITEMS).map((patient) => (
-                <li
-                  key={patient.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5"
-                >
+                <li key={patient.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <Link
                     href={`/pacientes?q=${encodeURIComponent(patient.dni)}`}
                     className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900 hover:text-brand-800"
@@ -208,5 +233,18 @@ export function ActionCenterCard({
         </div>
       )}
     </DashboardCard>
+    <ConfirmAlertDialog
+      open={Boolean(confirmation)}
+      onOpenChange={(open) => !open && setConfirming(null)}
+      title={confirmation?.title ?? ""}
+      description={confirmation?.description ?? ""}
+      confirmLabel={confirmation?.confirmLabel ?? ""}
+      cancelLabel="Volver"
+      destructive={confirmation?.destructive}
+      onConfirm={() => {
+        if (confirming) void run(confirming.appointment, confirming.status);
+      }}
+    />
+    </>
   );
 }

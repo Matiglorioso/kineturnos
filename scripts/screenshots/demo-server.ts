@@ -12,7 +12,8 @@ import { createScratchApp } from "../lib/scratch-app";
 import { seedDemo } from "./demo-data";
 import { spawn, spawnSync } from "node:child_process";
 
-const PORT = 3300;
+// DEMO_PORT permite levantar otra demo si el 3300 está ocupado.
+const PORT = Number(process.env.DEMO_PORT) || 3300;
 
 async function main() {
   const app = await createScratchApp("kineturnos_demo", PORT);
@@ -21,7 +22,7 @@ async function main() {
   await app.db.$disconnect();
 
   const server = spawn("npx", ["next", "dev", "-p", String(PORT)], {
-    env: { ...process.env, DATABASE_URL: app.databaseUrl, NEXT_DIST_DIR: ".next-demo", BREVO_API_KEY: "" },
+    env: { ...process.env, DATABASE_URL: app.databaseUrl, NEXT_DIST_DIR: PORT === 3300 ? ".next-demo" : `.next-demo-${PORT}`, BREVO_API_KEY: "" },
     shell: process.platform === "win32",
     stdio: "inherit",
   });

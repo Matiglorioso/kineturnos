@@ -5,6 +5,7 @@ import {
 } from "@/lib/patient-form";
 import { firstFieldError, type ParseResult } from "@/lib/api/parse-result";
 import type { PatientWriteInput } from "@/lib/db/patient-write";
+import { notesLengthError } from "@/lib/notes";
 import type { PatientStatus } from "@/types";
 
 const PATIENT_STATUSES: PatientStatus[] = ["activo", "inactivo"];
@@ -41,6 +42,9 @@ export function parsePatientWriteInput(
 
   const invalid = firstFieldError(validatePatientForm(values));
   if (invalid) return invalid;
+
+  const notesInvalid = notesLengthError(values.notes);
+  if (notesInvalid) return notesInvalid;
 
   const input: PatientWriteInput = {
     id: typeof payload.id === "string" ? payload.id : undefined,

@@ -58,7 +58,7 @@ function SectionCard({
 export function ProjectAboutPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-10 pb-12">
-      <header className="relative overflow-hidden rounded-3xl border border-brand-100/80 bg-gradient-to-br from-brand-50 via-white to-slate-50 p-8 shadow-elevated sm:p-10">
+      <header className="relative overflow-hidden rounded-3xl border border-brand-100/80 bg-brand-50/60 p-8 shadow-elevated sm:p-10">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl"

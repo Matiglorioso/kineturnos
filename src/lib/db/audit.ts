@@ -1,7 +1,9 @@
 import {
   AUDIT_MAX_ROWS,
+  clinicalReadToAuditItem,
   diffAuditSnapshots,
   formatAuditValue,
+  mergeAuditItems,
   resolveAuditAction,
   shouldRecordAudit,
   type AuditAction,
@@ -208,31 +210,45 @@ export async function auditWrite(
   }
 }
 
-/** Eventos desde `since`, del más reciente al más viejo, con el tope AUDIT_MAX_ROWS. */
+/**
+ * Eventos desde `since`, del más reciente al más viejo, con el tope AUDIT_MAX_ROWS. Suma las
+ * consultas a la historia clínica (`accesos_historia_clinica`); sus altas y correcciones ya
+ * están en `auditoria` con el detalle de los cambios.
+ */
 export async function getAuditLogFromDb(
   since: Date
 ): Promise<{ items: AuditLogItem[]; truncated: boolean }> {
-  const rows = await prisma.auditoria.findMany({
-    where: { fecha: { gte: since } },
-    orderBy: [{ fecha: "desc" }, { id: "desc" }],
-    take: AUDIT_MAX_ROWS + 1,
-  });
+  const [rows, reads] = await Promise.all([
+    prisma.auditoria.findMany({
+      where: { fecha: { gte: since } },
+      orderBy: [{ fecha: "desc" }, { id: "desc" }],
+      take: AUDIT_MAX_ROWS + 1,
+    }),
+    prisma.accesoHistoriaClinica.findMany({
+      where: { fecha: { gte: since }, accion: "lectura" },
+      orderBy: [{ fecha: "desc" }, { id: "desc" }],
+      take: AUDIT_MAX_ROWS + 1,
+      include: { paciente: { select: { nombre: true } } },
+    }),
+  ]);
 
-  return {
-    truncated: rows.length > AUDIT_MAX_ROWS,
-    items: rows.slice(0, AUDIT_MAX_ROWS).map((row) => ({
-      id: row.id,
-      at: row.fecha.toISOString(),
-      userId: row.usuarioId,
-      userName: row.usuarioNombre,
-      userRole: row.usuarioRol,
-      action: row.accion,
-      entity: row.entidad as AuditEntity,
-      entityId: row.entidadId,
-      label: row.registro,
-      changes: Array.isArray(row.cambios) ? (row.cambios as unknown as AuditChange[]) : [],
-      ip: row.ip,
-      userAgent: row.navegador,
-    })),
-  };
+  const changes: AuditLogItem[] = rows.map((row) => ({
+    id: row.id,
+    at: row.fecha.toISOString(),
+    userId: row.usuarioId,
+    userName: row.usuarioNombre,
+    userRole: row.usuarioRol,
+    action: row.accion,
+    entity: row.entidad as AuditEntity,
+    entityId: row.entidadId,
+    label: row.registro,
+    changes: Array.isArray(row.cambios) ? (row.cambios as unknown as AuditChange[]) : [],
+    ip: row.ip,
+    userAgent: row.navegador,
+  }));
+  const clinicalReads = reads.map((read) =>
+    clinicalReadToAuditItem({ ...read, pacienteNombre: read.paciente.nombre })
+  );
+
+  return mergeAuditItems(changes, clinicalReads, AUDIT_MAX_ROWS);
 }

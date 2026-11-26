@@ -72,7 +72,9 @@ export async function goToAgendaDate(page: Page, date: string) {
   const label = dayAriaLabel(date, 0).replace(", sin turnos", "");
   await dialog.getByRole("button", { name: new RegExp(`^${label},`) }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText(`Turnos del`)).toContainText(date);
+  // El día elegido se ve solo en la tira de días (no se repite debajo del título ni sobre la lista).
+  await expect(page.getByRole("button", { name: new RegExp(`^${label},`), pressed: true })).toBeVisible();
+  await expect(page.getByText(/Turnos del|Hoy —/)).toHaveCount(0);
 }
 
 const MONTHS = [

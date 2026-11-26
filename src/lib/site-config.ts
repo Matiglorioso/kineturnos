@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 
+/** Mail de soporte configurado, o null si no hay ninguno. */
+export function resolveSupportEmail(env: Record<string, string | undefined>): string | null {
+  return env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || null;
+}
+
 export const siteConfig = {
   name: "KineTurnos",
   tagline: "Gestión kinesiológica",
   clinicName: "SANMAR SALUD",
-  supportEmail:
-    process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "soporte@kineturnos.local",
+  /** Sin NEXT_PUBLIC_SUPPORT_EMAIL no se muestra ningún mail (antes salía uno inventado .local). */
+  supportEmail: resolveSupportEmail({
+    NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL,
+  }),
   url: "https://kineturnos.vercel.app",
   repo: "https://github.com/Matiglorioso/kineturnos",
   description:
@@ -42,6 +49,10 @@ export const pageMetadata = {
     title: "Profesionales",
     description:
       "Equipo de kinesiólogos, horarios de atención y turnos asignados por profesional.",
+  },
+  mas: {
+    title: "Más",
+    description: "Las demás secciones, tu cuenta y cerrar sesión.",
   },
   obrasSociales: {
     title: "Obras sociales",

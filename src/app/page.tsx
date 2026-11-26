@@ -1,6 +1,7 @@
 "use client";
 
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
+import { siteConfig } from "@/lib/site-config";
 import { DashboardShortcuts, type DashboardShortcut } from "@/components/dashboard/DashboardShortcuts";
 import { PeriodIndicators } from "@/components/dashboard/PeriodIndicators";
 import { TodayScheduleCard } from "@/components/dashboard/TodayScheduleCard";
@@ -90,7 +91,7 @@ export default function DashboardPage() {
       icon: CalendarDays,
       title: isScopedProfessional ? "Mis turnos de hoy" : "Agenda de hoy",
       value: pluralize(daySummary.total, "turno"),
-      detail: daySummary.total ? `${daySummary.attended} atendidos · ${daySummary.upcoming} por venir` : "Sin turnos",
+      detail: daySummary.total ? `${pluralize(daySummary.attended, "atendido")} · ${daySummary.upcoming} por venir` : "Sin turnos",
     },
     ...(showCoverage
       ? [
@@ -145,20 +146,30 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-5 lg:space-y-8">
+      {/* Celular: el consultorio y el día (no hay barra de arriba). */}
+      <header className="lg:hidden">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{siteConfig.clinicName}</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 first-letter:uppercase">
+          {formatAppDate(today, "EEEE dd-MM")}
+        </h1>
+      </header>
+      <header className="hidden flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:flex">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {greetingFor(nowMinutes)}
             {firstName ? `, ${firstName}` : ""}
           </h1>
-          <p className="mt-1 text-slate-500 first-letter:uppercase">
+          <p className="mt-0.5 text-sm text-slate-500 first-letter:uppercase sm:mt-1 sm:text-base">
             {formatAppDate(today, "EEEE d 'de' MMMM 'de' yyyy")}
           </p>
         </div>
       </header>
 
-      <DashboardShortcuts shortcuts={shortcuts} />
+      {/* En el celular se muestra lo del día; atajos e indicadores quedan para la computadora. */}
+      <div className="hidden lg:block">
+        <DashboardShortcuts shortcuts={shortcuts} />
+      </div>
 
       <section aria-labelledby="hoy-titulo">
         <h2 id="hoy-titulo" className="sr-only">
@@ -184,7 +195,9 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <PeriodIndicators appointments={appointments} patients={patients} showProfessionals={!isScopedProfessional} />
+      <div className="hidden lg:block">
+        <PeriodIndicators appointments={appointments} patients={patients} showProfessionals={!isScopedProfessional} />
+      </div>
     </div>
   );
 }

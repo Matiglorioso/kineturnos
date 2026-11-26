@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   auditPeriodStart,
+  clinicalReadToAuditItem,
+  mergeAuditItems,
   diffAuditSnapshots,
   filterAuditEntries,
   formatAuditValue,
@@ -138,5 +140,45 @@ describe("auditoría: navegador", () => {
     assert.equal(describeUserAgent("Mozilla/5.0 (Windows NT 10.0) Chrome/120 Safari/537.36 Edg/120"), "Edge en Windows");
     assert.equal(describeUserAgent("curl/8.0"), null);
     assert.equal(describeUserAgent(null), null);
+  });
+});
+
+describe("auditoría: consultas a la historia clínica (antes en «Ver accesos»)", () => {
+  const read = {
+    id: "acc-1",
+    fecha: new Date("2026-11-19T13:00:00Z"),
+    usuarioId: "u-admin",
+    usuarioNombre: "Julieta Paz",
+    usuarioRol: "Administración",
+    pacienteId: "p-1",
+    pacienteNombre: "Juan Romero",
+  };
+
+  it("una lectura de la historia clínica se ve como una consulta en la auditoría", () => {
+    assert.deepEqual(clinicalReadToAuditItem(read), {
+      id: "acc-1",
+      at: "2026-11-19T13:00:00.000Z",
+      userId: "u-admin",
+      userName: "Julieta Paz",
+      userRole: "admin",
+      action: "consulta",
+      entity: "historia_clinica",
+      entityId: "p-1",
+      label: "Juan Romero",
+      changes: [],
+      ip: null,
+      userAgent: null,
+    });
+  });
+
+  it("junta los dos registros del más reciente al más viejo, con el tope", () => {
+    const item = (id: string, at: string) => ({ ...clinicalReadToAuditItem(read), id, at });
+    const merged = mergeAuditItems(
+      [item("a", "2026-11-19T10:00:00.000Z"), item("c", "2026-11-17T10:00:00.000Z")],
+      [item("b", "2026-11-18T10:00:00.000Z")],
+      2
+    );
+    assert.deepEqual(merged.items.map((entry) => entry.id), ["a", "b"]);
+    assert.equal(merged.truncated, true);
   });
 });

@@ -126,6 +126,6 @@ describe("lista de usuarios", () => {
     assert.equal(formatLastLogin(null, now), "Nunca");
     assert.equal(formatLastLogin("2026-10-19T12:05:00.000Z", now), "Hoy 09:05");
     assert.equal(formatLastLogin("2026-10-19T01:30:00.000Z", now), "Ayer 22:30");
-    assert.equal(formatLastLogin("2026-10-03T15:00:00.000Z", now), "03/10/2026");
+    assert.equal(formatLastLogin("2026-10-03T15:00:00.000Z", now), "03-10-2026");
   });
 });

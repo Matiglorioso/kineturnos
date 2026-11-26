@@ -1,54 +1,51 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Professional } from "@/types";
-import { Calendar, Eye, Pencil, Stethoscope, UserX } from "lucide-react";
+import { Calendar, Stethoscope } from "lucide-react";
 import { readableAvatarColor } from "@/lib/professional-utils";
 
 interface ProfessionalCardProps {
   professional: Professional;
-  todayAppointments: number;
   onViewDetail: (professional: Professional) => void;
-  onEdit?: (professional: Professional) => void;
-  onToggleActive?: (professional: Professional) => void;
   className?: string;
 }
 
 export function ProfessionalCard({
   professional,
-  todayAppointments,
   onViewDetail,
-  onEdit,
-  onToggleActive,
   className,
 }: ProfessionalCardProps) {
 
   return (
     <Card
+      // Toda la tarjeta abre la ficha; el nombre es el botón para el teclado y los lectores.
+      onClick={() => onViewDetail(professional)}
       className={cn(
-        "group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-elevated",
+        "group flex cursor-pointer flex-col overflow-hidden transition-all duration-300 hover:shadow-elevated",
         !professional.active && "opacity-80",
         className
       )}
     >
-      <div className="relative flex-1 p-6">
-        <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-brand-50 opacity-60 transition-transform group-hover:scale-110" />
+      <div className="relative flex-1 p-5">
 
-        <div className="relative flex items-start gap-4">
-          <div
-            className={cn(
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm",
-              readableAvatarColor(professional.avatarColor)
-            )}
-          >
-            {getInitials(professional.name)}
-          </div>
+        <div className="relative flex items-stretch gap-3">
+          <span aria-hidden className={cn("w-1 shrink-0 self-stretch rounded-sm", readableAvatarColor(professional.avatarColor))} />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <h2 className="font-semibold text-slate-900">
-                  {professional.name}
+                  <button
+                    type="button"
+                    className="rounded text-left hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`Ver detalle de ${professional.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onViewDetail(professional);
+                    }}
+                  >
+                    {professional.name}
+                  </button>
                 </h2>
                 <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Stethoscope className="h-3.5 w-3.5" />
@@ -62,7 +59,7 @@ export function ProfessionalCard({
           </div>
         </div>
 
-        <div className="relative mt-6 space-y-3 border-t border-slate-100 pt-5">
+        <div className="relative mt-4 space-y-3 border-t border-slate-100 pt-4">
           <div className="flex items-start gap-2.5 text-sm">
             <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
@@ -82,53 +79,9 @@ export function ProfessionalCard({
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl bg-brand-50/60 px-4 py-3">
-            <span className="text-sm text-brand-700">Turnos hoy</span>
-            <span className="text-xl font-bold text-brand-800">
-              {todayAppointments}
-            </span>
-          </div>
         </div>
       </div>
 
-      <div
-        className={cn(
-          "grid gap-2 border-t border-slate-100 bg-muted/20 p-4",
-          onEdit ? "grid-cols-2" : "grid-cols-1"
-        )}
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => onViewDetail(professional)}
-        >
-          <Eye className="h-4 w-4 shrink-0" />
-          <span className="truncate">Ver detalle</span>
-        </Button>
-        {onEdit && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => onEdit(professional)}
-          >
-            <Pencil className="h-4 w-4" />
-            Editar
-          </Button>
-        )}
-        {onToggleActive && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="col-span-full w-full text-muted-foreground"
-            onClick={() => onToggleActive(professional)}
-          >
-            <UserX className="h-4 w-4" />
-            {professional.active ? "Desactivar" : "Activar"}
-          </Button>
-        )}
-      </div>
     </Card>
   );
 }

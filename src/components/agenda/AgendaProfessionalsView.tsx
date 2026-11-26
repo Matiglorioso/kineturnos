@@ -4,18 +4,20 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
 import type { ProfessionalDayCell, ProfessionalDayColumn, ProfessionalDayGrid } from "@/lib/agenda-professionals";
 import { pluralize } from "@/lib/pluralize";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Appointment, AppointmentStatus } from "@/types";
+import { StatusBadge } from "@/components/appointments/StatusBadge";
 import { Plus, Stethoscope } from "lucide-react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { useEffect, useState } from "react";
 import { readableAvatarColor } from "@/lib/professional-utils";
 
 const STATUS_STYLES: Record<AppointmentStatus, { card: string; dot: string }> = {
-  pendiente: { card: "border-l-amber-400 bg-amber-50/90 hover:bg-amber-50", dot: "bg-amber-500" },
-  confirmado: { card: "border-l-emerald-400 bg-emerald-50/90 hover:bg-emerald-50", dot: "bg-emerald-500" },
-  atendido: { card: "border-l-sky-400 bg-sky-50/90 hover:bg-sky-50", dot: "bg-sky-500" },
-  cancelado: { card: "border-l-red-400 bg-red-50/80 opacity-80 hover:bg-red-50", dot: "bg-red-500" },
-  ausente: { card: "border-l-slate-400 bg-slate-100/90 opacity-80 hover:bg-slate-100", dot: "bg-slate-400" },
+  pendiente: { card: "border-amber-200 bg-amber-50/90 hover:bg-amber-50", dot: "bg-amber-500" },
+  confirmado: { card: "border-sky-200 bg-sky-50/90 hover:bg-sky-50", dot: "bg-sky-500" },
+  atendido: { card: "border-brand-200 bg-brand-50/90 hover:bg-brand-50", dot: "bg-brand-500" },
+  cancelado: { card: "border-red-200 bg-red-50/80 opacity-80 hover:bg-red-50", dot: "bg-red-500" },
+  ausente: { card: "border-slate-300 bg-slate-100/90 opacity-80 hover:bg-slate-100", dot: "bg-slate-400" },
 };
 
 interface AgendaProfessionalsViewProps {
@@ -24,6 +26,8 @@ interface AgendaProfessionalsViewProps {
   onAppointmentClick: (appointment: Appointment) => void;
   /** Hueco libre: abre "Agendar turno" con el profesional y la hora. Sin permiso, no se ofrece. */
   onFreeSlotClick?: (professionalId: string, time: string) => void;
+  /** Celular: tocar un turno abre sus acciones (panel desde abajo). */
+  onMobileAppointmentClick?: (appointment: Appointment) => void;
 }
 
 function AppointmentChip({
@@ -42,7 +46,7 @@ function AppointmentChip({
       onClick={() => onClick(appointment)}
       aria-label={`${appointment.time} · ${appointment.patientName} · ${APPOINTMENT_STATUS_LABELS[appointment.status]}`}
       className={cn(
-        "flex w-full min-w-0 flex-col justify-center rounded-lg border border-l-4 border-slate-200/80 px-2.5 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+        "flex w-full min-w-0 flex-col justify-center rounded-lg border px-2.5 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
         styles.card,
         compact ? "py-1" : "h-full py-1.5"
       )}
@@ -113,15 +117,8 @@ function Cell({
 
 function ColumnHeader({ column, className }: { column: ProfessionalDayColumn; className?: string }) {
   return (
-    <div className={cn("flex min-w-0 items-center gap-2.5", className)}>
-      <span
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold text-white",
-          readableAvatarColor(column.professional.avatarColor)
-        )}
-      >
-        {getInitials(column.professional.name)}
-      </span>
+    <div className={cn("flex min-w-0 items-stretch gap-2.5", className)}>
+      <span aria-hidden className={cn("w-1 shrink-0 self-stretch rounded-sm", readableAvatarColor(column.professional.avatarColor))} />
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold text-slate-900">{column.professional.name}</span>
         <span className="block truncate text-xs text-muted-foreground">
@@ -143,6 +140,7 @@ export function AgendaProfessionalsView({
   dateLabel,
   onAppointmentClick,
   onFreeSlotClick,
+  onMobileAppointmentClick,
 }: AgendaProfessionalsViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(grid.columns[0]?.professional.id ?? null);
 
@@ -152,6 +150,8 @@ export function AgendaProfessionalsView({
       setSelectedId(grid.columns[0]?.professional.id ?? null);
     }
   }, [grid.columns, selectedId]);
+
+  const { ref: chipsRef, handlers: dragHandlers, wasDrag } = useDragScroll<HTMLDivElement>();
 
   if (grid.columns.length === 0) {
     return (
@@ -218,61 +218,97 @@ export function AgendaProfessionalsView({
         </div>
       </div>
 
-      {/* Celular: un profesional a la vez. */}
+      {/* Celular: un profesional a la vez, elegido con flechas o con la lista del teléfono. */}
       <div className="space-y-3 md:hidden">
-        <div
-          role="tablist"
-          aria-label="Profesionales del día"
-          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]"
-        >
-          {grid.columns.map((column) => {
-            const active = column.professional.id === selected.professional.id;
-            return (
-              <button
-                key={column.professional.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setSelectedId(column.professional.id)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
-                    : "border-slate-200 bg-white text-slate-600 hover:text-slate-900"
-                )}
-              >
-                {column.professional.name}
-                <span
+        {/* Profesionales en una fila que se desliza hacia el costado (con el dedo o arrastrando). */}
+        <div className="relative -mx-4">
+          <div
+            ref={chipsRef}
+            role="tablist"
+            aria-label="Profesionales del día"
+            {...dragHandlers}
+            className="flex cursor-grab touch-pan-x select-none gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+          >
+            {grid.columns.map((column) => {
+              const active = column.professional.id === selected.professional.id;
+              return (
+                <button
+                  key={column.professional.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  data-active={active || undefined}
+                  onClick={() => {
+                    // Un arrastre no cuenta como toque.
+                    if (!wasDrag()) setSelectedId(column.professional.id);
+                  }}
                   className={cn(
-                    "rounded-md px-1.5 text-xs",
-                    active ? "bg-brand-100 text-brand-700" : "bg-slate-100 text-slate-500"
+                    "flex h-10 shrink-0 items-center rounded-xl border px-3.5 text-sm font-medium transition-colors",
+                    active
+                      ? "border-brand-200 bg-brand-50 text-brand-800 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600"
                   )}
                 >
-                  {column.appointmentCount}
-                </span>
-              </button>
-            );
-          })}
+                  {column.professional.name}
+                </button>
+              );
+            })}
+          </div>
+          {/* Sombra en el borde: avisa que la fila sigue hacia el costado. */}
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent" />
         </div>
+        {!selected.worksThatDay && (
+          <p className="px-1 text-xs text-muted-foreground">No atiende este día.</p>
+        )}
 
-        <div role="tabpanel" aria-label={selected.professional.name} className="rounded-2xl border bg-card p-3 shadow-card">
-          <ColumnHeader column={selected} className="border-b border-slate-100 px-1 pb-3" />
-          <ul className="mt-2 divide-y divide-slate-100">
-            {grid.slots.map((time, row) => (
-              <li key={time} className="flex gap-3 py-1.5">
-                <span className="w-12 shrink-0 pt-2 text-xs font-semibold text-slate-500">{time}</span>
-                <div className="min-h-[3rem] min-w-0 flex-1">
-                  <Cell
-                    cell={selected.cells[row]}
-                    column={selected}
-                    onAppointmentClick={onAppointmentClick}
-                    onFreeSlotClick={onFreeSlotClick}
-                  />
+        {/* Un horario por renglón: hora y el turno, "+ Libre" para agendar, o "—". */}
+        <ul
+          aria-label={`Horarios de ${selected.professional.name}`}
+          className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
+        >
+          {grid.slots.map((time, row) => {
+            const cell = selected.cells[row];
+            return (
+              <li key={time} className="flex min-h-12 items-center gap-3 px-3 py-1.5">
+                <span className="w-11 shrink-0 text-sm font-bold tabular-nums text-brand-800">{time}</span>
+                <div className="min-w-0 flex-1">
+                  {cell.kind === "turnos" ? (
+                    <div className="divide-y divide-slate-100">
+                      {cell.appointments.map((appointment) => (
+                        <button
+                          key={appointment.id}
+                          type="button"
+                          onClick={() => (onMobileAppointmentClick ?? onAppointmentClick)(appointment)}
+                          aria-label={`${appointment.time} · ${appointment.patientName} · ${APPOINTMENT_STATUS_LABELS[appointment.status]}`}
+                          className="flex w-full items-center gap-2 py-1 text-left"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-slate-900">
+                            {appointment.patientName}
+                          </span>
+                          <StatusBadge status={appointment.status} className="shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : cell.kind === "libre" && onFreeSlotClick ? (
+                    <button
+                      type="button"
+                      onClick={() => onFreeSlotClick(selected.professional.id, cell.time)}
+                      aria-label={`Agendar con ${selected.professional.name} a las ${cell.time}`}
+                      className="flex w-full items-center gap-1.5 py-1 text-sm font-medium text-brand-700"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Libre
+                    </button>
+                  ) : (
+                    <span className="text-sm text-slate-400">
+                      {cell.kind === "libre" ? "Libre" : cell.kind === "ocupado" ? "Ocupado" : "—"}
+                    </span>
+                  )}
                 </div>
               </li>
-            ))}
-          </ul>
-        </div>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

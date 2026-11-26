@@ -3,9 +3,12 @@ import {
   CLINIC_CLOSING_TIME,
   CLINIC_OPENING_TIME,
 } from "@/lib/appointment-constants";
-import { areSameAppDay, getNowAppMinutes, isTodayAppDate } from "@/lib/date-utils";
+import { areSameAppDay, getNowAppMinutes, isTodayAppDate, isValidAppDate } from "@/lib/date-utils";
 import { formatAppointmentTimeRange } from "@/lib/datetime-format";
-import { professionalWorksOnDay } from "@/lib/professional-schedule";
+import {
+  professionalWorksOnDay,
+  validateProfessionalAppointmentSlot,
+} from "@/lib/professional-schedule";
 import { minutesToTime, normalizeTime, timeToMinutes } from "@/lib/time-utils";
 import type { Appointment, AppointmentStatus, Professional } from "@/types";
 
@@ -112,6 +115,31 @@ export function listHourlySlotOptions(
       available: !occupied && !alreadyStarted,
     };
   });
+}
+
+/**
+ * Por qué no hay ningún horario para elegir (null si hay alguno libre): que el profesional
+ * no atiende ese día, que ya pasaron los horarios de hoy o que están todos ocupados.
+ */
+export function noSlotsReason(
+  professional: Professional | undefined,
+  date: string,
+  options: HourlySlotOption[],
+  now: Date = new Date()
+): string | null {
+  if (!professional || !isValidAppDate(date)) return null;
+  if (options.some((option) => option.available)) return null;
+
+  if (!professionalWorksOnDay(professional, date)) {
+    return validateProfessionalAppointmentSlot(professional, date, CLINIC_OPENING_TIME).day ?? null;
+  }
+
+  const lastStart = getHourlySlotStarts().at(-1);
+  if (isTodayAppDate(date, now) && lastStart && timeToMinutes(lastStart) < getNowAppMinutes(now)) {
+    return "Ya pasaron todos los horarios de hoy. Elegí otra fecha.";
+  }
+
+  return `${professional.name} ya tiene ocupados todos los horarios de ese día. Elegí otra fecha u otro profesional.`;
 }
 
 /** Incluye el horario actual al editar aunque no caiga en un bloque estándar. */

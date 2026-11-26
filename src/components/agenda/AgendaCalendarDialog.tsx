@@ -122,7 +122,7 @@ export function AgendaCalendarDialog({
                       {count > 0 && (
                         <span
                           className={cn(
-                            "absolute right-1 top-1 rounded-full px-1 text-[10px] font-semibold leading-4",
+                            "absolute right-1 top-1 rounded-full px-1 text-[10px] font-semibold leading-4 lg:rounded",
                             selected ? "bg-white text-brand-800" : "text-brand-700"
                           )}
                         >

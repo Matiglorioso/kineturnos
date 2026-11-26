@@ -12,6 +12,7 @@ import {
   futureWorkday,
   prisma,
   weekdayName,
+  createAppointmentViaApi,
 } from "./helpers";
 
 after(async () => {
@@ -50,15 +51,16 @@ describe("API de turnos", () => {
     });
     assert.equal(created.status, 201, created.error);
     assert.equal(created.data?.patientName, patient.nombre);
+    const id = created.data!.id;
 
-    const confirmed = await api<ApiAppointment>(`/api/appointments/${body.id}`, {
+    const confirmed = await api<ApiAppointment>(`/api/appointments/${id}`, {
       method: "PATCH",
       body: { status: "confirmado" },
     });
     assert.equal(confirmed.status, 200, confirmed.error);
     assert.equal(confirmed.data?.status, "confirmado");
 
-    const edited = await api<ApiAppointment>(`/api/appointments/${body.id}`, {
+    const edited = await api<ApiAppointment>(`/api/appointments/${id}`, {
       method: "PATCH",
       body: {
         ...body,
@@ -71,7 +73,7 @@ describe("API de turnos", () => {
     assert.equal(edited.data?.sessionType, "Rehabilitación");
     assert.equal(edited.data?.notes, "Actualizado");
 
-    const cancelled = await api<ApiAppointment>(`/api/appointments/${body.id}`, {
+    const cancelled = await api<ApiAppointment>(`/api/appointments/${id}`, {
       method: "PATCH",
       body: { status: "cancelado" },
     });
@@ -106,11 +108,14 @@ describe("API de turnos", () => {
     const slot = { professionalId: professional.id, date: futureWorkday(14), time: "11:00" };
     const first = appointmentBody({ ...slot, patientId: patient.id });
 
-    assert.equal((await api("/api/appointments", { method: "POST", body: first })).status, 201);
-    await api(`/api/appointments/${first.id}`, {
+    const created = await api<{ id: string }>("/api/appointments", { method: "POST", body: first });
+    assert.equal(created.status, 201, created.error);
+    // El id lo genera el servidor.
+    const cancelled = await api(`/api/appointments/${created.data!.id}`, {
       method: "PATCH",
       body: { status: "cancelado" },
     });
+    assert.equal(cancelled.status, 200, cancelled.error);
 
     const again = await api("/api/appointments", {
       method: "POST",
@@ -181,7 +186,7 @@ describe("cambio de estado con la agenda del profesional modificada (A2)", () =>
       date,
       time: "10:00",
     });
-    assert.equal((await api("/api/appointments", { method: "POST", body })).status, 201);
+    const { id } = await createAppointmentViaApi(body);
 
     // Se le saca ese día: el turno queda fuera de su agenda.
     await prisma.profesional.update({
@@ -191,7 +196,7 @@ describe("cambio de estado con la agenda del profesional modificada (A2)", () =>
       },
     });
 
-    const cancelled = await api<ApiAppointment>(`/api/appointments/${body.id}`, {
+    const cancelled = await api<ApiAppointment>(`/api/appointments/${id}`, {
       method: "PATCH",
       body: { status: "cancelado" },
     });
@@ -285,13 +290,13 @@ describe("máquina de estados en la API", () => {
       date: futureWorkday(18),
       time: "09:00",
     });
-    assert.equal((await api("/api/appointments", { method: "POST", body })).status, 201);
+    const { id } = await createAppointmentViaApi(body);
     assert.equal(
-      (await api(`/api/appointments/${body.id}`, { method: "PATCH", body: { status: "cancelado" } })).status,
+      (await api(`/api/appointments/${id}`, { method: "PATCH", body: { status: "cancelado" } })).status,
       200
     );
 
-    const res = await api(`/api/appointments/${body.id}`, {
+    const res = await api(`/api/appointments/${id}`, {
       method: "PATCH",
       body: { status: "pendiente" },
     });

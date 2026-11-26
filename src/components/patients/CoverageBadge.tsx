@@ -40,13 +40,13 @@ export function CoverageBadge({
     <span
       title={short ? coverage.label : undefined}
       className={cn(
-        "inline-flex max-w-full items-center gap-1 rounded-lg border font-medium",
+        "inline-flex max-w-full items-center gap-1 rounded-lg border font-medium lg:rounded lg:border-transparent lg:font-semibold",
         size === "xs" ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-0.5 text-xs",
         TONE_STYLES[coverage.tone],
         className
       )}
     >
-      <Icon className={size === "xs" ? "h-3 w-3 shrink-0" : "h-3.5 w-3.5 shrink-0"} />
+      <Icon className={cn(size === "xs" ? "h-3 w-3 shrink-0" : "h-3.5 w-3.5 shrink-0", "lg:hidden")} />
       <span className="truncate">
         {!short
           ? coverage.label

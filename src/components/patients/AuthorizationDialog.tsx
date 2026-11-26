@@ -24,6 +24,7 @@ import { ApiError } from "@/lib/api/fetch-json";
 import { getTodayAppDate } from "@/lib/date-utils";
 import {
   AUTHORIZATION_STATE_LABELS,
+  AUTHORIZATION_DIAGNOSIS_MAX_LENGTH,
   MAX_AUTHORIZED_SESSIONS,
   parseAuthorizationInput,
 } from "@/lib/insurance";
@@ -37,6 +38,8 @@ interface AuthorizationDialogProps {
   /** null = alta. */
   authorization: Authorization | null;
   onSubmit: (body: AuthorizationRequest) => Promise<void>;
+  /** Al editar, ofrece eliminarla (en el celular no hay botón en la fila). */
+  onDelete?: () => void;
 }
 
 type Values = Omit<AuthorizationRequest, "sessions"> & { sessions: string };
@@ -48,6 +51,7 @@ function initialValues(authorization: Authorization | null): Values {
     sessions: authorization ? String(authorization.sessions) : "",
     validFrom: authorization?.validFrom ?? getTodayAppDate(),
     validUntil: authorization?.validUntil ?? "",
+    diagnosis: authorization?.diagnosis ?? "",
     notes: authorization?.notes ?? "",
   };
 }
@@ -58,6 +62,7 @@ export function AuthorizationDialog({
   insuranceName,
   authorization,
   onSubmit,
+  onDelete,
 }: AuthorizationDialogProps) {
   const [values, setValues] = useState<Values>(() => initialValues(authorization));
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
@@ -88,8 +93,10 @@ export function AuthorizationDialog({
       await onSubmit(body);
       onOpenChange(false);
     } catch (submitError) {
+      // Con campo (p. ej. número repetido), el error se muestra debajo de ese campo.
       setError({
         message: submitError instanceof ApiError ? submitError.message : "No se pudo guardar.",
+        field: submitError instanceof ApiError ? submitError.field : undefined,
       });
     } finally {
       setSaving(false);
@@ -100,7 +107,7 @@ export function AuthorizationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent mobileFullScreen className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{authorization ? "Editar autorización" : "Nueva autorización"}</DialogTitle>
           <DialogDescription>
@@ -110,7 +117,7 @@ export function AuthorizationDialog({
 
         <form onSubmit={submit} className="space-y-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="aut-number" label="Nº de autorización">
+            <FormField id="aut-number" label="Nº de autorización" error={fieldError("number")}>
               <Input
                 id="aut-number"
                 value={values.number}
@@ -165,6 +172,16 @@ export function AuthorizationDialog({
             </FormField>
           </div>
 
+          <FormField id="aut-diagnosis" label="Diagnóstico de la orden" error={fieldError("diagnosis")}>
+            <Input
+              id="aut-diagnosis"
+              value={values.diagnosis}
+              onChange={(event) => update("diagnosis", event.target.value)}
+              maxLength={AUTHORIZATION_DIAGNOSIS_MAX_LENGTH}
+              placeholder="Como figura en la orden médica"
+            />
+          </FormField>
+
           <FormField id="aut-notes" label="Observaciones">
             <Textarea
               id="aut-notes"
@@ -187,7 +204,18 @@ export function AuthorizationDialog({
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            {authorization && onDelete && (
+              <Button
+                type="button"
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:mr-auto"
+                onClick={onDelete}
+                disabled={saving}
+              >
+                Eliminar
+              </Button>
+            )}
+            <Button data-cancel type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
               Cancelar
             </Button>
             <Button type="submit" disabled={saving}>

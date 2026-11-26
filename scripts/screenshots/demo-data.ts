@@ -34,12 +34,56 @@ const COLORS = ["bg-brand-500", "bg-sky-500", "bg-violet-500", "bg-emerald-500",
 const INSURANCES = ["OSDE", "Swiss Medical", "Galeno", "APROSS"];
 const SESSION_TYPES = ["Rehabilitación", "Rehabilitación", "Control", "Evaluación inicial", "Deportiva", "RPG"];
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-const EVOLUTIONS = [
-  "Buena tolerancia al ejercicio. Disminuye el dolor (EVA 4/10). Se progresa la carga.",
-  "Mejora del rango de movimiento. Se agregan ejercicios de propiocepción.",
-  "Refiere molestias leves al final de la sesión. Se mantiene el plan y se indica hielo.",
-  "Marcha sin asistencia. Se trabaja fortalecimiento de cuádriceps y glúteo medio.",
-  "Sin dolor en reposo. Se incorporan ejercicios funcionales y domiciliarios.",
+/** Evoluciones por zona, como las escribe un kinesiólogo (abreviaturas y medidas habituales). */
+const EVOLUTIONS: Record<string, string[]> = {
+  rodilla: [
+    "Refiere leve molestia en flexión >90°. Se trabaja movilidad pasiva, isométricos de cuádriceps a 60° y crioterapia 15 min.",
+    "EVA 3/10 al bajar escaleras. Sentadilla 0–60° 3×12, step-up 15 cm y bicicleta 10 min sin resistencia. Buena tolerancia.",
+    "Leve derrame (+) que cede con MLD. Se mantiene la carga, se agrega propiocepción en bosu bipodal.",
+    "Sin dolor en reposo. Prensa 30 kg 3×10, puente glúteo y elongación de isquiotibiales. Se indican ejercicios domiciliarios.",
+  ],
+  hombro: [
+    "Dolor 4/10 en elevación por encima de 120°, arco doloroso (+). Pendulares, movilidad activo-asistida con bastón y TENS 20 min.",
+    "Mejora la RE (45° → 60°). Isométricos de manguito rotador y estabilización escapular en pared. Hielo 10 min.",
+    "Refiere menos dolor nocturno. Se progresa a banda elástica (RE/RI 3×15) y remo bajo. Sin dolor al finalizar.",
+    "Elevación activa completa con leve compensación escapular. Trabajo excéntrico de supraespinoso y control motor.",
+  ],
+  lumbar: [
+    "Lumbalgia mecánica, EVA 5/10 en flexión de tronco. Calor húmedo 15 min, movilidad en cuadrupedia y activación de transverso.",
+    "Disminuye la irradiación a glúteo izq. Puente, bird-dog 3×10 y elongación de psoas. Se dan pautas de higiene postural.",
+    "EVA 2/10. Se incorporan peso muerto con palo y plancha 3×20 s. Tolera bien la progresión.",
+    "Sin dolor en actividades de la vida diaria. Se refuerza el plan domiciliario y se espacian las sesiones.",
+  ],
+  tobillo: [
+    "Esguince grado II de tobillo der. (día 12). Edema perimaleolar (+), movilidad activa en descarga y crioterapia 15 min.",
+    "Marcha sin claudicación. Dorsiflexión en carga 8 cm (contralateral 11 cm). Elevaciones de talón y apoyo monopodal 3×30 s.",
+    "Sin edema. Propiocepción en superficie inestable y saltos bipodales submáximos. EVA 1/10.",
+    "Y-balance sin diferencias relevantes. Se trabajan cambios de dirección a baja velocidad.",
+  ],
+  cervical: [
+    "Cervicalgia con contractura de trapecio superior der. Masoterapia 10 min, movilidad activa y estiramientos suaves.",
+    "Menos cefalea tensional esta semana. Activación de flexores profundos (biofeedback 22 → 26 mmHg) y retracciones.",
+    "Rotación activa completa sin dolor. Se agregan ejercicios de estabilización escapular y pausas activas en el trabajo.",
+  ],
+};
+const EVOLUTION_AREAS = Object.keys(EVOLUTIONS);
+
+/** Posoperatorio de LCA del paciente destacado, de la primera sesión a la última. */
+const FEATURED_EVOLUTIONS = [
+  "Evaluación inicial. Posop. LCA rodilla der. (8 sem.). Flexión activa 0–95°, déficit de extensión 3°. Edema (++). Se pauta plan y ejercicios domiciliarios.",
+  "Refiere dolor 4/10 en cara anterior al final del día. MLD 10 min, NMES de VMO 20 min y movilidad pasiva. Crioterapia 15 min.",
+  "Flexión activa 0–102°, extensión completa. Isométricos de cuádriceps, elevación de pierna recta 3×12 y bicicleta sin resistencia.",
+  "Disminuye el edema (+). Marcha sin muletas en distancias cortas. Sentadilla a 45° 3×10 y transferencias de peso.",
+  "Refiere leve molestia en flexión >90°. Se trabaja movilidad pasiva y crioterapia 15 min. Se progresa carga en prensa a 20 kg.",
+  "Flexión 0–112°. Step-up 10 cm, puente monopodal y propiocepción bipodal en bosu. EVA 2/10 al finalizar.",
+  "Marcha sin ayudas técnicas, leve claudicación al final de la sesión. Excéntricos de isquiotibiales y prensa 30 kg 3×10.",
+  "Refiere dolor 3/10 al bajar escaleras. Se ajusta la carga; isométricos a 60° y elongación de cadena posterior.",
+  "Flexión activa 0–118°, ext. completa. Sentadilla 0–60° 3×12, step-up 20 cm y propiocepción monopodal. Buena tolerancia.",
+  "Sin dolor en reposo. Leve edema perirrotuliano (+). NMES de VMO 20 min y trabajo de control motor en apoyo monopodal.",
+  "Prensa 40 kg 3×10 y bicicleta 15 min con resistencia leve. Lachman sin cambios respecto de la evaluación previa.",
+  "Se incorporan saltos bipodales submáximos y cambios de dirección a baja velocidad. Sin derrame posterior a la sesión.",
+  "Trote en cinta 5 min a 7 km/h sin dolor. Fuerza de cuádriceps (dinamometría) 78 % respecto del contralateral.",
+  "Buena respuesta a la progresión. Pliometría de bajo impacto y estabilidad en superficie inestable. Se mantiene el plan.",
 ];
 
 export interface DemoData {
@@ -65,8 +109,20 @@ function random(seed: number) {
 const dbDate = (date: Date) => new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 const dbHour = (hour: number) => new Date(Date.UTC(1970, 0, 1, hour, 0, 0));
 
+/** UUID v4 a partir de un generador con semilla: mismo formato que la app, siempre los mismos. */
+function uuidFactory(seed: number) {
+  const next = random(seed);
+  const hex = (count: number) =>
+    Array.from({ length: count }, () => Math.floor(next() * 16).toString(16)).join("");
+  return () =>
+    `${hex(8)}-${hex(4)}-4${hex(3)}-${(8 + Math.floor(next() * 4)).toString(16)}${hex(3)}-${hex(12)}`;
+}
+
 export async function seedDemo(db: PrismaClient, password: string): Promise<DemoData> {
   const rand = random(1505);
+  const uuid = uuidFactory(7331);
+  // Minutos entre la sesión y su registro, con su propio generador (no cambia el resto de la demo).
+  const lag = random(2718);
   const pick = <T>(items: T[]) => items[Math.floor(rand() * items.length)];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -78,14 +134,14 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
   );
 
   const insurances = INSURANCES.map((name, index) => ({
-    id: `demo-os-${index}`,
+    id: uuid(),
     nombre: name,
     nombreNormalizado: name.toLowerCase(),
   }));
   await db.obraSocial.createMany({ data: insurances });
 
   const professionals = PROFESSIONALS.map((item, index) => ({
-    id: `demo-prof-${index}`,
+    id: uuid(),
     nombre: `${item.first} ${item.last}`,
     nombrePila: item.first,
     apellido: item.last,
@@ -110,7 +166,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
     const insurance = rand() < 0.65 ? insurances[index % insurances.length] : null;
     const birth = addDays(today, -Math.floor(365 * (18 + rand() * 55)));
     return {
-      id: `demo-pac-${index}`,
+      id: uuid(),
       nombre: `${first} ${last}`,
       nombrePila: first,
       apellido: last,
@@ -128,6 +184,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
   });
   await db.paciente.createMany({ data: patients });
   const featured = patients.find((patient) => patient.obraSocialId)!;
+  const otherPatients = patients.filter((patient) => patient.id !== featured.id);
 
   const appointments: {
     id: string;
@@ -157,8 +214,9 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
     const ratio = day.getDay() === 6 ? 0.45 : offset > 7 ? 0.35 : 0.7;
     for (const { professional, hour } of slots.slice(0, Math.round(slots.length * ratio))) {
       // El paciente destacado tiene sesiones dos veces por semana con la misma profesional.
-      let patient = pick(patients);
-      if (professional.id === "demo-prof-0" && hour === 9 && (day.getDay() === 1 || day.getDay() === 4)) {
+      // El resto de los turnos no le toca al destacado (no tiene dos sesiones el mismo día).
+      let patient = pick(otherPatients);
+      if (professional.id === professionals[0].id && hour === 9 && (day.getDay() === 1 || day.getDay() === 4)) {
         patient = featured;
       }
       const key = `${patient.id}-${offset}-${hour}`;
@@ -176,7 +234,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
               ? roll < 0.55 ? "confirmado" : "pendiente"
               : roll < 0.4 ? "confirmado" : roll < 0.95 ? "pendiente" : "cancelado";
       appointments.push({
-        id: `demo-tur-${appointments.length}`,
+        id: uuid(),
         pacienteId: patient.id,
         profesionalId: professional.id,
         pacienteNombre: patient.nombre,
@@ -198,7 +256,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
       const from = addDays(today, kind === 0 ? -120 : -45);
       const until = kind === 0 ? addDays(today, -20) : kind === 1 ? addDays(today, 5) : addDays(today, 45);
       return {
-        id: `demo-aut-${index}`,
+        id: uuid(),
         pacienteId: patient.id,
         obraSocialId: patient.obraSocialId!,
         numero: `${String(880000 + index * 31)}`,
@@ -236,11 +294,13 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
     date.setHours(hour, 12, 0, 0);
     return date;
   };
+  const professionalUserIds = professionals.slice(0, 4).map(() => uuid());
+  const adminUserId = uuid();
   await db.usuario.createMany({
     data: [
-      { id: "demo-u-admin", email: adminEmail, nombre: "Julieta Paz", passwordHash, rol: "admin", ultimoIngreso: lastLogin(0, 8) },
+      { id: adminUserId, email: adminEmail, nombre: "Julieta Paz", passwordHash, rol: "admin", ultimoIngreso: lastLogin(0, 8) },
       {
-        id: "demo-u-dueno",
+        id: uuid(),
         email: "direccion@sanmarsalud.com",
         nombre: "Ricardo Funes",
         passwordHash,
@@ -248,7 +308,7 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
         ultimoIngreso: lastLogin(1, 18),
       },
       ...professionals.slice(0, 4).map((professional, index) => ({
-        id: `demo-u-prof-${index}`,
+        id: professionalUserIds[index],
         email: professional.email!,
         nombre: professional.nombre,
         passwordHash,
@@ -257,31 +317,57 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
         ultimoIngreso: index === 3 ? null : lastLogin(index, 9 + index),
         debeCambiarPassword: index === 3,
       })),
-      { id: "demo-u-soporte", email: "soporte@kineturnos.app", nombre: "Soporte técnico", passwordHash, rol: "superadmin" },
+      { id: uuid(), email: "soporte@kineturnos.app", nombre: "Soporte técnico", passwordHash, rol: "superadmin" },
     ],
   });
 
   // Historia clínica: evoluciones de la mitad de las sesiones atendidas; el paciente destacado, todas.
-  const attended = appointments.filter((appointment) => appointment.estado === "atendido");
+  const attended = appointments
+    .filter((appointment) => appointment.estado === "atendido")
+    .sort((a, b) => a.fecha.getTime() - b.fecha.getTime() || a.hora.getTime() - b.hora.getTime());
+  const userByProfessional = new Map(professionals.slice(0, 4).map((professional, index) => [professional.id, professionalUserIds[index]]));
+  const areaOf = (patientId: string) =>
+    EVOLUTION_AREAS[[...patientId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % EVOLUTION_AREAS.length];
+  const sessionsSoFar = new Map<string, number>();
+  const now = Date.now();
   const clinical = attended
     .filter((appointment) => appointment.pacienteId === featured.id || rand() < 0.5)
-    .map((appointment, index) => {
+    .map((appointment) => {
       const isFeatured = appointment.pacienteId === featured.id;
+      const count = sessionsSoFar.get(appointment.pacienteId) ?? 0;
+      sessionsSoFar.set(appointment.pacienteId, count + 1);
+      const texts = isFeatured ? FEATURED_EVOLUTIONS : EVOLUTIONS[areaOf(appointment.pacienteId)];
+      // El turno es hora de Buenos Aires (UTC−3); el registro, después de la sesión.
+      const sessionStart = Date.UTC(
+        appointment.fecha.getUTCFullYear(),
+        appointment.fecha.getUTCMonth(),
+        appointment.fecha.getUTCDate(),
+        appointment.hora.getUTCHours() + 3
+      );
+      const registered = new Date(
+        Math.min(sessionStart + Math.round((20 + lag() * 100) * 60_000) + Math.floor(lag() * 59) * 1000, now - 5 * 60_000)
+      );
+      const first = isFeatured && count === 0;
       return {
-        id: `demo-hc-${index}`,
+        id: uuid(),
         pacienteId: appointment.pacienteId,
         profesionalId: appointment.profesionalId,
         profesionalNombre: appointment.profesionalNombre,
         turnoId: appointment.id,
-        autorId: "demo-u-prof-0",
+        autorId: userByProfessional.get(appointment.profesionalId) ?? adminUserId,
         autorNombre: appointment.profesionalNombre,
         fecha: appointment.fecha,
-        diagnostico: isFeatured && index % 6 === 0 ? "Posoperatorio de LCA de rodilla derecha (8 semanas)." : null,
-        tratamiento:
-          isFeatured && index % 6 === 0
-            ? "Fortalecimiento progresivo, propiocepción y reeducación de la marcha. Dos sesiones por semana."
-            : null,
-        evolucion: pick(EVOLUTIONS),
+        diagnostico: first ? "Posoperatorio de LCA de rodilla derecha (8 semanas)." : null,
+        tratamiento: first
+          ? "Fortalecimiento progresivo, propiocepción y reeducación de la marcha. Dos sesiones por semana."
+          : null,
+        // El destacado sigue su progresión y después alterna controles de rodilla; el resto rota los de su zona.
+        evolucion:
+          isFeatured && count >= texts.length
+            ? EVOLUTIONS.rodilla[count % EVOLUTIONS.rodilla.length]
+            : texts[count % texts.length],
+        creadoEn: registered,
+        actualizadoEn: registered,
       };
     });
   await db.historiaClinica.createMany({ data: clinical });
@@ -296,9 +382,9 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
   });
   await db.objetivoTratamiento.createMany({
     data: [
-      { id: "demo-obj-0", pacienteId: featured.id, descripcion: "Extensión completa de rodilla", cumplido: true, cumplidoEn: new Date(), creadoPorNombre: professionals[0].nombre },
-      { id: "demo-obj-1", pacienteId: featured.id, descripcion: "Marcha sin dolor ni asistencia", cumplido: true, cumplidoEn: new Date(), creadoPorNombre: professionals[0].nombre },
-      { id: "demo-obj-2", pacienteId: featured.id, descripcion: "Volver a correr a las 16 semanas", creadoPorNombre: professionals[0].nombre },
+      { id: uuid(), pacienteId: featured.id, descripcion: "Extensión completa de rodilla", cumplido: true, cumplidoEn: new Date(), creadoPorNombre: professionals[0].nombre },
+      { id: uuid(), pacienteId: featured.id, descripcion: "Marcha sin dolor ni asistencia", cumplido: true, cumplidoEn: new Date(), creadoPorNombre: professionals[0].nombre },
+      { id: uuid(), pacienteId: featured.id, descripcion: "Volver a correr a las 16 semanas", creadoPorNombre: professionals[0].nombre },
     ],
   });
 

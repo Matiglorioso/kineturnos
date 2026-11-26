@@ -19,25 +19,27 @@ export function splitFullName(fullName: string): {
   };
 }
 
-/** Title Case para nombres propios (ej. "juan PÉREZ" → "Juan Pérez"). */
+/** Partículas que van en minúscula dentro de un nombre ("María de la Fuente", "van der Berg"). */
+const NAME_PARTICLES = new Set(["de", "del", "la", "las", "los", "y", "da", "das", "do", "dos", "di", "van", "von", "der", "den"]);
+
+function capitalize(part: string): string {
+  return part ? part.charAt(0).toLocaleUpperCase("es-AR") + part.slice(1) : part;
+}
+
+/**
+ * Title Case para nombres propios (ej. "juan PÉREZ" → "Juan Pérez"), con mayúscula también
+ * después de guiones y apóstrofos ("O'Connor") y las partículas en minúscula ("de la Fuente").
+ * Una partícula sola queda con mayúscula: puede ser el nombre entero.
+ */
 export function toTitleCaseName(value: string): string {
-  return value
-    .trim()
-    .toLocaleLowerCase("es-AR")
-    .split(/\s+/)
-    .filter(Boolean)
+  const words = value.trim().toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
+  return words
     .map((word) => {
-      if (word.includes("-")) {
-        return word
-          .split("-")
-          .map((part) =>
-            part
-              ? part.charAt(0).toLocaleUpperCase("es-AR") + part.slice(1)
-              : part
-          )
-          .join("-");
-      }
-      return word.charAt(0).toLocaleUpperCase("es-AR") + word.slice(1);
+      if (words.length > 1 && NAME_PARTICLES.has(word)) return word;
+      return word
+        .split(/([-'’])/)
+        .map(capitalize)
+        .join("");
     })
     .join(" ");
 }

@@ -12,7 +12,6 @@ export type Permission =
   | "professionals:delete"
   | "clinical:read"
   | "clinical:write"
-  | "clinical:audit"
   | "insurances:read"
   | "insurances:write"
   | "users:manage"
@@ -31,7 +30,6 @@ const ADMIN_PERMISSIONS: Permission[] = [
   "professionals:delete",
   "clinical:read",
   "clinical:write",
-  "clinical:audit",
   "insurances:read",
   "insurances:write",
   "users:manage",
@@ -72,6 +70,7 @@ const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
     "/auditoria",
     "/proyecto",
     "/cambiar-contrasena",
+    "/mas",
   ],
   admin: [
     "/",
@@ -82,8 +81,9 @@ const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
     "/usuarios",
     "/proyecto",
     "/cambiar-contrasena",
+    "/mas",
   ],
-  profesional: ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena"],
+  profesional: ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena", "/mas"],
 };
 
 export function hasPermission(

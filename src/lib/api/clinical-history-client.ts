@@ -1,17 +1,17 @@
 import { fetchJson } from "@/lib/api/fetch-json";
 import type {
-  ClinicalAccessLogItem,
   ClinicalEntry,
   ClinicalHistory,
-  ClinicalProfile,
-  TreatmentGoal,
 } from "@/types";
 
+/** Alta: fecha, profesional y evolución (o el turno de la agenda). Corrección: solo la evolución. */
 export type ClinicalEntryRequest = {
   appointmentId?: string | null;
-  diagnosis: string;
-  treatment: string;
+  /** dd-MM-yyyy; sin turno, la de la sesión (hoy por defecto). */
+  date?: string | null;
   evolution: string;
+  /** Solo si quien carga no es profesional y la sesión no tiene turno. */
+  professionalId?: string | null;
 };
 
 const base = (patientId: string) => `/api/patients/${encodeURIComponent(patientId)}/historia`;
@@ -40,49 +40,5 @@ export function updateClinicalEntryRequest(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
-}
-
-export function fetchClinicalAccessLog(patientId: string): Promise<ClinicalAccessLogItem[]> {
-  return fetchJson<ClinicalAccessLogItem[]>(`${base(patientId)}/accesos`);
-}
-
-export function saveClinicalProfileRequest(
-  patientId: string,
-  body: { alerts: string; background: string }
-): Promise<ClinicalProfile> {
-  return fetchJson<ClinicalProfile>(`${base(patientId)}/ficha`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export function createTreatmentGoalRequest(
-  patientId: string,
-  description: string
-): Promise<TreatmentGoal> {
-  return fetchJson<TreatmentGoal>(`${base(patientId)}/objetivos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ description }),
-  });
-}
-
-export function updateTreatmentGoalRequest(
-  patientId: string,
-  goalId: string,
-  achieved: boolean
-): Promise<TreatmentGoal> {
-  return fetchJson<TreatmentGoal>(`${base(patientId)}/objetivos/${encodeURIComponent(goalId)}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ achieved }),
-  });
-}
-
-export async function deleteTreatmentGoalRequest(patientId: string, goalId: string): Promise<void> {
-  await fetchJson<{ id: string }>(`${base(patientId)}/objetivos/${encodeURIComponent(goalId)}`, {
-    method: "DELETE",
   });
 }

@@ -7,6 +7,7 @@ import {
   endOfMonth,
   endOfWeek,
   endOfYear,
+  startOfDay,
   startOfMonth,
   startOfWeek,
   startOfYear,
@@ -207,7 +208,10 @@ export function getTimeline(appointments: Appointment[], range: PeriodRange): Ti
       label = formatAppDate(toAppDate(cursor), "EEE d").replace(".", "");
       title = formatAppDate(toAppDate(cursor), "EEEE d 'de' MMMM");
     } else if (range.granularity === "semana") {
-      end = endOfWeek(cursor, WEEK) > to ? to : endOfWeek(cursor, WEEK);
+      // startOfDay: endOfWeek devuelve 23:59:59, y el día siguiente (el cursor) quedaba pasado de
+      // la medianoche del último día del período, que entonces se salteaba.
+      const weekEnd = startOfDay(endOfWeek(cursor, WEEK));
+      end = weekEnd > to ? to : weekEnd;
       label = formatAppDate(toAppDate(cursor), "d/MM");
       title = `Semana del ${formatAppDate(toAppDate(cursor), "d/MM")} al ${formatAppDate(toAppDate(end), "d/MM")}`;
     } else {

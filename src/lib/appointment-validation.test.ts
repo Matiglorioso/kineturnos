@@ -16,6 +16,7 @@ import {
   type AppointmentFormInput,
 } from "@/lib/appointment-validation";
 import { parseAppDate, toAppDate } from "@/lib/date-utils";
+import { validateProfessionalAppointmentSlot } from "@/lib/professional-schedule";
 import type { Appointment, Professional } from "@/types";
 
 /** Próximo lunes (siempre futuro), en formato de la app. */
@@ -78,7 +79,13 @@ describe("validación de agendado: día de atención", () => {
     const errors = validateAppointmentForm(values, [], [professional]);
 
     assert.ok(errors.date, "debe fallar por día de atención");
-    assert.match(errors.date!, /no atiende/i);
+    assert.match(errors.date!, /no atiende los domingos\./);
+  });
+
+  it("avisa que una fecha como el 31-02 no existe (no es un problema de formato)", () => {
+    const errors = validateAppointmentForm({ ...baseValues(), date: "31-02-2030" }, [], [professional]);
+
+    assert.equal(errors.date, "Esa fecha no existe. Revisá el día y el mes.");
   });
 
   it("acepta un turno en un día de atención dentro del horario", () => {
@@ -603,5 +610,16 @@ describe("M8: pacientes y profesionales desactivados", () => {
     assert.deepEqual(validateAppointmentParticipants({ ...values, status: "confirmado" }, inactive, previous), {});
     // Un turno final (p. ej. cargar una sesión ya atendida o cancelarlo).
     assert.deepEqual(validateAppointmentParticipants({ ...values, status: "cancelado" }, inactive), {});
+  });
+});
+
+describe("aviso de día de atención", () => {
+  it("nombra el día en minúscula y en plural", () => {
+    const saturday = toAppDate(nextDay(new Date(), 6)); // 6 = Saturday
+    const errors = validateProfessionalAppointmentSlot(professional, saturday, "10:00");
+    assert.equal(
+      errors.day,
+      `${professional.name} no atiende los sábados. Días: Lunes, Miércoles, Viernes.`
+    );
   });
 });

@@ -131,31 +131,6 @@ export interface ClinicalEntry {
   editableUntil: string | null;
 }
 
-/** Alertas (alergias, contraindicaciones) y antecedentes del paciente. */
-export interface ClinicalProfile {
-  alerts: string | null;
-  background: string | null;
-  updatedByName: string;
-  /** ISO 8601 */
-  updatedAt: string;
-}
-
-/** Objetivo del plan de tratamiento. */
-export interface TreatmentGoal {
-  id: string;
-  description: string;
-  achieved: boolean;
-  /** ISO 8601 */
-  achievedAt: string | null;
-  createdByName: string;
-}
-
-/** Diagnóstico y plan vigentes: los del último registro que los cargó. */
-export interface ClinicalSummary {
-  diagnosis: { text: string; date: string } | null;
-  treatment: { text: string; date: string } | null;
-}
-
 /** Turno del paciente que puede asociarse a un registro nuevo. */
 export interface ClinicalSessionOption {
   id: string;
@@ -177,22 +152,7 @@ export interface ClinicalHistory {
     coverage?: PatientCoverage;
   };
   entries: ClinicalEntry[];
-  summary: ClinicalSummary;
   sessionOptions: ClinicalSessionOption[];
-  profile: ClinicalProfile | null;
-  goals: TreatmentGoal[];
-  /** Próximo turno activo del paciente (para el encabezado). */
-  nextAppointment: { date: string; time: string; professionalName: string } | null;
-}
-
-export interface ClinicalAccessLogItem {
-  id: string;
-  userName: string;
-  userRole: string;
-  action: "lectura" | "alta" | "edicion";
-  entryId: string | null;
-  /** ISO 8601 */
-  at: string;
 }
 
 /** Evento del registro de auditoría (solo Superadmin). */
@@ -203,7 +163,7 @@ export interface AuditLogItem {
   userId: string | null;
   userName: string;
   userRole: string;
-  action: import("@/lib/audit").AuditAction;
+  action: import("@/lib/audit").AuditLogAction;
   entity: import("@/lib/audit").AuditEntity;
   entityId: string | null;
   label: string;
@@ -239,6 +199,8 @@ export interface Authorization {
   validFrom: string;
   /** dd-MM-yyyy, o null si no vence. */
   validUntil: string | null;
+  /** Diagnóstico de la orden médica. */
+  diagnosis: string | null;
   notes: string | null;
   createdByName: string;
   /** Es de la obra social actual del paciente. */

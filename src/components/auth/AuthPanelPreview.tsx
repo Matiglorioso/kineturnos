@@ -9,7 +9,7 @@ export function AuthPanelPreview() {
     >
       <div className="absolute -right-2 top-6 hidden h-full w-full rotate-6 rounded-2xl bg-white/[0.08] @[52rem]:block @[52rem]:top-8" />
       <div className="absolute -right-3 top-4 hidden h-full w-full rotate-3 rounded-2xl bg-white/15 ring-1 ring-white/25 @[52rem]:block @[52rem]:top-6" />
-      <div className="relative overflow-hidden rounded-2xl bg-white/95 p-3 text-slate-900 shadow-2xl shadow-teal-950/40 ring-1 ring-white/40 @[52rem]:p-4">
+      <div className="relative overflow-hidden rounded-2xl bg-white/95 p-3 text-slate-900 shadow-2xl shadow-brand-950/40 ring-1 ring-white/40 @[52rem]:p-4">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-700">

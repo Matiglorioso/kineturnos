@@ -2,15 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   canEditClinicalEntry,
-  CLINICAL_GOAL_MAX_LENGTH,
   CLINICAL_TEXT_MAX_LENGTH,
   getClinicalEditDeadline,
-  getClinicalSummary,
   getSessionNumbers,
   parseClinicalEntryInput,
-  parseClinicalProfileInput,
-  parseTreatmentGoalInput,
-  splitClinicalAlerts,
+  sessionProfessionalError,
 } from "./clinical-history";
 
 describe("edición de registros de historia clínica", () => {
@@ -35,24 +31,6 @@ describe("edición de registros de historia clínica", () => {
   });
 });
 
-describe("diagnóstico y plan vigentes", () => {
-  it("toma el registro más reciente que cargó cada uno", () => {
-    const summary = getClinicalSummary([
-      { date: "29-09-2026", diagnosis: null, treatment: null },
-      { date: "22-09-2026", diagnosis: null, treatment: "Fortalecimiento, 3 veces por semana" },
-      { date: "15-09-2026", diagnosis: "Esguince de tobillo grado II", treatment: "Reposo" },
-    ]);
-    assert.deepEqual(summary, {
-      diagnosis: { text: "Esguince de tobillo grado II", date: "15-09-2026" },
-      treatment: { text: "Fortalecimiento, 3 veces por semana", date: "22-09-2026" },
-    });
-  });
-
-  it("sin registros no hay diagnóstico ni plan", () => {
-    assert.deepEqual(getClinicalSummary([]), { diagnosis: null, treatment: null });
-  });
-});
-
 describe("validación del registro (RF11)", () => {
   it("la evolución es obligatoria", () => {
     assert.deepEqual(parseClinicalEntryInput({ evolution: "   " }), {
@@ -62,24 +40,24 @@ describe("validación del registro (RF11)", () => {
     assert.equal(parseClinicalEntryInput(null).error, "Datos inválidos.");
   });
 
-  it("diagnóstico, plan y turno son opcionales; los vacíos quedan en null", () => {
-    assert.deepEqual(parseClinicalEntryInput({ evolution: " Mejora del rango ", diagnosis: "" }), {
-      input: {
-        appointmentId: null,
-        date: null,
-        diagnosis: null,
-        treatment: null,
-        evolution: "Mejora del rango",
-      },
-    });
+  it("solo fecha, profesional y evolución (y el turno, si se abre desde la agenda)", () => {
+    // Diagnóstico y plan ya no se cargan en la evolución: si llegan, se ignoran.
+    assert.deepEqual(
+      parseClinicalEntryInput({ evolution: " Mejora del rango ", diagnosis: "Lumbalgia", treatment: "RPG" }),
+      {
+        input: {
+          appointmentId: null,
+          date: null,
+          evolution: "Mejora del rango",
+          professionalId: null,
+        },
+      }
+    );
   });
 
-  it("limita el largo de cada texto", () => {
-    const result = parseClinicalEntryInput({
-      evolution: "ok",
-      diagnosis: "x".repeat(CLINICAL_TEXT_MAX_LENGTH + 1),
-    });
-    assert.equal(result.field, "diagnosis");
+  it("limita el largo de la evolución", () => {
+    const result = parseClinicalEntryInput({ evolution: "x".repeat(CLINICAL_TEXT_MAX_LENGTH + 1) });
+    assert.equal(result.field, "evolution");
   });
 
   it("valida el formato de la fecha", () => {
@@ -102,37 +80,31 @@ describe("numeración de sesiones", () => {
   });
 });
 
-describe("alertas, antecedentes y objetivos", () => {
-  it("una alerta por renglón, sin renglones vacíos", () => {
-    assert.deepEqual(splitClinicalAlerts(" Alergia al ibuprofeno \r\n\nMarcapasos"), [
-      "Alergia al ibuprofeno",
-      "Marcapasos",
-    ]);
-    assert.deepEqual(splitClinicalAlerts(null), []);
-  });
-
-  it("alertas y antecedentes son opcionales", () => {
-    assert.deepEqual(parseClinicalProfileInput({ alerts: "", background: " Hernia L4-L5 " }), {
-      input: { alerts: null, background: "Hernia L4-L5" },
-    });
-    assert.equal(parseClinicalProfileInput("x").error, "Datos inválidos.");
-  });
-
-  it("el objetivo es obligatorio y tiene un largo máximo", () => {
-    assert.deepEqual(parseTreatmentGoalInput({ description: " Volver a correr " }), {
-      input: { description: "Volver a correr" },
-    });
-    assert.equal(parseTreatmentGoalInput({ description: "" }).field, "description");
-    assert.equal(
-      parseTreatmentGoalInput({ description: "x".repeat(CLINICAL_GOAL_MAX_LENGTH + 1) }).field,
-      "description"
-    );
-  });
-
+describe("plazo de corrección", () => {
   it("la fecha límite de edición es 24 h después de cargar", () => {
     assert.equal(
       getClinicalEditDeadline(new Date("2026-09-29T12:00:00Z")).toISOString(),
       "2026-09-30T12:00:00.000Z"
     );
+  });
+});
+
+describe("profesional de una sesión sin turno", () => {
+  const sinTurno = { appointmentId: null, professionalId: null };
+
+  it("el Profesional queda como el de la sesión", () => {
+    assert.equal(sessionProfessionalError({ professionalId: "pro1" }, sinTurno), null);
+  });
+
+  it("Administración tiene que elegir qué profesional atendió", () => {
+    assert.deepEqual(sessionProfessionalError({ professionalId: null }, sinTurno), {
+      error: "Elegí qué profesional atendió la sesión.",
+      field: "professionalId",
+    });
+    assert.equal(sessionProfessionalError({ professionalId: null }, { appointmentId: null, professionalId: "pro1" }), null);
+  });
+
+  it("con turno, el profesional sale del turno", () => {
+    assert.equal(sessionProfessionalError({ professionalId: null }, { appointmentId: "t1", professionalId: null }), null);
   });
 });

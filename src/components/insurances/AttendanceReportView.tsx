@@ -26,6 +26,9 @@ import { siteConfig } from "@/lib/site-config";
 import type { AttendanceReport, Insurance } from "@/types";
 import { AlertTriangle, ClipboardList, Printer } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { MobileList, MobileListRow, MobileStickyAction } from "@/components/mobile/MobileUi";
+import { cn } from "@/lib/utils";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 
 function currentMonth(): string {
   const [, month, year] = getTodayAppDate().split("-");
@@ -51,6 +54,16 @@ export function AttendanceReportView({
   const [report, setReport] = useState<AttendanceReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Celular: el paciente que muestra sus fechas.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const isDesktop = useIsDesktop();
+
+  // Celular: arranca con la primera obra social elegida (boceto 10), sin pantalla vacía.
+  useEffect(() => {
+    if (!isDesktop && !insuranceId && insurances.length > 0) {
+      setInsuranceId((insurances.find((insurance) => insurance.active) ?? insurances[0]).id);
+    }
+  }, [isDesktop, insuranceId, insurances]);
 
   useEffect(() => {
     if (!insuranceId || !/^\d{4}-\d{2}$/.test(month)) {
@@ -87,15 +100,16 @@ export function AttendanceReportView({
   const shownRows = useMemo(() => new Set(pagination.items), [pagination.items]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end print:hidden">
+    <div className={cn("space-y-4", report && report.rows.length > 0 && "max-lg:pb-20")}>
+      {/* Celular: obra social y mes uno al lado del otro, sin títulos (boceto 10). */}
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:gap-3 max-sm:[&_label]:sr-only print:hidden">
         <FormField
           id="planilla-obra-social"
           label="Obra social"
           className="sm:w-72"
         >
           <Select value={insuranceId} onValueChange={setInsuranceId}>
-            <SelectTrigger id="planilla-obra-social">
+            <SelectTrigger id="planilla-obra-social" className="max-sm:h-11 max-sm:bg-white max-sm:font-semibold">
               <SelectValue placeholder="Elegí la obra social" />
             </SelectTrigger>
             <SelectContent>
@@ -111,6 +125,7 @@ export function AttendanceReportView({
           <Input
             id="planilla-mes"
             type="month"
+            className="max-sm:h-11 max-sm:bg-white max-sm:font-semibold"
             value={month}
             onChange={(event) => setMonth(event.target.value)}
           />
@@ -118,7 +133,7 @@ export function AttendanceReportView({
         <Button
           type="button"
           variant="outline"
-          className="sm:ml-auto"
+          className="sm:ml-auto max-lg:hidden"
           disabled={!report || report.rows.length === 0}
           onClick={() => window.print()}
         >
@@ -151,20 +166,22 @@ export function AttendanceReportView({
             <p className="hidden text-xs text-slate-500 print:block">
               {siteConfig.clinicName}
             </p>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 max-lg:hidden print:block">
               Planilla de asistencia · {report.insurance.name} ·{" "}
               {monthLabel(report.month)}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {report.rows.length}{" "}
-              {report.rows.length === 1 ? "paciente" : "pacientes"} ·{" "}
-              {report.totalSessions}{" "}
-              {report.totalSessions === 1
-                ? "sesión atendida"
-                : "sesiones atendidas"}
+            <p className="text-sm text-muted-foreground max-lg:mx-1 max-lg:text-[13px] max-lg:[&>b]:font-semibold max-lg:[&>b]:text-slate-900 lg:[&>b]:font-normal">
+              <b>
+                {report.rows.length} {report.rows.length === 1 ? "paciente" : "pacientes"}
+              </b>{" "}
+              ·{" "}
+              <b>
+                {report.totalSessions} {report.totalSessions === 1 ? "sesión" : "sesiones"}
+              </b>{" "}
+              {report.totalSessions === 1 ? "atendida" : "atendidas"}
             </p>
           </div>
-          <div className="hidden md:block print:block">
+          <div className="hidden lg:block print:block">
             <DataTable
               headers={[
                 "Paciente",
@@ -217,52 +234,50 @@ export function AttendanceReportView({
             </DataTable>
           </div>
 
-          {/* Celular: tarjetas (al imprimir sale la tabla). */}
-          <ul
-            className="grid gap-3 md:hidden print:hidden"
-            aria-label="Pacientes de la planilla"
-          >
-            {pagination.items.map((row) => (
-              <li key={row.patientId} className="surface-card space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-900">
-                      {row.patientName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      DNI {row.dni}
-                      {row.affiliateNumber
-                        ? ` · Afiliado ${row.affiliateNumber}`
-                        : ""}
-                      {row.plan ? ` · ${row.plan}` : ""}
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-0.5 text-sm font-semibold text-brand-800">
-                    {row.dates.length}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Autorización:{" "}
-                  {row.authorizationNumbers.length
-                    ? row.authorizationNumbers.join(", ")
-                    : "—"}
-                </p>
-                <p className="text-xs text-slate-600">
-                  Sesiones:{" "}
-                  {row.dates
-                    .map((date) => formatAppDate(date, "dd/MM"))
-                    .join(", ")}
-                </p>
-                {row.withoutAuthorization > 0 && (
-                  <p className="flex items-center gap-1 text-xs font-medium text-amber-700">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {row.withoutAuthorization} sin autorización
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
+          {/* Celular (boceto 10): una fila por paciente con sus sesiones a la derecha; tocarla muestra las fechas. */}
+          <MobileList label="Pacientes de la planilla" className="lg:hidden print:hidden">
+            {pagination.items.map((row) => {
+              const expanded = expandedId === row.patientId;
+              // Sin autorización lo dice el aviso de abajo: no se repite.
+              const authorization = row.authorizationNumbers.length
+                ? ` · Nº ${row.authorizationNumbers.join(", ")}`
+                : "";
+              return (
+                <MobileListRow
+                  key={row.patientId}
+                  ariaLabel={`${row.patientName}: ${row.dates.length} sesiones`}
+                  title={row.patientName}
+                  detail={`${row.affiliateNumber ? `Afiliado ${row.affiliateNumber}` : `DNI ${row.dni}`}${authorization}`}
+                  extra={
+                    <>
+                      {row.withoutAuthorization > 0 && (
+                        <span className="mt-0.5 block text-[11.5px] font-semibold text-amber-700">
+                          {row.withoutAuthorization} sin autorización
+                        </span>
+                      )}
+                      {expanded && (
+                        <span className="mt-1.5 block text-xs leading-relaxed text-slate-600">
+                          {row.dates.map((date) => formatAppDate(date, "dd/MM")).join(" · ")}
+                        </span>
+                      )}
+                    </>
+                  }
+                  trailing={
+                    <span className="flex h-9 min-w-9 items-center justify-center rounded-[10px] bg-brand-50 px-2 text-[15px] font-bold tabular-nums text-brand-800">
+                      {row.dates.length}
+                    </span>
+                  }
+                  onClick={() => setExpandedId(expanded ? null : row.patientId)}
+                />
+              );
+            })}
+          </MobileList>
           <ListPagination pagination={pagination} itemLabel="pacientes" itemLabelSingular="paciente" />
+          <MobileStickyAction>
+            <Button type="button" className="h-12 w-full text-[15px]" onClick={() => window.print()}>
+              Imprimir planilla
+            </Button>
+          </MobileStickyAction>
         </section>
       ) : null}
     </div>

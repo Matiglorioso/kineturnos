@@ -1,10 +1,7 @@
 "use client";
 
-import { ClinicalAccessLog } from "@/components/clinical/ClinicalAccessLog";
 import { ClinicalEntryCard } from "@/components/clinical/ClinicalEntryCard";
 import { ClinicalEntryForm } from "@/components/clinical/ClinicalEntryForm";
-import { ClinicalProfileCard } from "@/components/clinical/ClinicalProfileCard";
-import { TreatmentGoalsCard } from "@/components/clinical/TreatmentGoalsCard";
 import { CoverageBadge } from "@/components/patients/CoverageBadge";
 import { DataLoadError } from "@/components/shared/DataLoadError";
 import { PageLoadingState } from "@/components/shared/PageLoadingState";
@@ -20,26 +17,23 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import {
   createClinicalEntryRequest,
-  createTreatmentGoalRequest,
-  deleteTreatmentGoalRequest,
   fetchClinicalHistory,
-  saveClinicalProfileRequest,
   updateClinicalEntryRequest,
-  updateTreatmentGoalRequest,
   type ClinicalEntryRequest,
 } from "@/lib/api/clinical-history-client";
 import { ApiError } from "@/lib/api/fetch-json";
-import { getSessionNumbers, splitClinicalAlerts } from "@/lib/clinical-history";
+import { fetchProfessionals } from "@/lib/api/professionals-client";
+import { getSessionNumbers } from "@/lib/clinical-history";
 import { formatAge } from "@/lib/birth-date";
-import { formatAppDate } from "@/lib/date-utils";
+import { formatAppDate, getTodayAppDate } from "@/lib/date-utils";
 import { siteConfig } from "@/lib/site-config";
 import { showSuccessToast } from "@/lib/toast";
 import { getInitials } from "@/lib/utils";
-import type { ClinicalEntry, ClinicalHistory, TreatmentGoal } from "@/types";
+import type { ClinicalEntry, ClinicalHistory } from "@/types";
 import {
-  AlertTriangle,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
@@ -55,6 +49,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 
 const ALL_PROFESSIONALS = "todos";
 /** Evoluciones por página en la línea de tiempo (al imprimir salen todas). */
+/** Sesiones por página en el celular (tarjetas). */
 const ENTRIES_PER_PAGE = 3;
 
 export default function HistoriaClinicaPage() {
@@ -65,61 +60,22 @@ export default function HistoriaClinicaPage() {
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-xl bg-white/70 px-4 py-3 ring-1 ring-slate-200/70 print:ring-slate-300">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{value}</p>
-      {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
-
-function CurrentItem({
-  label,
-  value,
-  onAdd,
-}: {
-  label: string;
-  value: { text: string; date: string } | null;
-  /** Abre "Nueva evolución": el diagnóstico y el plan se cargan ahí. */
-  onAdd?: () => void;
-}) {
-  return (
-    <section className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 print:break-inside-avoid">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-brand-800">{label}</h2>
-      {value ? (
-        <>
-          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-900">{value.text}</p>
-          <p className="mt-2 text-xs text-muted-foreground">Desde el {formatAppDate(value.date)}</p>
-        </>
-      ) : (
-        <>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Todavía no se cargó. Se completa al registrar una evolución.
-          </p>
-          {onAdd && (
-            <Button
-              type="button"
-              variant="link"
-              className="-mx-1 mt-1 h-auto min-h-6 px-1 py-0.5 text-brand-700 print:hidden"
-              onClick={onAdd}
-            >
-              Cargarlo en una evolución
-            </Button>
-          )}
-        </>
-      )}
-    </section>
-  );
-}
-
 function HistoriaClinicaContent() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const requestedAppointmentId = searchParams.get("turno");
-  const { can } = usePermissions();
+  const { can, professionalId: ownProfessionalId } = usePermissions();
   const canWrite = can("clinical:write");
+  // Administración elige quién atendió; el Profesional registra a su nombre (se muestra fijo).
+  const [professionalOptions, setProfessionalOptions] = useState<{ id: string; name: string }[]>();
+  useEffect(() => {
+    if (!canWrite) return;
+    fetchProfessionals()
+      .then((list) =>
+        setProfessionalOptions(list.filter((item) => item.active).map((item) => ({ id: item.id, name: item.name })))
+      )
+      .catch(() => setProfessionalOptions([]));
+  }, [canWrite]);
 
   const [history, setHistory] = useState<ClinicalHistory | null>(null);
   const [error, setError] = useState<{ message: string; status: number } | null>(null);
@@ -127,6 +83,9 @@ function HistoriaClinicaContent() {
   const [composerAppointmentId, setComposerAppointmentId] = useState<string | null>(null);
   const [professionalFilter, setProfessionalFilter] = useState(ALL_PROFESSIONALS);
   const [page, setPage] = useState(0);
+  // En la computadora entran más sesiones por pantalla (renglones compactos).
+  const isDesktop = useIsDesktop();
+  const entriesPerPage = isDesktop ? 8 : ENTRIES_PER_PAGE;
   const openedFromAppointment = useRef(false);
 
   const load = useCallback(async () => {
@@ -194,37 +153,6 @@ function HistoriaClinicaContent() {
     await load();
   };
 
-  const handleProfileSave = async (body: { alerts: string; background: string }) => {
-    await saveClinicalProfileRequest(id, body);
-    showSuccessToast("Alertas y antecedentes guardados");
-    await load();
-  };
-
-  const handleGoalAdd = async (description: string) => {
-    await createTreatmentGoalRequest(id, description);
-    await load();
-  };
-  // Optimista: el check cambia al instante; si falla, se recarga el estado real.
-  const handleGoalToggle = async (goal: TreatmentGoal) => {
-    const achieved = !goal.achieved;
-    setHistory((current) =>
-      current && {
-        ...current,
-        goals: current.goals.map((item) => (item.id === goal.id ? { ...item, achieved } : item)),
-      }
-    );
-    try {
-      await updateTreatmentGoalRequest(id, goal.id, achieved);
-    } catch (toggleError) {
-      await load();
-      throw toggleError;
-    }
-  };
-  const handleGoalRemove = async (goal: TreatmentGoal) => {
-    await deleteTreatmentGoalRequest(id, goal.id);
-    await load();
-  };
-
   const backLink = (
     <Button asChild variant="outline" size="sm" className="print:hidden">
       <Link href="/pacientes">
@@ -251,37 +179,47 @@ function HistoriaClinicaContent() {
     return <PageLoadingState title="Historia clínica" description="Cargando la historia del paciente..." />;
   }
 
-  const { patient, entries, summary, sessionOptions, profile, goals, nextAppointment } = history;
-  const alerts = splitClinicalAlerts(profile?.alerts);
-  const lastEntry = entries[0];
-  const achievedGoals = goals.filter((goal) => goal.achieved).length;
-  const pageCount = Math.max(1, Math.ceil(visibleEntries.length / ENTRIES_PER_PAGE));
+  const { patient, entries, sessionOptions } = history;
+  const composerAppointment = sessionOptions.find((option) => option.id === composerAppointmentId);
+  const ownProfessionalName = ownProfessionalId
+    ? (professionalOptions?.find((option) => option.id === ownProfessionalId)?.name ?? null)
+    : null;
+  const pageCount = Math.max(1, Math.ceil(visibleEntries.length / entriesPerPage));
   const currentPage = Math.min(page, pageCount - 1);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-2 print:hidden">
-        {backLink}
-        <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
-          <Printer className="h-4 w-4" />
-          Imprimir
-        </Button>
-      </div>
+    <div className="space-y-5 max-lg:pb-20 lg:space-y-4">
+      <div className="flex items-center justify-between gap-2 lg:hidden print:hidden">{backLink}</div>
+      {/* Computadora: dónde estás, sin botón de volver. */}
+      <nav aria-label="Ruta" className="hidden text-sm text-muted-foreground lg:block print:hidden">
+        <Link href="/pacientes" className="hover:text-slate-900 hover:underline">
+          Pacientes
+        </Link>
+        <span className="mx-1.5 text-slate-400">/</span>
+        <span className="text-slate-700">{patient.name}</span>
+        <span className="mx-1.5 text-slate-400">/</span>
+        <span>Historia clínica</span>
+      </nav>
 
       <p className="hidden text-xs text-slate-500 print:block">
         {siteConfig.clinicName} · Historia clínica · impresa el{" "}
         {new Intl.DateTimeFormat("es-AR", { dateStyle: "long", timeStyle: "short" }).format(new Date())}
       </p>
 
-      <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm print:shadow-none sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-lg font-bold text-white print:hidden">
+      <section
+        aria-labelledby="historia-paciente"
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm print:shadow-none sm:p-5 lg:px-4 lg:py-3 lg:shadow-none"
+      >
+        <div className="flex items-center gap-3 sm:gap-4 lg:items-start">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white sm:h-14 sm:w-14 sm:rounded-2xl sm:text-lg lg:hidden print:hidden">
             {getInitials(patient.name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-brand-700">Historia clínica</p>
-            <h1 className="truncate text-2xl font-bold tracking-tight text-slate-900">{patient.name}</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wide text-brand-700 lg:hidden">Historia clínica</p>
+            <h1 id="historia-paciente" className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-xl">
+              {patient.name}
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm lg:text-[13px] lg:text-slate-600">
               {[
                 `DNI ${patient.dni}`,
                 patient.birthDate && `${formatAge(patient.birthDate)} (${formatAppDate(patient.birthDate)})`,
@@ -291,47 +229,29 @@ function HistoriaClinicaContent() {
                 .filter(Boolean)
                 .join(" · ")}
             </p>
-            <CoverageBadge coverage={patient.coverage} className="mt-2" />
+            <CoverageBadge coverage={patient.coverage} className="mt-2 lg:mt-1.5" />
+          </div>
+          {/* La acción principal de la pantalla, junto al paciente. */}
+          <div className="flex shrink-0 items-center gap-2 max-lg:hidden print:hidden">
+            {/* Imprimir no tiene sentido en el celular. */}
+            <Button type="button" variant="outline" onClick={() => window.print()}>
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
+            {canWrite && (
+              <Button type="button" onClick={openComposer}>
+                <Plus className="h-4 w-4" />
+                Nueva evolución
+              </Button>
+            )}
           </div>
         </div>
-        {alerts.length > 0 && (
-          <ul aria-label="Alertas clínicas" className="mt-4 flex flex-wrap gap-2">
-            {alerts.map((alert) => (
-              <li
-                key={alert}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-sm font-medium text-red-700"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                {alert}
-              </li>
-            ))}
-          </ul>
-        )}
-      </header>
+      </section>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Sesiones registradas" value={String(entries.length)} />
-        <Stat
-          label="Última evolución"
-          value={lastEntry ? formatAppDate(lastEntry.date) : "—"}
-          hint={lastEntry?.professionalName ?? undefined}
-        />
-        <Stat
-          label="Próximo turno"
-          value={nextAppointment ? `${formatAppDate(nextAppointment.date, "dd/MM")} ${nextAppointment.time}` : "Sin turnos"}
-          hint={nextAppointment?.professionalName}
-        />
-        <Stat
-          label="Objetivos cumplidos"
-          value={goals.length > 0 ? `${achievedGoals} de ${goals.length}` : "—"}
-        />
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] print:block">
-        <div className="min-w-0 space-y-4">
+      <div className="space-y-4 lg:space-y-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-              <Stethoscope className="h-5 w-5 text-slate-500" />
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 lg:text-base">
+              <Stethoscope className="h-5 w-5 text-slate-500 lg:hidden" />
               Evolución
             </h2>
             {professionals.length > 1 && (
@@ -369,7 +289,8 @@ function HistoriaClinicaContent() {
             />
           ) : (
             <>
-              <ol className="relative ml-1.5 space-y-4 border-l-2 border-slate-200 print:ml-0 print:border-0">
+              {/* Celular: tarjetas; computadora: una lista compacta, una sesión por renglón. */}
+              <ol className="relative space-y-3 lg:space-y-0 lg:divide-y lg:divide-slate-100 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-slate-200 lg:bg-white print:border-0">
                 {visibleEntries.map((entry, index) => (
                   <ClinicalEntryCard
                     key={entry.id}
@@ -378,7 +299,7 @@ function HistoriaClinicaContent() {
                     onUpdate={handleUpdate}
                     // Fuera de la página actual se ocultan en pantalla, pero se imprimen.
                     className={
-                      Math.floor(index / ENTRIES_PER_PAGE) === currentPage
+                      Math.floor(index / entriesPerPage) === currentPage
                         ? undefined
                         : "hidden print:block"
                     }
@@ -401,8 +322,8 @@ function HistoriaClinicaContent() {
                     Más recientes
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    {currentPage * ENTRIES_PER_PAGE + 1}–
-                    {Math.min((currentPage + 1) * ENTRIES_PER_PAGE, visibleEntries.length)} de{" "}
+                    {currentPage * entriesPerPage + 1}–
+                    {Math.min((currentPage + 1) * entriesPerPage, visibleEntries.length)} de{" "}
                     {visibleEntries.length}
                   </span>
                   <Button
@@ -419,45 +340,27 @@ function HistoriaClinicaContent() {
               )}
             </>
           )}
-
-          {can("clinical:audit") && (
-            <div className="print:hidden">
-              <ClinicalAccessLog patientId={patient.id} />
-            </div>
-          )}
-        </div>
-
-        <aside className="order-first grid content-start gap-4 sm:grid-cols-2 xl:order-none xl:sticky xl:top-20 xl:grid-cols-1 xl:self-start print:mt-6 print:block print:space-y-3">
-          {canWrite && (
-            <Button type="button" className="w-full sm:col-span-2 xl:col-span-1 print:hidden" onClick={openComposer}>
-              <Plus className="h-4 w-4" />
-              Nueva evolución
-            </Button>
-          )}
-          <CurrentItem
-            label="Diagnóstico vigente"
-            value={summary.diagnosis}
-            onAdd={canWrite ? openComposer : undefined}
-          />
-          <CurrentItem
-            label="Plan de tratamiento vigente"
-            value={summary.treatment}
-            onAdd={canWrite ? openComposer : undefined}
-          />
-          <TreatmentGoalsCard
-            goals={goals}
-            canEdit={canWrite}
-            onAdd={handleGoalAdd}
-            onToggle={handleGoalToggle}
-            onRemove={handleGoalRemove}
-          />
-          <ClinicalProfileCard profile={profile} canEdit={canWrite} onSave={handleProfileSave} />
-        </aside>
       </div>
+
+      {/* Celular: "Nueva evolución" fijo abajo, sobre la barra de navegación. */}
+      {canWrite && (
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200/80 bg-background/95 px-4 py-2.5 backdrop-blur lg:hidden print:hidden">
+          <Button type="button" className="h-12 w-full text-[15px]" onClick={openComposer}>
+            <Plus className="h-5 w-5" />
+            Nueva evolución
+          </Button>
+        </div>
+      )}
 
       {canWrite && (
         <Sheet open={composerOpen} onOpenChange={setComposerOpen}>
-          <SheetContent>
+          <SheetContent
+            // El cursor arranca en la evolución, que es lo que se escribe; fecha y profesional ya vienen.
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              document.getElementById("nuevo-evolution")?.focus();
+            }}
+          >
             <div>
               <SheetTitle>Nueva evolución</SheetTitle>
               <SheetDescription>
@@ -467,11 +370,17 @@ function HistoriaClinicaContent() {
             {composerOpen && (
               <ClinicalEntryForm
                 idPrefix="nuevo"
-                sessionOptions={sessionOptions}
-                defaultAppointmentId={composerAppointmentId}
-                current={{
-                  diagnosis: summary.diagnosis?.text ?? null,
-                  treatment: summary.treatment?.text ?? null,
+                newEntry={{
+                  today: getTodayAppDate(),
+                  professionalOptions,
+                  ownProfessionalName,
+                  appointment: composerAppointment
+                    ? {
+                        id: composerAppointment.id,
+                        date: composerAppointment.date,
+                        professionalName: composerAppointment.professionalName,
+                      }
+                    : null,
                 }}
                 submitLabel="Guardar en la historia"
                 onCancel={() => setComposerOpen(false)}
