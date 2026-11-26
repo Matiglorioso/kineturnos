@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site-config";
-import { Activity } from "lucide-react";
+import { KineMark } from "@/components/brand/KineMark";
 import Link from "next/link";
 
 type LogoSize = "sm" | "md" | "lg";
@@ -69,7 +69,7 @@ export function Logo({
         )}
         aria-hidden
       >
-        <Activity className={cn("text-white", styles.icon)} strokeWidth={2.25} />
+        <KineMark className={cn("text-white", styles.icon)} />
       </div>
       {showText && (
         <div className="min-w-0">
@@ -127,7 +127,7 @@ export function LogoMark({
       )}
       aria-hidden
     >
-      <Activity className={cn("h-4 w-4", iconClassName)} strokeWidth={2.25} />
+      <KineMark className={cn("h-4 w-4", iconClassName)} />
     </div>
   );
 }
