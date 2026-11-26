@@ -132,7 +132,7 @@ async function main() {
       {
         file: "historia-clinica-desktop.png",
         path: historia,
-        prepare: (p) => p.getByRole("list", { name: "Alertas clínicas" }).waitFor(),
+        prepare: (p) => p.getByRole("article").first().waitFor(),
       },
       {
         file: "autorizaciones-desktop.png",
@@ -153,13 +153,14 @@ async function main() {
       {
         file: "profesionales-desktop.png",
         path: "/profesionales",
-        prepare: (p) => p.getByRole("navigation", { name: "Páginas de profesionales" }).or(p.getByText(/^\d+ profesionales?$/)).first().waitFor(),
+        prepare: (p) => p.getByRole("button", { name: /^Ver detalle de/ }).filter({ visible: true }).first().waitFor(),
       },
       { file: "usuarios-desktop.png", path: "/usuarios", prepare: (p) => p.getByRole("table").getByRole("row").nth(1).waitFor() },
     ];
 
     const mobile: Shot[] = [
-      { file: "dashboard.png", path: "/", prepare: (p) => p.getByRole("region", { name: "Indicadores" }).waitFor() },
+      // En el celular el panel muestra lo del día (los indicadores quedan para la computadora).
+      { file: "dashboard.png", path: "/", prepare: (p) => p.getByRole("region", { name: "Para hacer" }).waitFor() },
       {
         file: "agenda.png",
         path: "/agenda",
@@ -174,11 +175,11 @@ async function main() {
         },
       },
       { file: "pacientes.png", path: "/pacientes", prepare: (p) => p.getByRole("navigation", { name: "Páginas de pacientes" }).waitFor() },
-      { file: "historia-clinica.png", path: historia, prepare: (p) => p.getByRole("list", { name: "Alertas clínicas" }).waitFor() },
+      { file: "historia-clinica.png", path: historia, prepare: (p) => p.getByRole("article").first().waitFor() },
       {
         file: "profesionales.png",
         path: "/profesionales",
-        prepare: (p) => p.getByRole("navigation", { name: "Páginas de profesionales" }).or(p.getByText(/^\d+ profesionales?$/)).first().waitFor(),
+        prepare: (p) => p.getByRole("button", { name: /^Ver detalle de/ }).filter({ visible: true }).first().waitFor(),
       },
       { file: "usuarios.png", path: "/usuarios", prepare: (p) => p.getByRole("list", { name: "Usuarios" }).waitFor() },
     ];
