@@ -93,6 +93,18 @@ export function hasPermission(
   return ROLE_PERMISSIONS[role].includes(permission);
 }
 
+/**
+ * Secciones del menú que puede ver el perfil. Mientras la sesión carga (sin perfil),
+ * solo las que ven todos los perfiles: así nunca aparece un instante algo que no le toca.
+ */
+export function visibleNavItems<T extends { href: string }>(
+  role: RolUsuario | null | undefined,
+  items: readonly T[]
+): T[] {
+  const roles = role ? [role] : (Object.keys(ROLE_PAGE_PREFIXES) as RolUsuario[]);
+  return items.filter((item) => roles.every((each) => canAccessPage(each, item.href)));
+}
+
 export function canAccessPage(role: RolUsuario, pathname: string): boolean {
   const allowed = ROLE_PAGE_PREFIXES[role];
 
