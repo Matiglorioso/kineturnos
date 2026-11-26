@@ -214,7 +214,7 @@ export function UserDialog({
               inputMode="email"
               value={form.email}
               onChange={(event) => update("email", event.target.value)}
-              placeholder="nombre@consultorio.com"
+              placeholder="usuario@sanmarsalud.com"
               autoComplete="off"
             />
           </FormField>
