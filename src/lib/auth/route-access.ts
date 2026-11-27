@@ -3,7 +3,7 @@ import { canAccessPage } from "@/lib/auth/permissions";
 
 export function isPublicPath(pathname: string): boolean {
   // /turno: confirmar o cancelar desde el correo (el enlace firmado autoriza).
-  const publicPaths = ["/login", "/ayuda", "/turno"];
+  const publicPaths = ["/login", "/turno"];
 
   return (
     publicPaths.some(

@@ -99,6 +99,6 @@ test.describe("rol profesional", () => {
 /** Día hábil anterior a hoy (dd-MM-yyyy), para un turno ya atendido. */
 function recentWorkdayBefore(): string {
   let date = addDays(parseAppDate(getTodayAppDate())!, -1);
-  if (date.getDay() === 0) date = addDays(date, -1);
+  while (date.getDay() === 0 || date.getDay() === 6) date = addDays(date, -1);
   return toAppDate(date);
 }

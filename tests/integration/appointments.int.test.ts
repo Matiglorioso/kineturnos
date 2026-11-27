@@ -139,12 +139,12 @@ describe("concurrencia", () => {
     const patients = [await createPatient(), await createPatient()];
 
     // Varias rondas para que una carrera real tenga chance de aparecer.
-    // De a 2 días: futureWorkday corre el domingo al lunes y dos rondas seguidas
+    // De a 7 días: futureWorkday corre el fin de semana al lunes y dos rondas seguidas
     // podían caer en la misma fecha (el slot ya ocupado daba 409 y 409).
     for (let round = 0; round < 3; round++) {
       const slot = {
         professionalId: professional.id,
-        date: futureWorkday(20 + round * 2),
+        date: futureWorkday(20 + round * 7),
         time: "10:00",
       };
       const statuses = await racePosts(
@@ -159,7 +159,7 @@ describe("concurrencia", () => {
     const patient = await createPatient();
 
     for (let round = 0; round < 3; round++) {
-      const date = futureWorkday(27 + round * 2);
+      const date = futureWorkday(27 + round * 7);
       const statuses = await racePosts(
         professionals.map((professional) =>
           appointmentBody({
@@ -257,7 +257,7 @@ describe("sincronización con pacientes", () => {
       patient,
       professional,
       date: futureWorkday(17),
-      time: "12:00",
+      time: "14:00",
     });
 
     const renamed = await api(`/api/patients/${patient.id}`, {
@@ -361,7 +361,7 @@ describe("M8: turnos de pacientes o profesionales desactivados", () => {
   it("permite cancelar el turno activo de un paciente que se desactivó", async () => {
     const professional = await createProfessional();
     const patient = await createPatient();
-    const turno = await createAppointmentInDb({ patient, professional, date: futureWorkday(14), time: "12:00" });
+    const turno = await createAppointmentInDb({ patient, professional, date: futureWorkday(14), time: "14:00" });
     await prisma.paciente.update({ where: { id: patient.id }, data: { estado: "inactivo" } });
 
     const res = await api(`/api/appointments/${turno.id}`, { method: "PATCH", body: { status: "cancelado" } });

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
 
 interface AgendaCalendarDialogProps {
   open: boolean;
@@ -82,7 +82,7 @@ export function AgendaCalendarDialog({
         </div>
 
         <div role="grid" aria-label={formatCalendarMonth(month)} className="space-y-1.5">
-          <div role="row" className="grid grid-cols-7 gap-1.5">
+          <div role="row" className="grid grid-cols-5 gap-1.5">
             {WEEKDAYS.map((day) => (
               <div
                 key={day}
@@ -94,7 +94,7 @@ export function AgendaCalendarDialog({
             ))}
           </div>
           {getMonthGrid(month).map((week) => (
-            <div key={week[0].date} role="row" className="grid grid-cols-7 gap-1.5">
+            <div key={week[0].date} role="row" className="grid grid-cols-5 gap-1.5">
               {week.map(({ date, inMonth }) => {
                 const count = counts.get(date) ?? 0;
                 const selected = date === value;

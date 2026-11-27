@@ -145,10 +145,10 @@ export async function login(
 
 // ---------------------------------------------------------------- Fechas
 
-/** Día hábil (lunes a sábado) a `daysAhead` días de hoy, en formato dd-MM-yyyy. */
+/** Día hábil (lunes a viernes) a `daysAhead` días de hoy, en formato dd-MM-yyyy. */
 export function futureWorkday(daysAhead: number): string {
   let date = addDays(parseAppDate(getTodayAppDate())!, daysAhead);
-  if (date.getDay() === 0) date = addDays(date, 1);
+  while (date.getDay() === 0 || date.getDay() === 6) date = addDays(date, 1);
   return toAppDate(date);
 }
 
@@ -160,7 +160,7 @@ export function weekdayName(appDate: string): string {
 
 // ---------------------------------------------------------------- Fixtures (Prisma)
 
-const ALL_WORKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const ALL_WORKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
 export async function createProfessional(
   overrides: Partial<{

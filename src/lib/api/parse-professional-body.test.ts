@@ -159,8 +159,8 @@ describe("parseProfessionalWriteInput: validación", () => {
 });
 
 describe("parseProfessionalWriteInput: validaciones de formato (M7)", () => {
-  it("rechaza días fuera de lunes a sábado", () => {
-    for (const day of ["Domingo", "foo", "lunes"]) {
+  it("rechaza días fuera de lunes a viernes", () => {
+    for (const day of ["Sábado", "Domingo", "foo", "lunes"]) {
       assert.deepEqual(
         parseProfessionalWriteInput(validBody({ days: ["Lunes", day] })),
         { error: `Día de atención inválido: ${day}`, field: "days" },

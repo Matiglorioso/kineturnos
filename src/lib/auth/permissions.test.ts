@@ -86,14 +86,14 @@ describe("permisos: helpers por capacidad", () => {
 });
 
 describe("menú mientras carga la sesión", () => {
-  const items = ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/usuarios", "/auditoria", "/proyecto"].map(
+  const items = ["/", "/agenda", "/pacientes", "/profesionales", "/obras-sociales", "/usuarios", "/auditoria"].map(
     (href) => ({ href })
   );
 
   it("sin perfil todavía, solo muestra lo que ven todos los perfiles (nunca Auditoría ni Usuarios)", () => {
     assert.deepEqual(
       visibleNavItems(undefined, items).map((item) => item.href),
-      ["/", "/agenda", "/pacientes", "/proyecto"]
+      ["/", "/agenda", "/pacientes"]
     );
   });
 
@@ -104,9 +104,9 @@ describe("menú mientras carga la sesión", () => {
 });
 
 describe("permisos: acceso a páginas", () => {
-  it("todos los roles acceden a inicio, agenda, pacientes, proyecto y Más", () => {
+  it("todos los roles acceden a inicio, agenda, pacientes y Más", () => {
     for (const role of ROLES) {
-      for (const path of ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena", "/mas"]) {
+      for (const path of ["/", "/agenda", "/pacientes", "/cambiar-contrasena", "/mas"]) {
         assert.equal(canAccessPage(role, path), true, `${role} → ${path}`);
       }
     }
@@ -149,11 +149,9 @@ describe("permisos: acceso a páginas", () => {
 });
 
 describe("route-access", () => {
-  it("login, ayuda, auth, health y cron son públicas (cron valida su propio secreto)", () => {
+  it("login, turno, auth, health y cron son públicas (cron valida su propio secreto)", () => {
     for (const path of [
       "/login",
-      "/ayuda",
-      "/ayuda/turnos",
       "/turno/abc.def/confirmar",
       "/api/auth/session",
       "/api/health/db",
@@ -164,7 +162,7 @@ describe("route-access", () => {
   });
 
   it("el resto de las rutas requieren sesión", () => {
-    for (const path of ["/", "/agenda", "/loginx", "/api/patients", "/api/cronx"]) {
+    for (const path of ["/", "/agenda", "/ayuda", "/proyecto", "/loginx", "/api/patients", "/api/cronx"]) {
       assert.equal(isPublicPath(path), false, path);
     }
   });

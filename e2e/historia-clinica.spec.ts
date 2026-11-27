@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { getTodayAppDate } from "../src/lib/date-utils";
 import { cleanupTestData, createPatient, prisma, storageStateFor, uniqueName } from "./helpers";
 
-test.use({ storageState: storageStateFor("recepcionista") });
+test.use({ storageState: storageStateFor("admin") });
 test.afterAll(cleanupTestData);
 
 test.describe("historia clínica (Administración)", () => {

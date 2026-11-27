@@ -17,9 +17,7 @@ export {
 
 export const USERS = {
   superadmin: { email: "superadmin@kineturnos.local", roleLabel: "Superadmin" },
-  admin: { email: "admin@kineturnos.local", roleLabel: "Administración" },
-  // La recepcionista tiene perfil Administrador (como en la tesis).
-  recepcionista: { email: "recepcion@kineturnos.local", roleLabel: "Administración" },
+  admin: { email: "admin@kineturnos.local", roleLabel: "Administrador" },
   profesional: { email: "profe@kineturnos.local", roleLabel: "Profesional" },
 } as const;
 

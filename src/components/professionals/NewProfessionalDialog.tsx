@@ -246,7 +246,7 @@ export function NewProfessionalDialog({
               })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Horario del consultorio: {getClinicScheduleLabel()} hs, turnos de 1 hora.
+              Horario del consultorio: {getClinicScheduleLabel()} hs, de lunes a viernes. Turnos de 1 hora.
             </p>
             {errors.days && (
               <p className="text-xs text-destructive" role="alert">

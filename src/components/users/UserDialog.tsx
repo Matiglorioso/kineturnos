@@ -30,7 +30,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 const ROLE_DESCRIPTIONS: Record<RolUsuario, string> = {
   admin: "Dueños y recepción: todo el consultorio.",
   profesional: "Su agenda, la asistencia y la historia clínica de sus pacientes.",
-  superadmin: "Equipo de desarrollo: todo lo de Administración.",
+  superadmin: "Acceso técnico del equipo de desarrollo (no es un perfil del consultorio): todo lo del Administrador.",
 };
 
 interface UserDialogProps {

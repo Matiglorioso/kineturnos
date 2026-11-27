@@ -44,9 +44,12 @@ describe("vista de agenda por profesional (RF03)", () => {
       now,
     });
 
-    assert.deepEqual(grid.slots, ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"]);
+    assert.deepEqual(grid.slots, [
+      "07:00", "08:00", "09:00", "10:00", "11:00",
+      "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
+    ]);
     assert.deepEqual(grid.columns.map((column) => column.professional.name), ["Laura Fernández"]);
-    assert.equal(grid.columns[0].freeCount, 10);
+    assert.equal(grid.columns[0].freeCount, 12);
   });
 
   it("ubica los turnos en su bloque, cuenta los libres y no muestra los cancelados", () => {
@@ -64,11 +67,11 @@ describe("vista de agenda por profesional (RF03)", () => {
     }).columns;
 
     assert.equal(column.appointmentCount, 2);
-    assert.equal(column.cells[1].kind, "turnos");
-    assert.equal(column.cells[3].kind, "turnos"); // 11:30 cae en el bloque de 11:00
-    assert.equal(column.cells[4].kind, "ocupado"); // 11:30 a 12:30 también toma el bloque de 12:00
+    assert.equal(column.cells[2].kind, "turnos"); // 09:00
+    assert.equal(column.cells[4].kind, "turnos"); // 11:30 cae en el bloque de 11:00
+    assert.equal(column.cells[5].kind, "libre"); // 11:30 a 12:30 pisa la pausa: no toma el bloque de 13:00
     assert.equal(column.cells[7].kind, "libre"); // el cancelado libera las 15:00
-    assert.equal(column.freeCount, 7);
+    assert.equal(column.freeCount, 10);
   });
 
   it("con filtro por estado cancelado, los muestra", () => {
@@ -93,8 +96,8 @@ describe("vista de agenda por profesional (RF03)", () => {
       allAppointments: [oculto],
       now,
     }).columns;
-    assert.equal(column.cells[2].kind, "ocupado");
-    assert.equal(column.freeCount, 9);
+    assert.equal(column.cells[3].kind, "ocupado");
+    assert.equal(column.freeCount, 11);
   });
 
   it("hoy, los bloques que ya empezaron no se ofrecen", () => {
@@ -106,8 +109,8 @@ describe("vista de agenda por profesional (RF03)", () => {
       now: new Date("2026-10-26T13:30:00.000Z"), // 10:30 en Buenos Aires
     }).columns;
     assert.deepEqual(
-      column.cells.slice(0, 4).map((cell) => cell.kind),
-      ["pasado", "pasado", "pasado", "libre"]
+      column.cells.slice(0, 5).map((cell) => cell.kind),
+      ["pasado", "pasado", "pasado", "pasado", "libre"]
     );
   });
 
@@ -122,7 +125,7 @@ describe("vista de agenda por profesional (RF03)", () => {
     });
     const column = grid.columns.find((item) => item.professional.id === "pr-diego")!;
     assert.equal(column.worksThatDay, false);
-    assert.equal(column.cells[0].kind, "turnos");
+    assert.equal(column.cells[1].kind, "turnos"); // 08:00
     assert.equal(column.freeCount, 0);
   });
 

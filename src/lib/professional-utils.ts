@@ -14,13 +14,13 @@ export {
   validateProfessionalAppointmentSlot,
 };
 
+/** Días en que atiende el consultorio: no abre sábados ni domingos. */
 export const WEEK_DAYS: WeekDay[] = [
   "Lunes",
   "Martes",
   "Miércoles",
   "Jueves",
   "Viernes",
-  "Sábado",
 ];
 
 export const PROFESSIONAL_SPECIALTIES = [

@@ -128,14 +128,14 @@ describe("correos al paciente por cada cambio del turno", () => {
     const professional = await createProfessional();
     const patient = await patientWithEmail();
     const date = futureWorkday(17);
-    await createAppointmentInDb({ patient, professional, date, time: "12:00" });
+    await createAppointmentInDb({ patient, professional, date, time: "14:00" });
 
     const other = await patientWithEmail();
     const body = appointmentBody({
       patientId: other.id,
       professionalId: professional.id,
       date,
-      time: "12:00",
+      time: "14:00",
     });
     assert.equal((await api("/api/appointments", { method: "POST", body })).status, 409);
     // Sin turno creado (409) no hay a qué colgarle un correo.

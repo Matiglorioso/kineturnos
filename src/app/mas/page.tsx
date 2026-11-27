@@ -1,6 +1,6 @@
 "use client";
 
-import { navigation, secondaryNavigation } from "@/components/layout/Sidebar";
+import { navigation } from "@/components/layout/Sidebar";
 import { MobilePageTitle } from "@/components/mobile/MobileUi";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -49,7 +49,7 @@ export default function MasPage() {
 
   // Hasta saber el perfil no se muestra nada (para no mostrar y sacar secciones).
   const sections = role
-    ? [...navigation, ...secondaryNavigation].filter(
+    ? navigation.filter(
         (item) => !IN_TAB_BAR.has(item.href) && canAccessPage(role, item.href)
       )
     : [];

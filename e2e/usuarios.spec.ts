@@ -9,7 +9,7 @@ import {
   waitForLoginForm,
 } from "./helpers";
 
-test.use({ storageState: storageStateFor("recepcionista") });
+test.use({ storageState: storageStateFor("admin") });
 test.afterAll(cleanupTestData);
 
 test.describe("gestión de usuarios", () => {
@@ -73,7 +73,8 @@ test.describe("gestión de usuarios", () => {
 
   test("desactivar pide confirmación; el usuario propio no se puede desactivar", async ({ page }) => {
     await page.goto("/usuarios");
-    const own = page.getByRole("row").filter({ hasText: "recepcion@kineturnos.local" });
+    // "superadmin@…" también contiene "admin@…": se excluye con la letra anterior.
+    const own = page.getByRole("row").filter({ hasText: /(?<![a-z])admin@kineturnos\.local/ });
     await expect(own).toContainText("(vos)");
     await expect(own.getByRole("button", { name: "No podés desactivar tu usuario" })).toBeDisabled();
 

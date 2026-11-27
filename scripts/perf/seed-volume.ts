@@ -12,7 +12,7 @@ export interface VolumeOptions {
   pastDays: number;
   /** Días hacia adelante con turnos agendados. */
   futureDays: number;
-  /** Turnos por día de lunes a viernes (los sábados, la mitad). */
+  /** Turnos por día de lunes a viernes. */
   perWeekday: number;
   professionals: number;
   patients: number;
@@ -36,7 +36,9 @@ export interface VolumeResult {
   samplePatientId: string;
 }
 
-const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+/** Inicios de turno del consultorio: de 07:00 a 12:00 y de 13:00 a 20:00. */
+const CLINIC_HOURS = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19];
 const COLORS = ["bg-brand-500", "bg-sky-500", "bg-violet-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
 const FIRST = ["Ana", "Juan", "María", "Carlos", "Lucía", "Diego", "Sofía", "Martín", "Valentina", "Tomás", "Camila", "Lucas"];
 const LAST = ["Torres", "Pérez", "Gómez", "Fernández", "Ruiz", "Díaz", "Romero", "Sosa", "Álvarez", "Acosta", "Benítez", "Medina"];
@@ -148,12 +150,12 @@ export async function seedVolume(
 
   for (let offset = -options.pastDays; offset <= options.futureDays; offset += 1) {
     const day = addDays(today, offset);
-    if (day.getDay() === 0) continue;
-    const perDay = day.getDay() === 6 ? Math.round(options.perWeekday / 2) : options.perWeekday;
+    if (day.getDay() === 0 || day.getDay() === 6) continue;
+    const perDay = options.perWeekday;
 
     // Bloques libres del día (profesional × hora), sin solapamientos.
     const slots = working.flatMap((professional) =>
-      Array.from({ length: 10 }, (_, hour) => ({ professional, hour: 8 + hour }))
+      CLINIC_HOURS.map((hour) => ({ professional, hour }))
     );
     for (let index = slots.length - 1; index > 0; index -= 1) {
       const swap = Math.floor(rand() * (index + 1));

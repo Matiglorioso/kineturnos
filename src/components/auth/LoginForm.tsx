@@ -1,6 +1,5 @@
 "use client";
 
-import { Logo } from "@/components/brand/Logo";
 import { KineMark } from "@/components/brand/KineMark";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/FormField";
@@ -13,7 +12,7 @@ import { showErrorToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -90,15 +89,20 @@ export function LoginForm() {
   return (
     <div className="space-y-5 sm:space-y-6 lg:space-y-5">
       <div className="text-center lg:text-left">
-        {/* Celular (boceto 14): la marca, el nombre y el consultorio, centrados. */}
+        {/* Celular: el logo del consultorio (ya dice su nombre) y el nombre del sistema, centrados. */}
         <div className="mb-3 flex justify-center lg:hidden">
-          <Logo size="lg" showText={false} />
+          <Image
+            src="/brand/sanmar-salud-logo.png"
+            alt="SanMarSalud — Kinesiología y Fisioterapia"
+            width={1218}
+            height={1311}
+            priority
+            quality={90}
+            sizes="200px"
+            className="h-40 w-auto"
+          />
         </div>
-        {/* Celular: nombre y consultorio. */}
         <h1 className="text-[22px] font-bold text-slate-900 lg:hidden">{siteConfig.name}</h1>
-        <p className="mt-1 text-[13px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-          {siteConfig.clinicName}
-        </p>
         {/* Computadora: el isotipo y el título (el consultorio ya está en el panel izquierdo). */}
         <div className="flex items-center gap-3 max-lg:hidden">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-brand-800 text-white">
@@ -180,13 +184,12 @@ export function LoginForm() {
         </Button>
       </form>
 
-      {/* La ayuda tiene el contacto de soporte. */}
       <p className="text-center text-xs text-muted-foreground lg:text-left lg:text-sm">
-        ¿Olvidaste tu contraseña? Pedila a Administración ·{" "}
-        <Link href="/ayuda" className="font-semibold text-brand-700 hover:underline">
-          Ayuda
-        </Link>
+        ¿Olvidaste tu contraseña? Pedir a Administración o al soporte técnico.
       </p>
+
+      {/* Celular: el domicilio (en computadora está en el panel verde). */}
+      <p className="text-center text-xs text-muted-foreground lg:hidden">{siteConfig.clinicAddress}</p>
     </div>
   );
 }

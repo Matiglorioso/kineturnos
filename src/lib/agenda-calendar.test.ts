@@ -8,7 +8,7 @@ import {
   getMonthDays,
   getMonthGrid,
   getMonthTabs,
-  isSunday,
+  isWeekend,
   shiftCalendarMonth,
 } from "./agenda-calendar";
 
@@ -23,14 +23,24 @@ describe("calendario de la agenda", () => {
     assert.equal(getMonthDays({ year: 2028, month: 1 }).length, 29);
   });
 
-  it("arma la grilla de lunes a domingo con los días vecinos", () => {
+  it("arma la grilla de lunes a viernes con los días vecinos", () => {
     const grid = getMonthGrid(october);
     // 1/10/2026 es jueves: la grilla arranca el lunes 28/09.
     assert.deepEqual(grid[0][0], { date: "28-09-2026", inMonth: false });
     assert.deepEqual(grid[0][3], { date: "01-10-2026", inMonth: true });
     assert.equal(grid.length, 5);
-    assert.deepEqual(grid[4][6], { date: "01-11-2026", inMonth: false });
-    assert.ok(grid.every((week) => week.length === 7));
+    // El 31/10 es sábado: la última semana termina el viernes 30.
+    assert.deepEqual(grid[4][4], { date: "30-10-2026", inMonth: true });
+    assert.ok(grid.every((week) => week.length === 5));
+  });
+
+  it("la grilla no muestra semanas sin días hábiles del mes", () => {
+    // 1/11/2026 es domingo: la primera semana sería toda de octubre y se omite.
+    const grid = getMonthGrid({ year: 2026, month: 10 });
+    assert.deepEqual(grid[0][0], { date: "02-11-2026", inMonth: true });
+    assert.equal(grid.length, 5);
+    assert.deepEqual(grid[4][0], { date: "30-11-2026", inMonth: true });
+    assert.deepEqual(grid[4][1], { date: "01-12-2026", inMonth: false });
   });
 
   it("cambia de mes y de año", () => {
@@ -62,8 +72,15 @@ describe("calendario de la agenda", () => {
     assert.equal(getDefaultDayForMonth(october, "16-10-2026"), "16-10-2026");
     // 1/11/2026 es domingo: el primer día hábil es el lunes 2.
     assert.equal(getDefaultDayForMonth({ year: 2026, month: 10 }, "16-10-2026"), "02-11-2026");
-    assert.equal(isSunday("01-11-2026"), true);
-    assert.equal(isSunday("02-11-2026"), false);
+    // 1/8/2026 es sábado: el primer día hábil es el lunes 3.
+    assert.equal(getDefaultDayForMonth({ year: 2026, month: 7 }, "16-10-2026"), "03-08-2026");
+  });
+
+  it("el sábado y el domingo no son días de atención", () => {
+    assert.equal(isWeekend("31-10-2026"), true);
+    assert.equal(isWeekend("01-11-2026"), true);
+    assert.equal(isWeekend("30-10-2026"), false);
+    assert.equal(isWeekend("02-11-2026"), false);
   });
 
   it("cuenta los turnos por día y abrevia desde 10", () => {

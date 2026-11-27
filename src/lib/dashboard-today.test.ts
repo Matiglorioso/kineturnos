@@ -71,6 +71,7 @@ describe("para hacer", () => {
   it("confirmar: los pendientes del próximo día de atención", () => {
     assert.equal(getNextWorkday(TODAY), "22-10-2026");
     assert.equal(getNextWorkday("24-10-2026"), "26-10-2026", "el sábado pasa al lunes");
+    assert.equal(getNextWorkday("23-10-2026"), "26-10-2026", "el viernes pasa al lunes");
     const items = [
       appointment("22-10-2026", "10:00", "pendiente"),
       appointment("22-10-2026", "09:00", "pendiente"),

@@ -11,7 +11,7 @@ import {
   uniqueName,
 } from "./helpers";
 
-test.use({ storageState: storageStateFor("recepcionista") });
+test.use({ storageState: storageStateFor("admin") });
 test.afterAll(cleanupTestData);
 
 async function openNewAppointmentDialog(page: import("@playwright/test").Page) {
@@ -22,7 +22,7 @@ async function openNewAppointmentDialog(page: import("@playwright/test").Page) {
   return dialog;
 }
 
-test.describe("agendar turnos (recepcionista, perfil Administrador)", () => {
+test.describe("agendar turnos (perfil Administrador)", () => {
   test("agenda un turno: los horarios ocupados no se pueden elegir y el turno aparece en la agenda", async ({ page }) => {
     const professional = await createProfessional(uniqueName("Prof"));
     const patient = await createPatient(uniqueName("Pac"));
@@ -205,7 +205,7 @@ test.describe("vista por profesional (RF03)", () => {
 
     const grid = page.getByRole("table", { name: "Turnos por profesional" });
     await expect(grid.getByRole("columnheader").filter({ hasText: professional.nombre })).toContainText(
-      "1 turno · 9 libres"
+      "1 turno · 11 libres"
     );
 
     await grid.getByRole("button", { name: new RegExp(`^10:00 · ${patient.nombre}`) }).click();

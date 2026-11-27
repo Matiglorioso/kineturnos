@@ -38,8 +38,9 @@ export function getMonthDays(value: CalendarMonth): string[] {
 }
 
 /**
- * Grilla del mes por semanas, de lunes a domingo, con los días de los meses
- * vecinos que completan la primera y la última semana (`inMonth: false`).
+ * Grilla del mes por semanas, de lunes a viernes (el consultorio no abre fines de semana),
+ * con los días de los meses vecinos que completan la primera y la última semana
+ * (`inMonth: false`). Una semana sin ningún día hábil del mes no se muestra.
  */
 export function getMonthGrid(value: CalendarMonth): CalendarCell[][] {
   const first = new Date(value.year, value.month, 1);
@@ -48,13 +49,15 @@ export function getMonthGrid(value: CalendarMonth): CalendarCell[][] {
   const last = endOfMonth(first);
   const weeks: CalendarCell[][] = [];
 
-  for (let cursor = start; cursor <= last || weeks.length === 0; ) {
+  for (let cursor = start; cursor <= last; ) {
     const week: CalendarCell[] = [];
     for (let day = 0; day < 7; day += 1) {
-      week.push({ date: toAppDate(cursor), inMonth: cursor.getMonth() === value.month });
+      if (day < 5) {
+        week.push({ date: toAppDate(cursor), inMonth: cursor.getMonth() === value.month });
+      }
       cursor = addDays(cursor, 1);
     }
-    weeks.push(week);
+    if (week.some((cell) => cell.inMonth)) weeks.push(week);
   }
   return weeks;
 }
@@ -70,14 +73,16 @@ export function getMonthTabs(today: CalendarMonth, selected: CalendarMonth): Cal
   return [0, 1, 2].map((delta) => shiftCalendarMonth(start, delta));
 }
 
-/** Día a elegir al pasar a otro mes: hoy si es el mes actual; si no, el primer día hábil (lunes a sábado). */
+/** Día a elegir al pasar a otro mes: hoy si es el mes actual; si no, el primer día hábil (lunes a viernes). */
 export function getDefaultDayForMonth(value: CalendarMonth, today: string): string {
   if (isSameCalendarMonth(getCalendarMonth(today), value)) return today;
-  return getMonthDays(value).find((date) => parseAppDate(date)!.getDay() !== 0)!;
+  return getMonthDays(value).find((date) => !isWeekend(date))!;
 }
 
-export function isSunday(appDate: string): boolean {
-  return parseAppDate(appDate)?.getDay() === 0;
+/** Sábado o domingo: el consultorio no atiende. */
+export function isWeekend(appDate: string): boolean {
+  const day = parseAppDate(appDate)?.getDay();
+  return day === 0 || day === 6;
 }
 
 /** Cantidad de turnos por día (dd-MM-yyyy). */

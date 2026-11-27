@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { cuilCheckDigit } from "../src/lib/document-validation";
 import { cleanupTestData, createPatient, prisma, selectOption, storageStateFor, uniqueName } from "./helpers";
 
-test.use({ storageState: storageStateFor("recepcionista") });
+test.use({ storageState: storageStateFor("admin") });
 test.afterAll(cleanupTestData);
 
 test.describe("lista de pacientes: orden y filtro por obra social", () => {

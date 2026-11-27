@@ -11,7 +11,7 @@ import {
   uniqueName,
 } from "./helpers";
 
-test.use({ storageState: storageStateFor("recepcionista") });
+test.use({ storageState: storageStateFor("admin") });
 test.afterAll(cleanupTestData);
 
 const today = () => parseAppDate(getTodayAppDate())!;
@@ -41,7 +41,7 @@ test.describe("panel del consultorio", () => {
     const attended = await createPatient(uniqueName("Vino"));
     const toConfirm = await createPatient(uniqueName("Confirma"));
     let yesterday = addDays(today(), -1);
-    if (yesterday.getDay() === 0) yesterday = addDays(yesterday, -1);
+    while (yesterday.getDay() === 0 || yesterday.getDay() === 6) yesterday = addDays(yesterday, -1);
     await createAppointmentInDb({
       patient: attended,
       professional,

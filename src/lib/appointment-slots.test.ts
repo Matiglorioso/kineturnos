@@ -16,18 +16,20 @@ const MONDAY = "07-06-2027";
 const WEDNESDAY = "09-06-2027";
 const SUNDAY = "06-06-2027";
 
-/** Horario del consultorio: 08:00 a 18:00, bloques de 1 hora. */
+/** Horario del consultorio: 07:00 a 12:00 y 13:00 a 20:00, bloques de 1 hora (sin turnos a las 12:00). */
 const CLINIC_SLOTS = [
+  "07:00",
   "08:00",
   "09:00",
   "10:00",
   "11:00",
-  "12:00",
   "13:00",
   "14:00",
   "15:00",
   "16:00",
   "17:00",
+  "18:00",
+  "19:00",
 ];
 
 const professional: Professional = {
@@ -61,8 +63,14 @@ function availability(options: { startTime: string; available: boolean }[]) {
 }
 
 describe("slots: bloques de 1 h del consultorio", () => {
-  it("genera un bloque por hora entre las 08:00 y las 18:00", () => {
+  it("genera un bloque por hora de 07:00 a 12:00 y de 13:00 a 20:00", () => {
     assert.deepEqual(getHourlySlotStarts(), CLINIC_SLOTS);
+  });
+
+  it("no hay bloque a las 12:00: es la pausa del mediodía", () => {
+    assert.equal(getHourlySlotStarts().includes("12:00"), false);
+    const options = listHourlySlotOptions(professional, MONDAY, []);
+    assert.equal(options.some((option) => option.startTime === "12:00"), false);
   });
 
   it("formatea la etiqueta como rango de 1 h", () => {
@@ -92,7 +100,7 @@ describe("slots: disponibilidad por día", () => {
       CLINIC_SLOTS
     );
     assert.ok(options.every((option) => option.available));
-    assert.equal(options[0].label, "08:00 - 09:00 hs");
+    assert.equal(options[0].label, "07:00 - 08:00 hs");
   });
 });
 
@@ -125,7 +133,7 @@ describe("slots: ocupación", () => {
     assert.equal(slots["09:00"], true);
     assert.equal(slots["10:00"], false);
     assert.equal(slots["11:00"], false);
-    assert.equal(slots["12:00"], true);
+    assert.equal(slots["13:00"], true);
   });
 
   it("turnos contiguos no se consideran solapados", () => {
@@ -231,14 +239,17 @@ describe("slots: opciones del formulario de edición", () => {
 
 describe("slots: validación de inicio de bloque", () => {
   it("acepta inicios de bloque del consultorio (con o sin segundos)", () => {
-    assert.equal(isValidHourlySlotStart("08:00"), true);
-    assert.equal(isValidHourlySlotStart("17:00:00"), true);
+    assert.equal(isValidHourlySlotStart("07:00"), true);
+    assert.equal(isValidHourlySlotStart("11:00"), true);
+    assert.equal(isValidHourlySlotStart("13:00"), true);
+    assert.equal(isValidHourlySlotStart("19:00:00"), true);
   });
 
-  it("rechaza horarios fuera de grilla o fuera del horario del consultorio", () => {
+  it("rechaza horarios fuera de grilla, en la pausa del mediodía o fuera del horario", () => {
     assert.equal(isValidHourlySlotStart("10:30"), false);
-    assert.equal(isValidHourlySlotStart("07:00"), false);
-    assert.equal(isValidHourlySlotStart("18:00"), false);
+    assert.equal(isValidHourlySlotStart("06:00"), false);
+    assert.equal(isValidHourlySlotStart("12:00"), false);
+    assert.equal(isValidHourlySlotStart("20:00"), false);
   });
 });
 
@@ -278,9 +289,9 @@ describe("slots: por qué no hay horarios", () => {
   });
 
   it("es hoy y ya pasaron todos los horarios", () => {
-    // Lunes 07-06-2027 a las 17:30 ART.
+    // Lunes 07-06-2027 a las 20:30 ART.
     assert.equal(
-      reason(MONDAY, [], new Date("2027-06-07T20:30:00Z")),
+      reason(MONDAY, [], new Date("2027-06-07T23:30:00Z")),
       "Ya pasaron todos los horarios de hoy. Elegí otra fecha."
     );
   });

@@ -67,7 +67,6 @@ Reemplazá el dominio si usás otro:
 |-----|-------------------|
 | `https://kineturnos.vercel.app/api/health/db` | `{ "ok": true, ... }` |
 | `https://kineturnos.vercel.app/login` | Pantalla de login |
-| `https://kineturnos.vercel.app/proyecto` | Case study (público, sin login) |
 | `https://kineturnos.vercel.app/pacientes` | Redirige a login si no hay sesión |
 
 Si `/api/health/db` falla con 503, revisá que `DATABASE_URL` esté bien pegada (sin espacios) y que sea la URL **Pooled**.

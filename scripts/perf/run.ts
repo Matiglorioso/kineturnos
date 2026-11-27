@@ -199,8 +199,10 @@ async function main() {
     const freeSlots: { date: string; time: string }[] = [];
     for (let offset = 40; freeSlots.length < REQUESTS; offset += 1) {
       const day = addDays(new Date(), offset);
-      if (day.getDay() === 0) continue;
-      for (let hour = 8; hour < 18 && freeSlots.length < REQUESTS; hour += 1) {
+      if (day.getDay() === 0 || day.getDay() === 6) continue;
+      // Inicios de turno del consultorio: 07:00 a 12:00 y 13:00 a 20:00.
+      for (const hour of [7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]) {
+        if (freeSlots.length >= REQUESTS) break;
         freeSlots.push({ date: format(day, "dd-MM-yyyy"), time: `${String(hour).padStart(2, "0")}:00` });
       }
     }

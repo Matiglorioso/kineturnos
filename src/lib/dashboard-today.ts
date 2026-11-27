@@ -40,10 +40,10 @@ export function getPendingAttendance(
     .sort((a, b) => byDateAndTime(b, a));
 }
 
-/** Próximo día de atención (el consultorio no atiende los domingos). */
+/** Próximo día de atención (el consultorio no atiende sábados ni domingos). */
 export function getNextWorkday(today: string): string {
   let date = addDays(parseAppDate(today)!, 1);
-  if (date.getDay() === 0) date = addDays(date, 1);
+  while (date.getDay() === 0 || date.getDay() === 6) date = addDays(date, 1);
   return toAppDate(date);
 }
 

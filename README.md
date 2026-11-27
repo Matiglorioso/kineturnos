@@ -175,8 +175,6 @@ npm run db:seed
 
 Sobre una base con datos aborta; para borrar todo y recargar los mocks: `npx prisma db seed -- --force`.
 
-La sección **Ayuda** (`/proyecto`) está disponible una vez autenticado.
-
 ---
 
 ## Tecnologías
@@ -298,7 +296,6 @@ kineturnos/
     │   ├── agenda/         # Agenda por día y por profesional
     │   ├── pacientes/      # Gestión de pacientes
     │   ├── profesionales/  # Gestión de kinesiólogos
-    │   ├── proyecto/       # Ayuda (requiere login)
     │   └── api/            # REST: patients, professionals, appointments, health/db
     ├── components/
     │   ├── agenda/         # Vistas de calendario

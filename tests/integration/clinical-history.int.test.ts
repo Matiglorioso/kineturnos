@@ -143,7 +143,7 @@ describe("registro de sesiones (RF11-RF13)", () => {
       patient,
       professional: ownProfessional,
       date: futureWorkday(4),
-      time: "12:00",
+      time: "14:00",
     });
     const res = await api(historia(patient.id), {
       method: "POST",

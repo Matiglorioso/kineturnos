@@ -38,9 +38,9 @@ const ADMIN_PERMISSIONS: Permission[] = [
 
 /**
  * Perfiles de la tesis: Administrador (dueños y recepción) gestiona todo el
- * consultorio; Profesional ve su agenda y registra asistencia. Superadmin es
- * el acceso técnico del equipo de desarrollo: todo lo del Administrador y,
- * por ahora solo él, el registro de auditoría.
+ * consultorio; Profesional ve su agenda y registra asistencia. Superadmin no
+ * es un perfil: es el acceso técnico del equipo de desarrollo, con todo lo del
+ * Administrador y, por ahora solo él, el registro de auditoría.
  */
 const ROLE_PERMISSIONS: Record<RolUsuario, readonly Permission[]> = {
   superadmin: [...ADMIN_PERMISSIONS, "audit:read"],
@@ -68,7 +68,6 @@ const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
     "/obras-sociales",
     "/usuarios",
     "/auditoria",
-    "/proyecto",
     "/cambiar-contrasena",
     "/mas",
   ],
@@ -79,11 +78,10 @@ const ROLE_PAGE_PREFIXES: Record<RolUsuario, readonly string[]> = {
     "/profesionales",
     "/obras-sociales",
     "/usuarios",
-    "/proyecto",
     "/cambiar-contrasena",
     "/mas",
   ],
-  profesional: ["/", "/agenda", "/pacientes", "/proyecto", "/cambiar-contrasena", "/mas"],
+  profesional: ["/", "/agenda", "/pacientes", "/cambiar-contrasena", "/mas"],
 };
 
 export function hasPermission(

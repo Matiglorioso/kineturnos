@@ -1,7 +1,6 @@
 import {
   APPOINTMENT_SLOT_DURATION_MINUTES,
-  CLINIC_CLOSING_TIME,
-  CLINIC_OPENING_TIME,
+  CLINIC_SCHEDULE_BLOCKS,
 } from "@/lib/appointment-constants";
 import { parseAppDate } from "@/lib/date-utils";
 import { timeToMinutes } from "@/lib/time-utils";
@@ -9,9 +8,9 @@ import { Professional } from "@/types";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-/** Ej: "08:00 - 18:00": horario del consultorio, igual para todos los profesionales. */
+/** Ej: "07:00 a 12:00 y de 13:00 a 20:00": horario del consultorio, igual para todos los profesionales. */
 export function getClinicScheduleLabel(): string {
-  return `${CLINIC_OPENING_TIME} - ${CLINIC_CLOSING_TIME}`;
+  return CLINIC_SCHEDULE_BLOCKS.map((block) => `${block.start} a ${block.end}`).join(" y de ");
 }
 
 export function getWeekdayLabelFromAppDate(dateStr: string): string | null {
@@ -47,12 +46,13 @@ export function professionalWorksOnDay(
   return professional.days.some((day) => normalizeWeekday(day) === target);
 }
 
-/** Valida que el turno (1 h) empiece y termine dentro del horario del consultorio. */
+/** Valida que el turno (1 h) empiece y termine dentro de un mismo tramo del horario del consultorio. */
 export function isWithinClinicSchedule(startTime: string): boolean {
   const start = timeToMinutes(startTime);
-  return (
-    start >= timeToMinutes(CLINIC_OPENING_TIME) &&
-    start + APPOINTMENT_SLOT_DURATION_MINUTES <= timeToMinutes(CLINIC_CLOSING_TIME)
+  return CLINIC_SCHEDULE_BLOCKS.some(
+    (block) =>
+      start >= timeToMinutes(block.start) &&
+      start + APPOINTMENT_SLOT_DURATION_MINUTES <= timeToMinutes(block.end)
   );
 }
 
@@ -77,7 +77,7 @@ export function validateProfessionalAppointmentSlot(
 
   if (!isWithinClinicSchedule(time)) {
     return {
-      schedule: `El horario debe estar entre ${getClinicScheduleLabel()}.`,
+      schedule: `El horario debe estar dentro del horario del consultorio: ${getClinicScheduleLabel()}.`,
     };
   }
 

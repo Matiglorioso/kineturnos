@@ -9,6 +9,7 @@ export const siteConfig = {
   name: "KineTurnos",
   tagline: "Gestión kinesiológica",
   clinicName: "SANMAR SALUD",
+  clinicAddress: "Blamey Lafore N° 1531 - Córdoba Capital - C.P.: 5010",
   /** Sin NEXT_PUBLIC_SUPPORT_EMAIL no se muestra ningún mail (antes salía uno inventado .local). */
   supportEmail: resolveSupportEmail({
     NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL,
@@ -70,16 +71,6 @@ export const pageMetadata = {
   cambiarContrasena: {
     title: "Cambiar contraseña",
     description: "Elegí una contraseña propia para ingresar a KineTurnos.",
-  },
-  proyecto: {
-    title: "Ayuda",
-    description:
-      "Guía de uso de KineTurnos: módulos, estados de turnos y soporte para el equipo del consultorio.",
-  },
-  ayuda: {
-    title: "Ayuda para ingresar",
-    description:
-      "Preguntas frecuentes sobre acceso, contraseñas y uso inicial de KineTurnos.",
   },
   login: {
     title: "Ingresar",

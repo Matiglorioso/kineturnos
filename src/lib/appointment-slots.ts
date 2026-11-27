@@ -1,7 +1,7 @@
 import {
   APPOINTMENT_SLOT_DURATION_MINUTES,
-  CLINIC_CLOSING_TIME,
   CLINIC_OPENING_TIME,
+  CLINIC_SCHEDULE_BLOCKS,
 } from "@/lib/appointment-constants";
 import { areSameAppDay, getNowAppMinutes, isTodayAppDate, isValidAppDate } from "@/lib/date-utils";
 import { formatAppointmentTimeRange } from "@/lib/datetime-format";
@@ -56,18 +56,19 @@ export type HourlySlotOption = {
   available: boolean;
 };
 
-/** Inicios de bloque de 1 h dentro del horario del consultorio (igual para todos). */
+/** Inicios de bloque de 1 h dentro de cada tramo del horario del consultorio (igual para todos). */
 export function getHourlySlotStarts(): string[] {
-  const scheduleStart = timeToMinutes(CLINIC_OPENING_TIME);
-  const scheduleEnd = timeToMinutes(CLINIC_CLOSING_TIME);
   const slots: string[] = [];
 
-  for (
-    let start = scheduleStart;
-    start + APPOINTMENT_SLOT_DURATION_MINUTES <= scheduleEnd;
-    start += APPOINTMENT_SLOT_DURATION_MINUTES
-  ) {
-    slots.push(minutesToTime(start));
+  for (const block of CLINIC_SCHEDULE_BLOCKS) {
+    const blockEnd = timeToMinutes(block.end);
+    for (
+      let start = timeToMinutes(block.start);
+      start + APPOINTMENT_SLOT_DURATION_MINUTES <= blockEnd;
+      start += APPOINTMENT_SLOT_DURATION_MINUTES
+    ) {
+      slots.push(minutesToTime(start));
+    }
   }
 
   return slots;

@@ -182,7 +182,7 @@ export default function ProfesionalesPage() {
         className="max-lg:hidden"
         title="Profesionales"
         // El horario es el mismo para todos: se dice una vez acá y no en cada tarjeta.
-        description={`Horario del consultorio: ${getClinicScheduleLabel()}.`}
+        description={`Horario del consultorio: ${getClinicScheduleLabel()} hs, de lunes a viernes.`}
         actionLabel={
           canManageProfessionals
             ? emptyStateActions.registerProfessional

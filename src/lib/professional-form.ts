@@ -3,6 +3,7 @@ import {
   isDuplicateLicense,
   licenseFormatValidationError,
 } from "@/lib/document-validation";
+import { WEEK_DAYS } from "@/lib/professional-utils";
 import { emailValidationError, requiredFieldError } from "@/lib/validation";
 import type { Professional, WeekDay } from "@/types";
 
@@ -49,7 +50,9 @@ export function buildProfessionalFormValues(
     email: professional.email ?? "",
     phone: professional.phone ?? "",
     specialty: professional.specialty,
-    days: [...professional.days],
+    // Un profesional viejo puede tener guardado un día en que el consultorio ya no abre (sábado):
+    // no se muestra para tildar, y al guardar se le saca (el sistema avisa si tiene turnos ese día).
+    days: professional.days.filter((day) => WEEK_DAYS.includes(day)),
     active: professional.active,
     notes: professional.notes ?? "",
   };

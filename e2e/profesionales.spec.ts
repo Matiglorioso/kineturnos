@@ -9,7 +9,7 @@ import {
   uniqueName,
 } from "./helpers";
 
-test.use({ storageState: storageStateFor("recepcionista") });
+test.use({ storageState: storageStateFor("admin") });
 test.afterAll(cleanupTestData);
 
 test.describe("profesionales (Administración)", () => {

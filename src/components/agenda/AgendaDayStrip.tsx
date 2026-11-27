@@ -11,7 +11,7 @@ import {
   getMonthDays,
   getMonthTabs,
   isSameCalendarMonth,
-  isSunday,
+  isWeekend,
 } from "@/lib/agenda-calendar";
 import { formatAppDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
@@ -49,8 +49,8 @@ export function AgendaDayStrip({
   const { ref: stripRef, handlers: dragHandlers, wasDrag } = useDragScroll<HTMLDivElement>();
   const selectedMonth = getCalendarMonth(value);
   const tabs = getMonthTabs(getCalendarMonth(today), selectedMonth);
-  // El consultorio no atiende los domingos: no se muestran, salvo que sea el día elegido.
-  const days = getMonthDays(selectedMonth).filter((date) => !isSunday(date) || date === value);
+  // El consultorio no atiende sábados ni domingos: no se muestran, salvo que sea el día elegido.
+  const days = getMonthDays(selectedMonth).filter((date) => !isWeekend(date) || date === value);
 
   // Mantiene el día elegido a la vista (centrado) al cambiar de día o de mes.
   useEffect(() => {

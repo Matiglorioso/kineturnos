@@ -12,7 +12,6 @@ import { visibleNavItems } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 import {
   CalendarDays,
-  CircleHelp,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -70,14 +69,6 @@ export const navigation = [
     name: "Auditoría",
     href: "/auditoria",
     icon: History,
-  },
-];
-
-export const secondaryNavigation = [
-  {
-    name: "Ayuda",
-    href: "/proyecto",
-    icon: CircleHelp,
   },
 ];
 
@@ -154,7 +145,6 @@ export function Sidebar({
   const { role } = usePermissions();
 
   const visibleNavigation = visibleNavItems(role, navigation);
-  const visibleSecondary = visibleNavItems(role, secondaryNavigation);
 
   const renderNav = (options: {
     compact: boolean;
@@ -170,24 +160,6 @@ export function Sidebar({
               item.href === "/"
                 ? pathname === "/"
                 : pathname.startsWith(item.href);
-
-            return (
-              <NavLink
-                key={item.href}
-                href={item.href}
-                name={item.name}
-                icon={item.icon}
-                isActive={isActive}
-                compact={compact}
-                onNavigate={onNavigate}
-              />
-            );
-          })}
-        </nav>
-
-        <nav aria-label="Soporte" className="mx-3 space-y-1 border-t border-white/10 pb-3 pt-3">
-          {visibleSecondary.map((item) => {
-            const isActive = pathname.startsWith(item.href);
 
             return (
               <NavLink

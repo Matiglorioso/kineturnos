@@ -23,7 +23,7 @@ export const mockProfessionals: Professional[] = [
     email: "tomas.ibanez@kineturnos.com",
     phone: "+54 11 4000-1002",
     specialty: "Deportiva",
-    days: ["Martes", "Jueves", "Sábado"],
+    days: ["Martes", "Jueves", "Viernes"],
     active: true,
     avatarColor: "bg-sky-500",
   },

@@ -74,10 +74,6 @@ async function main() {
 
   await checkStatus("/login", 200, "Login accesible");
 
-  await checkStatus("/ayuda", 200, "Ayuda publica accesible");
-
-  await checkRedirectToLogin("/proyecto");
-
   await checkRedirectToLogin("/pacientes");
 
   await checkStatus("/api/patients", 401, "API protegida sin auth");

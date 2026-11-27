@@ -29,13 +29,12 @@ describe("autenticación de la API", () => {
   });
 
   it("con contraseña incorrecta no hay sesión", async () => {
-    await assert.rejects(login("recepcion@kineturnos.local", "incorrecta-123"));
+    await assert.rejects(login("admin@kineturnos.local", "incorrecta-123"));
   });
 
   for (const email of [
     "superadmin@kineturnos.local",
     "admin@kineturnos.local",
-    "recepcion@kineturnos.local", // recepcionista: perfil Administrador
     "profe@kineturnos.local",
   ]) {
     it(`${email} inicia sesión y lee pacientes`, async () => {
@@ -94,8 +93,8 @@ describe("permisos por rol", () => {
     assert.equal(res.status, 403);
   });
 
-  it("la recepcionista, con perfil Administrador, sí gestiona profesionales (201)", async () => {
-    const session = await login("recepcion@kineturnos.local");
+  it("el Administrador sí gestiona profesionales (201)", async () => {
+    const session = await login("admin@kineturnos.local");
     const res = await api("/api/professionals", {
       method: "POST",
       auth: session,

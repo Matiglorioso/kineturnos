@@ -10,8 +10,9 @@ export type SeedUserInput = {
 };
 
 /**
- * Usuarios iniciales para SANMAR SALUD (go-live o desarrollo): Superadmin del
- * equipo de desarrollo, dos Administradores (dueño y recepción) y un Profesional.
+ * Usuarios iniciales para SANMAR SALUD (go-live o desarrollo): los dos perfiles
+ * del consultorio (Administrador y Profesional) más el Superadmin, que no es un
+ * perfil sino el acceso técnico del equipo de desarrollo.
  */
 export function getDefaultUsers(professionalId?: string | null): SeedUserInput[] {
   return [
@@ -26,13 +27,6 @@ export function getDefaultUsers(professionalId?: string | null): SeedUserInput[]
       id: "u-admin",
       email: "admin@kineturnos.local",
       nombre: "Carolina Viera",
-      rol: "admin",
-      profesionalId: null,
-    },
-    {
-      id: "u-recepcion",
-      email: "recepcion@kineturnos.local",
-      nombre: "Laura Mendoza",
       rol: "admin",
       profesionalId: null,
     },

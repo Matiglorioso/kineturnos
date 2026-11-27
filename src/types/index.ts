@@ -29,8 +29,7 @@ export type WeekDay =
   | "Martes"
   | "Miércoles"
   | "Jueves"
-  | "Viernes"
-  | "Sábado";
+  | "Viernes";
 
 export interface Patient {
   id: string;

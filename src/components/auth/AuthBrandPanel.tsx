@@ -1,7 +1,7 @@
 import { KineMark } from "@/components/brand/KineMark";
-import { CLINIC_CLOSING_TIME, CLINIC_OPENING_TIME } from "@/lib/appointment-constants";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface AuthBrandPanelProps {
   className?: string;
@@ -42,7 +42,7 @@ function GoniometerArcs() {
 
 /**
  * Panel izquierdo del acceso (computadora): la entrada institucional del consultorio.
- * Solo información real: el nombre, qué es y el horario de atención.
+ * Solo información real: el nombre, qué es, el domicilio.
  */
 export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
   return (
@@ -60,13 +60,25 @@ export function AuthBrandPanel({ className }: AuthBrandPanelProps) {
           <p className="mt-1 text-[13px] font-medium text-brand-100/90">Consultorio kinesiológico</p>
         </header>
 
+        {/* Logo del consultorio, directo sobre el fondo (versión con colores claros para fondo oscuro). */}
+        <div className="flex flex-1 items-center justify-center py-6">
+          <Image
+            src="/brand/sanmar-salud-logo-claro.png"
+            alt="SanMarSalud — Kinesiología y Fisioterapia"
+            width={1218}
+            height={1311}
+            priority
+            quality={90}
+            sizes="400px"
+            className="h-[min(44vh,380px)] w-auto"
+          />
+        </div>
+
         {/* Franja inferior: tapa los arcos para que el texto quede limpio. */}
-        <footer className="mt-auto flex items-end justify-between gap-6 border-t border-white/20 bg-[#1b3b2b] pt-5 shadow-[0_36px_0_36px_#1b3b2b]">
+        <footer className="flex items-end justify-between gap-6 border-t border-white/20 bg-[#1b3b2b] pt-5 shadow-[0_36px_0_36px_#1b3b2b]">
           <div>
-            <p className="text-xs text-brand-100/80">Horario de atención</p>
-            <p className="mt-0.5 text-[15px] font-semibold">
-              Lunes a Sábados de {CLINIC_OPENING_TIME} a {CLINIC_CLOSING_TIME} hs.
-            </p>
+            <p className="text-xs text-brand-100/80">Domicilio</p>
+            <p className="mt-0.5 text-[15px] font-semibold">{siteConfig.clinicAddress}</p>
           </div>
           <p className="flex items-center gap-1.5 text-xs text-brand-100/80">
             <KineMark className="h-4 w-4" withJoint={false} />
