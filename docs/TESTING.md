@@ -88,7 +88,7 @@ Commits en formato rojo → verde. PR: #5 unitarios (paso 1), #6 regresión (pas
 | # | Caso | Test | Resultado |
 |---|---|---|---|
 | 1 | Cancelar un turno después de sacarle ese día al profesional | `appointments.int.test.ts` (A2) | ✅ |
-| 2 | Crear un turno "para hoy" de noche (22:00 ART) | `date-utils.test.ts` (M1) | ✅ Escenario adaptado: desde #8 no hay turnos después de las 18:00, así que se prueba que a las 21:30 ART un turno de mañana siga siendo futuro |
+| 2 | Crear un turno "para hoy" de noche (22:00 ART) | `date-utils.test.ts` (M1) | ✅ Escenario adaptado: desde #8 no hay turnos de noche (el último empieza a las 19:00), así que se prueba que a las 21:30 ART un turno de mañana siga siendo futuro |
 | 3 | Crear un turno para hoy a una hora que ya pasó | `appointment-validation.test.ts`, `appointment-slots.test.ts` (M3) | ✅ |
 | 4 | Mismo paciente, misma hora, dos profesionales | `appointment-validation.test.ts`, `appointments.int.test.ts`, `e2e/agenda.spec.ts` (M2) | ✅ |
 | 5 | `/login?callbackUrl=https://example.com` | `safe-callback-url.test.ts`, `e2e/auth.spec.ts` (A4) | ✅ |

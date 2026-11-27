@@ -130,7 +130,7 @@ erDiagram
 - `ultimo_turno` = último turno atendido con fecha hasta hoy.
 - Estado activo o inactivo: un paciente con historia clínica no se borra, se desactiva.
 
-**Profesional** (`profesionales`): kinesiólogo con matrícula única, especialidad, días de atención (lunes a sábado) y estado activo (RF09). El horario del consultorio (08:00 a 18:00) es común a todos.
+**Profesional** (`profesionales`): kinesiólogo con matrícula única, especialidad, días de atención (lunes a viernes) y estado activo (RF09). El horario del consultorio (de lunes a viernes, de 07:00 a 12:00 y de 13:00 a 20:00) es común a todos.
 
 **Usuario** (`usuarios`): acceso al sistema (RF18, RF19).
 - **Perfil:** `admin` (Administrador: dueños y recepción), `profesional` o `superadmin` (nivel técnico, RNF13).

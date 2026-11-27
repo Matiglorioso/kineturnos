@@ -244,8 +244,8 @@ def clases():
     d.edge(turno, estado, dashed=True, arrow="open")
     d.text(30, 1075, 1380, 50,
            "<i>Un Turno pertenece a un único Paciente y a un único Profesional; un Paciente o un Profesional puede tener "
-           "múltiples Turnos. Todos los turnos duran 1 hora, dentro del horario del consultorio (08:00 a 18:00), común a "
-           "todos los profesionales: cada Profesional solo define sus días de atención.</i>",
+           "múltiples Turnos. Todos los turnos duran 1 hora, dentro del horario del consultorio (de lunes a viernes, de 07:00 a 12:00 y de 13:00 a 20:00), "
+           "común a todos los profesionales: cada Profesional solo define sus días de atención.</i>",
            "fontSize=12;fontColor=#555555;")
     d.write()
 

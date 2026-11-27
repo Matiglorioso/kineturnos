@@ -9,7 +9,7 @@
 
 1. **Base descartable.** Crea una base nueva (`kineturnos_perf_…`) en la rama de pruebas de Neon, la migra y la borra al terminar.
 2. **Volumen del consultorio.** Carga [`scripts/perf/seed-volume.ts`](../scripts/perf/seed-volume.ts), siempre con los mismos datos:
-   - 6 meses de historia y 1 mes agendado hacia adelante, a **40 turnos por día hábil** y 20 los sábados: **6.640 turnos**;
+   - 6 meses de historia y 1 mes agendado hacia adelante, a **40 turnos por día hábil** y 20 los sábados: **6.640 turnos** (así se midió el 26-10-2026, cuando el consultorio atendía los sábados; como ahora atiende de lunes a viernes, el script carga 40 turnos por día hábil y ninguno los sábados, unos 6.000: un volumen levemente menor, por lo que las mediciones siguen siendo un escenario más exigente);
    - 500 pacientes, 10 profesionales, 4 obras sociales;
    - 296 autorizaciones y 2.192 registros de historia clínica.
 

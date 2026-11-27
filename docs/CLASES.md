@@ -1,6 +1,6 @@
 # Diagrama de clases — Gestión de Turnos y Agenda
 
-Clases del paquete de negocio Gestión de Turnos y Agenda, tal como quedaron implementadas. Los turnos duran siempre 1 hora y el horario del consultorio (08:00 a 18:00) es común a todos los profesionales: cada profesional solo define sus días de atención.
+Clases del paquete de negocio Gestión de Turnos y Agenda, tal como quedaron implementadas. Los turnos duran siempre 1 hora y el horario del consultorio (de lunes a viernes, de 07:00 a 12:00 y de 13:00 a 20:00, sin turnos a las 12:00) es común a todos los profesionales: cada profesional solo define sus días de atención.
 
 ```mermaid
 classDiagram

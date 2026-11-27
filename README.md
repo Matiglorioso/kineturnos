@@ -74,7 +74,7 @@ Eso genera **solapamientos**, **poca visibilidad del día** y **dificultad para 
 - Planilla de asistencia mensual por obra social, lista para imprimir
 
 ### Profesionales
-- CRUD de kinesiólogos con especialidad y días de atención (turnos de 1 hora, horario del consultorio 08:00 a 18:00)
+- CRUD de kinesiólogos con especialidad y días de atención (turnos de 1 hora, horario del consultorio de lunes a viernes, de 07:00 a 12:00 y de 13:00 a 20:00)
 - Turnos asignados y contador del día
 
 ### Usuarios
