@@ -104,8 +104,8 @@ PAQUETES = {
         "casos": [
             ("2.1", "Registrar Paciente", ["Administrador"]),
             ("2.2", "Actualizar Paciente", ["Administrador"]),
-            ("2.3", "Desactivar Paciente", ["Administrador"]),
-            ("2.4", "Eliminar Paciente", ["Administrador"]),
+            ("2.3", "Dar de Baja Paciente", ["Administrador"]),
+            ("2.4", "Reactivar Paciente", ["Administrador"]),
             ("2.5", "Buscar Paciente", ["Administrador", "Profesional"]),
         ],
         "relaciones": [
@@ -116,8 +116,8 @@ PAQUETES = {
         ],
         "clases": [
             ("«control»", "GestorPacientes", [], [
-                "+registrarPaciente(datos)", "+actualizarPaciente(id, datos)", "+desactivarPaciente(id)",
-                "+eliminarPaciente(id)", "+buscarPacientes(texto)",
+                "+registrarPaciente(datos)", "+actualizarPaciente(id, datos)", "+darDeBajaPaciente(id)",
+                "+reactivarPaciente(id)", "+buscarPacientes(texto)",
             ]),
             ("«entidad»", "Paciente", [
                 "-id: String", "-nombrePila: String", "-apellido: String", "-dni: String", "-cuil: String",
@@ -162,16 +162,15 @@ PAQUETES = {
                     ("control", "interfaz", "8- Mostrar paciente actualizado"),
                 ],
             },
-            "2.4": {
+            "2.3": {
                 "interfaz": "IU: Pacientes", "control": "GestorPacientes",
-                "entidades": ["Turno", "HistoriaClinica", "Paciente", "Auditoria"],
+                "entidades": ["Turno", "Paciente", "Auditoria"],
                 "mensajes": [
-                    ("interfaz", "control", "1- Solicitar eliminar paciente"),
+                    ("interfaz", "control", "1- Solicitar dar de baja al paciente"),
                     ("control", "Turno", "2- Verificar turnos activos"),
-                    ("control", "HistoriaClinica", "3- Verificar historia clínica"),
-                    ("control", "Paciente", "4- Eliminar paciente"),
-                    ("control", "Auditoria", "5- Registrar baja"),
-                    ("control", "interfaz", "6- Mostrar resultado"),
+                    ("control", "Paciente", "3- Dar de baja al paciente"),
+                    ("control", "Auditoria", "4- Registrar modificación"),
+                    ("control", "interfaz", "5- Mostrar paciente dado de baja"),
                 ],
             },
         },
@@ -239,21 +238,15 @@ PAQUETES = {
             ("4.1", "Registrar Evolución", ["Profesional"]),
             ("4.2", "Corregir Evolución", ["Profesional"]),
             ("4.3", "Consultar Historia Clínica", ["Profesional", "Administrador"]),
-            ("4.4", "Registrar Alertas y Antecedentes", ["Profesional"]),
-            ("4.5", "Gestionar Objetivos de Tratamiento", ["Profesional"]),
-            ("4.6", "Consultar Registro de Accesos", ["Administrador"]),
         ],
         "relaciones": [
             ("4.1", "4.3", "extend"),
             ("4.2", "4.3", "extend"),
-            ("4.4", "4.3", "extend"),
-            ("4.5", "4.3", "extend"),
         ],
         "clases": [
             ("«control»", "GestorHistoriaClinica", [], [
                 "+consultarHistoria(paciente)", "+registrarEvolucion(paciente, datos)",
-                "+corregirEvolucion(registro, datos)", "+guardarFicha(paciente, datos)",
-                "+gestionarObjetivo(paciente, datos)", "+tieneAcceso(usuario, paciente): boolean",
+                "+corregirEvolucion(registro, datos)", "+tieneAcceso(usuario, paciente): boolean",
             ]),
             ("«entidad»", "HistoriaClinica", [
                 "-id: String", "-fecha: Date", "-diagnostico: String", "-tratamiento: String",

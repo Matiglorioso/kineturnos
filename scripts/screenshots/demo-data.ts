@@ -25,8 +25,8 @@ const LAST = [
 ];
 const PROFESSIONALS = [
   { first: "Laura", last: "Méndez", specialty: "Traumatología", days: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"] },
-  { first: "Diego", last: "Ferreyra", specialty: "Deportiva", days: ["Lunes", "Miércoles", "Viernes", "Sábado"] },
-  { first: "Paula", last: "Quiroga", specialty: "Respiratoria", days: ["Martes", "Jueves", "Sábado"] },
+  { first: "Diego", last: "Ferreyra", specialty: "Deportiva", days: ["Lunes", "Miércoles", "Viernes"] },
+  { first: "Paula", last: "Quiroga", specialty: "Respiratoria", days: ["Martes", "Jueves", "Viernes"] },
   { first: "Martín", last: "Aguirre", specialty: "RPG", days: ["Lunes", "Martes", "Jueves", "Viernes"] },
   { first: "Sofía", last: "Barrios", specialty: "Neurológica", days: ["Lunes", "Miércoles", "Jueves", "Viernes"] },
 ];
@@ -201,17 +201,18 @@ export async function seedDemo(db: PrismaClient, password: string): Promise<Demo
 
   for (let offset = -75; offset <= 14; offset += 1) {
     const day = addDays(today, offset);
-    if (day.getDay() === 0) continue;
+    if (day.getDay() === 0 || day.getDay() === 6) continue;
     const working = professionals.filter((professional) => professional.diasAtencion.includes(WEEKDAYS[day.getDay()]));
+    // Inicios de turno del consultorio: 07:00 a 12:00 y 13:00 a 20:00.
     const slots = working.flatMap((professional) =>
-      Array.from({ length: 10 }, (_, hour) => ({ professional, hour: 8 + hour }))
+      [7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19].map((hour) => ({ professional, hour }))
     );
     for (let index = slots.length - 1; index > 0; index -= 1) {
       const swap = Math.floor(rand() * (index + 1));
       [slots[index], slots[swap]] = [slots[swap], slots[index]];
     }
-    // ~70 % de ocupación los días hábiles, menos los sábados y más adelante en el tiempo.
-    const ratio = day.getDay() === 6 ? 0.45 : offset > 7 ? 0.35 : 0.7;
+    // ~70 % de ocupación los días hábiles, menos más adelante en el tiempo.
+    const ratio = offset > 7 ? 0.35 : 0.7;
     for (const { professional, hour } of slots.slice(0, Math.round(slots.length * ratio))) {
       // El paciente destacado tiene sesiones dos veces por semana con la misma profesional.
       // El resto de los turnos no le toca al destacado (no tiene dos sesiones el mismo día).

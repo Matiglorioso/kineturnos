@@ -49,7 +49,16 @@ export async function createScratchApp(prefix: string, port: number): Promise<Sc
 
   const admin = new PrismaClient({ datasourceUrl: serverUrl.toString() });
   console.log(`Base descartable: ${name}`);
-  await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
+  // Neon y los Postgres comunes ya son UTF8. En un servidor local con otra codificación (por ejemplo
+  // WIN1252 en Windows) la base se crea en UTF8: los datos de demostración llevan caracteres como "→".
+  const [{ server_encoding: serverEncoding }] = await admin.$queryRawUnsafe<{ server_encoding: string }[]>(
+    "SHOW server_encoding"
+  );
+  await admin.$executeRawUnsafe(
+    serverEncoding.toUpperCase() === "UTF8"
+      ? `CREATE DATABASE "${name}"`
+      : `CREATE DATABASE "${name}" ENCODING 'UTF8' TEMPLATE template0 LC_COLLATE 'C' LC_CTYPE 'C'`
+  );
   run("npx", ["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: direct.toString() }, "migrate deploy");
 
   const db = new PrismaClient({ datasources: { db: { url: pooled.toString() } } });

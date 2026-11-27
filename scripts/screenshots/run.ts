@@ -28,6 +28,8 @@ interface Shot {
   fullPage?: boolean;
   /** Captura solo este elemento (p. ej. un formulario) en lugar de la página. */
   element?: (page: Page) => Locator;
+  /** Alto máximo (px) del elemento: para paneles laterales que ocupan toda la pantalla y quedarían vacíos abajo. */
+  maxHeight?: number;
 }
 
 async function login(page: Page, baseUrl: string, email: string, password: string) {
@@ -64,7 +66,18 @@ async function capture(page: Page, baseUrl: string, shot: Shot) {
   await shot.prepare(page);
   // Deja terminar animaciones y la carga de fuentes.
   await page.waitForTimeout(600);
-  if (shot.element) await shot.element(page).screenshot({ path: join(OUTPUT_DIR, shot.file) });
+  if (shot.element) {
+    const target = shot.element(page);
+    const box = shot.maxHeight ? await target.boundingBox() : null;
+    if (box && shot.maxHeight) {
+      await page.screenshot({
+        path: join(OUTPUT_DIR, shot.file),
+        clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, shot.maxHeight) },
+      });
+    } else {
+      await target.screenshot({ path: join(OUTPUT_DIR, shot.file) });
+    }
+  }
   else await page.screenshot({ path: join(OUTPUT_DIR, shot.file), fullPage: shot.fullPage ?? true });
   console.log(`OK ${shot.file}`);
 }
@@ -120,7 +133,7 @@ async function main() {
           await p.getByRole("option").filter({ hasNotText: /Ocupado/i }).last().click();
           await dialog.getByRole("combobox", { name: "Tipo de sesión" }).click();
           await p.getByRole("option", { name: "Rehabilitación" }).click();
-          await dialog.getByLabel("Observaciones").fill("Control de rodilla. Traer estudios.");
+          await dialog.getByLabel(/^Observaciones/).fill("Control de rodilla. Traer estudios.");
         },
       },
       {
@@ -133,6 +146,73 @@ async function main() {
         file: "historia-clinica-desktop.png",
         path: historia,
         prepare: (p) => p.getByRole("article").first().waitFor(),
+      },
+      {
+        // Nueva evolución: el panel lateral de la historia clínica.
+        file: "historia-nueva-evolucion-desktop.png",
+        path: historia,
+        element: (p) => p.getByRole("dialog", { name: "Nueva evolución" }),
+        maxHeight: 510,
+        prepare: async (p) => {
+          await p.getByRole("article").first().waitFor();
+          await p.getByRole("button", { name: "Nueva evolución" }).filter({ visible: true }).first().click();
+          const dialog = p.getByRole("dialog", { name: "Nueva evolución" });
+          const professional = dialog.getByRole("combobox", { name: "Profesional" });
+          if (await professional.isVisible().catch(() => false)) {
+            await professional.click();
+            await p.getByRole("option").first().click();
+          }
+          await dialog
+            .getByLabel("Evolución")
+            .fill("Buena respuesta al tratamiento. Mejora el rango de flexión de rodilla; sin dolor al caminar. Se indican ejercicios para el domicilio.");
+        },
+      },
+      {
+        file: "paciente-formulario-desktop.png",
+        path: "/pacientes",
+        element: (p) => p.getByRole("dialog", { name: "Nuevo paciente" }),
+        prepare: async (p) => {
+          await p.getByRole("table").getByRole("row").nth(1).waitFor();
+          await p.getByRole("button", { name: "Nuevo paciente" }).filter({ visible: true }).first().click();
+          const dialog = p.getByRole("dialog", { name: "Nuevo paciente" });
+          await dialog.getByLabel(/^Nombre/).fill("Luciana");
+          await dialog.getByLabel(/^Apellido/).fill("Paredes");
+          await dialog.getByLabel(/^DNI/).fill("38123456");
+          await dialog.getByLabel(/^Fecha de nacimiento/).fill("14-03-1992");
+          await dialog.getByLabel(/^Teléfono/).fill("+54 351 555-0142");
+          await dialog.getByLabel(/^Email/).fill("luciana.paredes@example.com");
+          await dialog.getByLabel(/^Observaciones/).fill("Derivada por traumatología.");
+        },
+      },
+      {
+        file: "paciente-ficha-desktop.png",
+        path: "/pacientes",
+        element: (p) => p.getByRole("dialog"),
+        prepare: async (p) => {
+          await p.getByRole("table").getByRole("row").nth(1).waitFor();
+          // La lista está paginada: se busca al paciente para que quede a la vista.
+          await p.getByLabel("Buscar pacientes").filter({ visible: true }).first().fill(demo.featuredPatientName);
+          await p.getByRole("button", { name: `Ver detalle de ${demo.featuredPatientName}` }).filter({ visible: true }).first().click();
+          await p.getByRole("dialog").getByRole("heading", { name: demo.featuredPatientName }).waitFor();
+        },
+      },
+      {
+        file: "profesional-formulario-desktop.png",
+        path: "/profesionales",
+        element: (p) => p.getByRole("dialog", { name: "Nuevo profesional" }),
+        prepare: async (p) => {
+          await p.getByRole("button", { name: /^Ver detalle de/ }).filter({ visible: true }).first().waitFor();
+          await p.getByRole("button", { name: "Nuevo profesional" }).filter({ visible: true }).first().click();
+          const dialog = p.getByRole("dialog", { name: "Nuevo profesional" });
+          await dialog.getByLabel(/^Nombre/).fill("Marcos");
+          await dialog.getByLabel(/^Apellido/).fill("Villalba");
+          await dialog.getByLabel(/^Matrícula/).fill("MP 4821");
+          await dialog.getByLabel(/^Teléfono/).fill("+54 351 555-0177");
+          await dialog.getByLabel(/^Email/).fill("marcos.villalba@example.com");
+          await dialog.getByRole("combobox", { name: "Especialidad" }).click();
+          await p.getByRole("option").first().click();
+          for (const day of ["Lunes", "Miércoles", "Viernes"]) await dialog.getByRole("button", { name: day, exact: true }).click();
+        },
       },
       {
         file: "autorizaciones-desktop.png",
